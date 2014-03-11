@@ -44,6 +44,10 @@
 #include <stdlib.h>
 #include <getopt.h>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #ifdef _WIN32
 #include <conio.h>
 #else
@@ -608,6 +612,24 @@ static void usage(const char *argv0)
     printf( "                  to the next available algorithm\n" );
 }
 
+static inline int
+processorCount(void)
+{
+#ifdef _OPENMP
+    int k;
+#  pragma omp parallel
+    {
+#  pragma omp master
+        {
+            k = omp_get_num_threads();
+        }
+    }
+    return k;
+#else
+    return sysconf( _SC_NPROCESSORS_ONLN );
+#endif
+}
+
 int
 main( int argc, char *argv[] )
 {
@@ -756,9 +778,10 @@ main( int argc, char *argv[] )
 
     g_N = kParticles * 1024;
 
-    printf( "Running simulation with %d particles, crosscheck %s, CPU %s\n", (int) g_N,
+    printf( "Running simulation with %d particles, crosscheck %s, CPU %s, %d threads\n", (int) g_N,
         g_bCrossCheck ? "enabled" : "disabled",
-        g_bNoCPU ? "disabled" : "enabled" );
+        g_bNoCPU ? "disabled" : "enabled",
+        processorCount() );
 
 #if defined(HAVE_SIMD)
     g_maxAlgorithm = CPU_SIMD;
