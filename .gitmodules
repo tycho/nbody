@@ -1,0 +1,3 @@
+[submodule "libtime"]
+	path = libtime
+	url = git://github.com/tycho/libtime.git
