@@ -523,6 +523,48 @@ Error:
 }
 
 static int
+freeArrays(void)
+{
+#ifndef NO_CUDA
+    cudaError_t status;
+
+    if ( g_bCUDAPresent ) {
+        CUDART_CHECK( cudaFreeHost( (void **) &g_hostAOS_PosMass ) );
+        for ( size_t i = 0; i < 3; i++ ) {
+            CUDART_CHECK( cudaFreeHost( (void **) &g_hostSOA_Pos[i] ) );
+            CUDART_CHECK( cudaFreeHost( (void **) &g_hostSOA_Force[i] ) );
+        }
+        CUDART_CHECK( cudaFreeHost( (void **) &g_hostAOS_Force ) );
+        CUDART_CHECK( cudaFreeHost( (void **) &g_hostAOS_Force_Golden ) );
+        CUDART_CHECK( cudaFreeHost( (void **) &g_hostAOS_VelInvMass ) );
+        CUDART_CHECK( cudaFreeHost( (void **) &g_hostSOA_Mass ) );
+        CUDART_CHECK( cudaFreeHost( (void **) &g_hostSOA_InvMass ) );
+
+        CUDART_CHECK( cudaFree( &g_dptrAOS_PosMass ) );
+        CUDART_CHECK( cudaFree( (void **) &g_dptrAOS_Force ) );
+    } else
+#endif
+    {
+        free(g_hostAOS_PosMass);
+        for ( size_t i = 0; i < 3; i++ ) {
+            free(g_hostSOA_Pos[i]);
+            free(g_hostSOA_Force[i]);
+        }
+        free(g_hostAOS_Force);
+        free(g_hostAOS_Force_Golden);
+        free(g_hostAOS_VelInvMass);
+        free(g_hostSOA_Mass);
+        free(g_hostSOA_InvMass);
+    }
+    return 0;
+#ifndef NO_CUDA
+Error:
+    fprintf(stderr, "Failed to allocate required memory.\n");
+    return 1;
+#endif
+}
+
+static int
 allocArrays(void)
 {
 #ifndef NO_CUDA
@@ -584,10 +626,6 @@ allocArrays(void)
         if (!g_hostAOS_VelInvMass)
             goto Error;
 
-        g_hostSOA_Mass = (float *)valloc(sizeof(float) * g_N);
-        if (!g_hostSOA_Mass)
-            goto Error;
-
         g_hostSOA_InvMass = (float *)valloc(sizeof(float) * g_N);
         if (!g_hostSOA_InvMass)
             goto Error;
@@ -597,7 +635,6 @@ Error:
     fprintf(stderr, "Failed to allocate required memory.\n");
     return 1;
 }
-
 
 static void usage(const char *argv0)
 {
@@ -918,6 +955,8 @@ main( int argc, char *argv[] )
         worker_join(&g_GPUThreadPool[i]);
         worker_destroy(&g_GPUThreadPool[i]);
     }
+
+    freeArrays();
 
     return 0;
 Error:
