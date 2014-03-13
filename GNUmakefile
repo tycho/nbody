@@ -8,6 +8,10 @@ uname_S := $(shell uname -s 2>/dev/null || echo "not")
 uname_M := $(shell uname -m 2>/dev/null || echo "not")
 uname_O := $(shell uname -o 2>/dev/null || echo "not")
 
+ifeq ($(shell type -P nvcc),)
+NO_CUDA := 1
+endif
+
 CC := gcc
 CXX := g++
 NVCC := nvcc
