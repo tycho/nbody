@@ -36,6 +36,7 @@
  */
 
 #ifdef __ALTIVEC__
+#include "libtime.h"
 
 #include "bodybodyInteraction_AltiVec.h"
 #include "nbody_CPU_SSE.h"
@@ -49,8 +50,9 @@ ComputeGravitation_SIMD(
     size_t N
 )
 {
-    chTimerTimestamp start, end;
-    chTimerGetTime( &start );
+    uint64_t start, end;
+
+    start = libtime_cpu();
 
 #pragma omp parallel for
     for ( size_t i = 0; i < N; i++ )
@@ -69,7 +71,7 @@ ComputeGravitation_SIMD(
         for ( size_t j = 0; j < N/4; j++ ) {
 
             bodyBodyInteraction(
-                ax, ay, az,
+                &ax, &ay, &az,
                 x0, y0, z0,
                 px[j], py[j], pz[j], pmass[j],
                 _vec_set_ps1( softeningSquared ) );
@@ -82,9 +84,9 @@ ComputeGravitation_SIMD(
         force[2][i] = _vec_sum( az );
     }
 
-    chTimerGetTime( &end );
+    end = libtime_cpu();
 
-    return (float) chTimerElapsedTime( &start, &end ) * 1000.0f;
+    return libtime_cpu_to_wall(end - start) * 1e-6;
 }
 #endif
 

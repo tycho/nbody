@@ -86,20 +86,20 @@ rcp_sqrt_nr_ps(const v4sf x)
 
 inline void
 bodyBodyInteraction(
-    v4sf& fx,
-    v4sf& fy,
-    v4sf& fz,
+    v4sf *fx,
+    v4sf *fy,
+    v4sf *fz,
 
-    const v4sf& x0,
-    const v4sf& y0,
-    const v4sf& z0,
+    const v4sf x0,
+    const v4sf y0,
+    const v4sf z0,
 
-    const v4sf& x1,
-    const v4sf& y1,
-    const v4sf& z1,
-    const v4sf& mass1,
+    const v4sf x1,
+    const v4sf y1,
+    const v4sf z1,
+    const v4sf mass1,
 
-    const v4sf& softeningSquared )
+    const v4sf softeningSquared )
 {
     // r_01  [3 FLOPS]
     v4sf dx = vec_sub( x1, x0 );
@@ -130,9 +130,9 @@ bodyBodyInteraction(
     v4sf s = vec_mul( mass1, invDistCube );
 
     // (m_1 * r_01) / (d^2 + e^2)^(3/2)  [6 FLOPS]
-    fx = vec_add( fx, vec_mul( dx, s ) );
-    fy = vec_add( fy, vec_mul( dy, s ) );
-    fz = vec_add( fz, vec_mul( dz, s ) );
+    *fx = vec_add( *fx, vec_mul( dx, s ) );
+    *fy = vec_add( *fy, vec_mul( dy, s ) );
+    *fz = vec_add( *fz, vec_mul( dz, s ) );
 }
 
 #endif
