@@ -56,7 +56,7 @@ _vec_set_ps1(float f)
 }
 
 static inline float
-_vec_sum(vf32x4_t const &v)
+_vec_sum(vf32x4_t const v)
 {
     float32x2_t r;
     v4 iv;
@@ -66,7 +66,7 @@ _vec_sum(vf32x4_t const &v)
 }
 
 static inline vf32x4_t
-rcp_sqrt_nr_ps(const vf32x4_t& _v) {
+rcp_sqrt_nr_ps(const vf32x4_t _v) {
     v4 vec, result;
     vec.p = _v;
     result.v = vrsqrteq_f32(vec.v);
@@ -74,22 +74,22 @@ rcp_sqrt_nr_ps(const vf32x4_t& _v) {
     return result.p;
 }
 
-inline void
+static inline void
 bodyBodyInteraction(
-    vf32x4_t& fx,
-    vf32x4_t& fy,
-    vf32x4_t& fz,
+    vf32x4_t *fx,
+    vf32x4_t *fy,
+    vf32x4_t *fz,
 
-    const vf32x4_t& x0,
-    const vf32x4_t& y0,
-    const vf32x4_t& z0,
+    const vf32x4_t x0,
+    const vf32x4_t y0,
+    const vf32x4_t z0,
 
-    const vf32x4_t& x1,
-    const vf32x4_t& y1,
-    const vf32x4_t& z1,
-    const vf32x4_t& mass1,
+    const vf32x4_t x1,
+    const vf32x4_t y1,
+    const vf32x4_t z1,
+    const vf32x4_t mass1,
 
-    const vf32x4_t& softeningSquared )
+    const vf32x4_t softeningSquared )
 {
     // r_01  [3 FLOPS]
     vf32x4_t dx = x1 - x0;
@@ -108,9 +108,9 @@ bodyBodyInteraction(
     vf32x4_t s = mass1 * invDistCube;
 
     // (m_1 * r_01) / (d^2 + e^2)^(3/2)  [6 FLOPS]
-    fx = fx + (dx * s);
-    fy = fy + (dy * s);
-    fz = fz + (dz * s);
+    *fx += (dx * s);
+    *fy += (dy * s);
+    *fz += (dz * s);
 }
 
 #endif
