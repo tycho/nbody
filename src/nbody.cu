@@ -515,8 +515,19 @@ static int initializeGPU( void *_p )
 
     struct gpuInit_struct *p = (struct gpuInit_struct *) _p;
     CUDART_CHECK( cudaSetDevice( p->iGPU ) );
-    CUDART_CHECK( cudaSetDeviceFlags( cudaDeviceMapHost ) );
     CUDART_CHECK( cudaFree(0) );
+Error:
+    p->status = status;
+    return 0;
+}
+
+static int teardownGPU( void *_p )
+{
+    cudaError_t status;
+
+    struct gpuInit_struct *p = (struct gpuInit_struct *) _p;
+    CUDART_CHECK( cudaSetDevice( p->iGPU ) );
+    CUDART_CHECK( cudaDeviceReset() );
 Error:
     p->status = status;
     return 0;
@@ -529,19 +540,20 @@ freeArrays(void)
     cudaError_t status;
 
     if ( g_bCUDAPresent ) {
-        CUDART_CHECK( cudaFreeHost( (void **) &g_hostAOS_PosMass ) );
+        CUDART_CHECK( cudaDeviceSynchronize() );
+        CUDART_CHECK( cudaFreeHost( g_hostAOS_PosMass ) );
         for ( size_t i = 0; i < 3; i++ ) {
-            CUDART_CHECK( cudaFreeHost( (void **) &g_hostSOA_Pos[i] ) );
-            CUDART_CHECK( cudaFreeHost( (void **) &g_hostSOA_Force[i] ) );
+            CUDART_CHECK( cudaFreeHost( g_hostSOA_Pos[i] ) );
+            CUDART_CHECK( cudaFreeHost( g_hostSOA_Force[i] ) );
         }
-        CUDART_CHECK( cudaFreeHost( (void **) &g_hostAOS_Force ) );
-        CUDART_CHECK( cudaFreeHost( (void **) &g_hostAOS_Force_Golden ) );
-        CUDART_CHECK( cudaFreeHost( (void **) &g_hostAOS_VelInvMass ) );
-        CUDART_CHECK( cudaFreeHost( (void **) &g_hostSOA_Mass ) );
-        CUDART_CHECK( cudaFreeHost( (void **) &g_hostSOA_InvMass ) );
+        CUDART_CHECK( cudaFreeHost( g_hostAOS_Force ) );
+        CUDART_CHECK( cudaFreeHost( g_hostAOS_Force_Golden ) );
+        CUDART_CHECK( cudaFreeHost( g_hostAOS_VelInvMass ) );
+        CUDART_CHECK( cudaFreeHost( g_hostSOA_Mass ) );
+        CUDART_CHECK( cudaFreeHost( g_hostSOA_InvMass ) );
 
-        CUDART_CHECK( cudaFree( &g_dptrAOS_PosMass ) );
-        CUDART_CHECK( cudaFree( (void **) &g_dptrAOS_Force ) );
+        CUDART_CHECK( cudaFree( g_dptrAOS_PosMass ) );
+        CUDART_CHECK( cudaFree( g_dptrAOS_Force ) );
     } else
 #endif
     {
@@ -559,7 +571,7 @@ freeArrays(void)
     return 0;
 #ifndef NO_CUDA
 Error:
-    fprintf(stderr, "Failed to allocate required memory.\n");
+    fprintf(stderr, "Failed to clean up memory.\n");
     return 1;
 #endif
 }
@@ -571,16 +583,6 @@ allocArrays(void)
     cudaError_t status;
 
     if ( g_bCUDAPresent ) {
-        cudaDeviceProp propForVersion;
-
-        CUDART_CHECK( cudaSetDeviceFlags( cudaDeviceMapHost ) );
-        CUDART_CHECK( cudaGetDeviceProperties( &propForVersion, 0 ) );
-        if ( propForVersion.major < 3 ) {
-            // Only SM 3.x supports shuffle and fast atomics, so we cannot run
-            // some algorithms on this board.
-            g_maxAlgorithm = multiGPU;
-        }
-
         CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_PosMass, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
         for ( size_t i = 0; i < 3; i++ ) {
             CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Pos[i], g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
@@ -827,8 +829,19 @@ main( int argc, char *argv[] )
 #endif
     g_Algorithm = g_bCUDAPresent ? GPU_AOS : CPU_SOA;
     if ( g_bCUDAPresent || g_bNoCPU ) {
+        cudaDeviceProp propForVersion;
+
         // max algorithm is different depending on whether SM 3.0 is present
         g_maxAlgorithm = g_bSM30Present ? GPU_AOS_tiled_const : multiGPU;
+
+        CUDART_CHECK( cudaSetDeviceFlags( cudaDeviceMapHost ) );
+        CUDART_CHECK( cudaGetDeviceProperties( &propForVersion, 0 ) );
+        if ( propForVersion.major < 3 ) {
+            // Only SM 3.x supports shuffle and fast atomics, so we cannot run
+            // some algorithms on this board.
+            g_maxAlgorithm = multiGPU;
+        }
+
     }
 
     if (allocArrays() != 0)
@@ -947,6 +960,19 @@ main( int argc, char *argv[] )
                 }
 
             }
+        }
+    }
+
+    for ( int i = 0; i < g_numGPUs; i++ ) {
+        struct gpuInit_struct initGPU = {i};
+        worker_delegate(&g_GPUThreadPool[i], teardownGPU, &initGPU, 1);
+        if ( cudaSuccess != initGPU.status ) {
+            fprintf( stderr, "GPU %d teardown failed "
+                " with %d (%s)\n",
+                i,
+                initGPU.status,
+                cudaGetErrorString( initGPU.status ) );
+            return 1;
         }
     }
 

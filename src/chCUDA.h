@@ -70,6 +70,11 @@ static inline cudaError_t cudaMalloc ( void **devPtr, size_t size )
     return 1;
 }
 
+static inline cudaError_t cudaDeviceReset ( void )
+{
+    return 1;
+}
+
 static inline cudaError_t cudaHostAlloc ( void ** pHost, size_t size, unsigned int flags )
 {
     return 1;
