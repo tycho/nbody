@@ -48,9 +48,13 @@ CFWARN     := \
 	-Wno-unknown-pragmas \
 	-Wold-style-definition \
 	-Wstrict-prototypes
-CPPFLAGS   := -D_GNU_SOURCE $(CFWARN)
+CPPFLAGS   := -D_GNU_SOURCE
+ifndef DEBUG
 CFOPTIMIZE := -O3 -ffast-math
-CFLAGS     := $(CFOPTIMIZE) -std=gnu11 -fno-strict-aliasing $(CPPFLAGS)
+else
+CFOPTIMIZE := -O0 -ggdb
+endif
+CFLAGS     := $(CFOPTIMIZE) -std=gnu11 -fno-strict-aliasing $(CPPFLAGS) $(CFWARN)
 
 ifeq ($(uname_S),Darwin)
 ifneq ($(findstring gcc,$(shell $(CC) -v 2>&1)),)

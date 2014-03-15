@@ -8,7 +8,12 @@ ifeq ($(shell type -P nvcc),)
 NO_CUDA := 1
 endif
 
+ifndef DEBUG
 NVCCFLAGS := -O3
+else
+NVCCFLAGS := -O0 -g
+CPPFLAGS  += -DDEBUG
+endif
 
 ifeq ($(NO_OPENMP),)
 COMPILER_SUPPORTS_OPENMP := $(shell $(CC) -fopenmp -E -dM -xc /dev/null 2>/dev/null | grep _OPENMP)
@@ -64,6 +69,7 @@ NVCCFLAGS := $(CFLAGS)
 NVCCFLAGS += -xc
 CPPFLAGS += -DNO_CUDA
 else
+NVCC := nvcc
 NVCCFLAGS +=
 LDFLAGS += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
 endif
