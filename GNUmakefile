@@ -114,7 +114,7 @@ endif
 
 LINK := $(CXX)
 
-INCLUDE := -Ilibc11/include -Ilibtime
+INCLUDE := -Ilibc11/include -Ilibtime/include
 
 SOURCES := \
 	src/nbody.cu \
