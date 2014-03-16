@@ -99,7 +99,6 @@ SOURCES += \
 endif
 
 OBJECTS := $(SOURCES:%.cu=%.o)
-OBJECTS := $(OBJECTS:%.cpp=%.o)
 OBJECTS := $(OBJECTS:%.c=%.o)
 
 clean:
@@ -108,9 +107,6 @@ clean:
 
 %.o: %.cu .cflags
 	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) $(INCLUDE) -c -o $@ $<
-
-%.o: %.cpp .cflags
-	$(QUIET_CXX)$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDE) -c -o $@ $<
 
 %.o: %.c .cflags
 	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDE) -c -o $@ $<
