@@ -63,10 +63,6 @@ LDFLAGS += -static-intel
 endif
 
 ifneq ($(NO_CUDA),)
-QUIET_NVCC = $(QUIET_CC)
-NVCC := $(CC)
-NVCCFLAGS := $(CFLAGS)
-NVCCFLAGS += -xc
 CPPFLAGS += -DNO_CUDA
 else
 NVCC := nvcc
@@ -118,8 +114,13 @@ clean:
 	rm -f $(BIN)
 	rm -f $(OBJECTS)
 
+ifndef NO_CUDA
 %.o: %.cu .cflags
 	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) $(NVCC_INLINE_DEPGEN_CFLAGS) $(INCLUDE) -c -o $@ $<
+else
+%.o: %.cu .cflags
+	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -xc -c -o $@ $<
+endif
 
 %.o: %.c .cflags
 	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -c -o $@ $<
