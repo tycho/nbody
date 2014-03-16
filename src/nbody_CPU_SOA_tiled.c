@@ -88,11 +88,14 @@ DoDiagonalTile(
             acz += fz;
         }
 
-        #pragma omp atomic update
+        /* We parallelize DoDiagonalTile along the iTile axis, so there's no
+         * need to atomically update here.
+         */
+        //#pragma omp atomic update
         force[0][i] += acx;
-        #pragma omp atomic update
+        //#pragma omp atomic update
         force[1][i] += acy;
-        #pragma omp atomic update
+        //#pragma omp atomic update
         force[2][i] += acz;
     }
 }
@@ -158,13 +161,16 @@ DoNondiagonalTile(
         force[2][i] += az;
     }
 
+    /* We parallelize DoNonDiagonalTile on the jTile axis, so there's no need
+     * to atomically update here.
+     */
     for ( size_t _j = 0; _j < nTile; _j++ ) {
         const size_t j = jTile*nTile+_j;
-        #pragma omp atomic update
+        //#pragma omp atomic update
         force[0][j] += symmetricXP[_j];
-        #pragma omp atomic update
+        //#pragma omp atomic update
         force[1][j] += symmetricYP[_j];
-        #pragma omp atomic update
+        //#pragma omp atomic update
         force[2][j] += symmetricZP[_j];
     }
 }
