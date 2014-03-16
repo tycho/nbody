@@ -101,15 +101,28 @@ endif
 OBJECTS := $(SOURCES:%.cu=%.o)
 OBJECTS := $(OBJECTS:%.c=%.o)
 
+# Dependency generation
+#
+ifndef NO_INLINE_DEPGEN
+# See info node: (gcc) Preprocessor Options
+INLINE_DEPGEN_CFLAGS = -MMD
+NVCC_INLINE_DEPGEN_CFLAGS = -Xcompiler -MMD
+endif
+
+DEPS := $(OBJECTS:%.o=%.d)
+
+VALID_DEPS := $(shell ls $(DEPS) 2>/dev/null)
+-include $(VALID_DEPS)
+
 clean:
 	rm -f $(BIN)
 	rm -f $(OBJECTS)
 
 %.o: %.cu .cflags
-	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) $(INCLUDE) -c -o $@ $<
+	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) $(NVCC_INLINE_DEPGEN_CFLAGS) $(INCLUDE) -c -o $@ $<
 
 %.o: %.c .cflags
-	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDE) -c -o $@ $<
+	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -c -o $@ $<
 
 $(BIN): $(OBJECTS) .cflags
 	$(QUIET_LINK)$(LINK) -o $@ $(OBJECTS) $(LDFLAGS)
