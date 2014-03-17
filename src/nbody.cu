@@ -907,6 +907,8 @@ main( int argc, char *argv[] )
         }
     }
 
+    freeArrays();
+
     for ( int i = 0; i < g_numGPUs; i++ ) {
         struct gpuInit_struct initGPU = {i};
         worker_delegate(&g_GPUThreadPool[i], teardownGPU, &initGPU, 1);
@@ -925,8 +927,6 @@ main( int argc, char *argv[] )
         worker_join(&g_GPUThreadPool[i]);
         worker_destroy(&g_GPUThreadPool[i]);
     }
-
-    freeArrays();
 
     return 0;
 Error:
