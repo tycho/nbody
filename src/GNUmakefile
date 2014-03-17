@@ -102,7 +102,6 @@ OBJECTS := $(OBJECTS:%.c=%.o)
 ifndef NO_INLINE_DEPGEN
 # See info node: (gcc) Preprocessor Options
 INLINE_DEPGEN_CFLAGS = -MMD
-NVCC_INLINE_DEPGEN_CFLAGS = -Xcompiler -MMD
 endif
 
 DEPS := $(OBJECTS:%.o=%.d)
@@ -116,7 +115,7 @@ clean:
 
 ifndef NO_CUDA
 %.o: %.cu .cflags
-	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) $(NVCC_INLINE_DEPGEN_CFLAGS) $(INCLUDE) -c -o $@ $<
+	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) $(INCLUDE) -c -o $@ $<
 else
 %.o: %.cu .cflags
 	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -xc -c -o $@ $<
