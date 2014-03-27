@@ -665,7 +665,7 @@ processorCount(void)
     }
     return k;
 #else
-    return sysconf( _SC_NPROCESSORS_ONLN );
+    return 1;
 #endif
 }
 
