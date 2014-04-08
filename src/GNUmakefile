@@ -47,6 +47,11 @@ CPPFLAGS += -DHAVE_SSE
 endif
 endif
 
+ifeq ($(uname_S),Darwin)
+# For AVX support
+CFLAGS += -Wa,-q
+endif
+
 CUDA_ROOT := $(dir $(shell which nvcc 2>/dev/null))..
 
 LDFLAGS += -lm
