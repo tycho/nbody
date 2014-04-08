@@ -40,11 +40,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef __STDC_NO_THREADS__
-#include <threads.h>
-#else
+//#ifndef __STDC_NO_THREADS__
+//#include <threads.h>
+//#else
 #include "c11/threads.h"
-#endif
+//#endif
 
 typedef struct _sem_t {
     mtx_t mtx;
