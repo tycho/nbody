@@ -20,15 +20,13 @@ COMPILER_SUPPORTS_OPENMP := $(shell $(CC) -fopenmp -E -dM -xc /dev/null 2>/dev/n
 ifneq ($(COMPILER_SUPPORTS_OPENMP),)
 CPPFLAGS += -DUSE_OPENMP
 CFLAGS += -fopenmp
-LDFLAGS += -fopenmp
-LIBIOMP5_FOUND := $(shell gcc -o /dev/null -xc <(echo "int main() { }") -liomp5 2>/dev/null && echo Yes)
-ifeq ($(LIBIOMP5_FOUND),Yes)
-LDFLAGS += -liomp5
-else
 LIBIOMP5_PATH := $(shell ldconfig -N -v 2>/dev/null | awk '{ if (NF == 1) { sub(/:$$/, "", $$1); path=$$1; } else if (match($$1, /^libiomp5.so$$/)) { print path; } }' )
-ifneq ($(LIBIOMP5_PATH),)
+LIBIOMP5_FOUND := $(shell gcc -c -fopenmp openmp-test.c && gcc -o openmp-test openmp-test.o -L$(LIBIOMP5_PATH) -liomp5 && echo Yes)
+ifeq ($(LIBIOMP5_FOUND),Yes)
 LDFLAGS += -L$(LIBIOMP5_PATH) -liomp5
-endif # LIBIOMP5_PATH
+else
+$(warning The Intel OpenMP runtime could not be found or is broken, using GNU OpenMP runtime)
+LDFLAGS += -fopenmp
 endif # LIBIOMP5_FOUND
 endif # COMPILER_SUPPORTS_OPENMP
 endif # NO_OPENMP
