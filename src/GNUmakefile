@@ -16,7 +16,7 @@ CPPFLAGS  += -DDEBUG
 endif
 
 ifeq ($(NO_OPENMP),)
-COMPILER_SUPPORTS_OPENMP := $(shell $(CC) -fopenmp -E -dM -xc /dev/null 2>/dev/null | grep _OPENMP)
+COMPILER_SUPPORTS_OPENMP := $(shell $(CC) -fopenmp -E -dM -xc _cc_test_openmp_modern.c 2>/dev/null | grep _OPENMP)
 ifneq ($(COMPILER_SUPPORTS_OPENMP),)
 CPPFLAGS += -DUSE_OPENMP
 CFLAGS += -fopenmp
