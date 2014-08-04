@@ -1,17 +1,21 @@
 include common.mk
 
-all: nbody
+BIN := nbody
 
-nbody: src/nbody
+all: $(BIN)
+
+$(BIN): src/$(BIN)
 	$(QUIET)$(CP) $< $@
+
+distclean: clean
 
 clean:
 	$(MAKE) -C src clean
 	$(MAKE) -C libtime clean
 	$(MAKE) -C libc11 clean
 
-src/nbody: libtime/libtime.a libc11/libc11.a
-	$(QUIET)$(MAKE) -C src nbody
+src/$(BIN): libtime/libtime.a libc11/libc11.a
+	$(QUIET)$(MAKE) -C src $(BIN)
 
 libtime/libtime.a:
 	$(QUIET)$(MAKE) -C libtime libtime.a
