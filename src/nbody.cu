@@ -853,7 +853,7 @@ main( int argc, char *argv[] )
                 exit(1);
             }
             double interactionsPerSecond = (double) g_N*g_N*1000.0f / ms,
-                   flops = (g_N * g_N * (3 + 6 + 4 + 1 + 6)) / ms;
+                   flops = interactionsPerSecond * (3 + 6 + 4 + 1 + 6) * 1e-3;
             if ( interactionsPerSecond > 1e9 ) {
                 printf ( "\r%13s: %8.2f ms = %8.3fx10^9 interactions/s (%9.2lf GFLOPS)",
                     rgszAlgorithmNames[g_Algorithm],
