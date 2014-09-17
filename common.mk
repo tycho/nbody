@@ -49,11 +49,11 @@ define cc-option-add-closure
     endif
 endef
 
-ifneq ($(shell type -P clang),)
-CC         := clang
-else
+#ifneq ($(shell type -P clang),)
+#CC         := clang
+#else
 CC         := gcc
-endif
+#endif
 
 LINK       := $(CC)
 AR         := ar rcu
