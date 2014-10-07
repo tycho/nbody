@@ -91,7 +91,8 @@ SOURCES := \
 	nbody_CPU_SOA_tiled.c \
 	nbody_CPU_AltiVec.c \
 	nbody_CPU_NEON.c \
-	nbody_CPU_SSE.c
+	nbody_CPU_SSE.c \
+	nbody_util.c
 
 ifeq ($(NO_CUDA),)
 SOURCES += \

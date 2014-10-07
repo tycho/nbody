@@ -65,6 +65,7 @@
 #include "chError.h"
 
 #include "nbody.h"
+#include "nbody_util.h"
 
 enum nbodyAlgorithm_enum {
     CPU_AOS = 0,    /* This is the golden implementation */
@@ -649,24 +650,6 @@ static void usage(const char *argv0)
     printf( "    --iterations specifies a fixed number of iterations to execute\n" );
     printf( "    --cycle-after specifies the number of iterations before rotating\n" );
     printf( "                  to the next available algorithm\n" );
-}
-
-static inline int
-processorCount(void)
-{
-#ifdef _OPENMP
-    int k;
-#  pragma omp parallel
-    {
-#  pragma omp master
-        {
-            k = omp_get_num_threads();
-        }
-    }
-    return k;
-#else
-    return 1;
-#endif
 }
 
 int
