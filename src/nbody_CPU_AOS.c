@@ -70,8 +70,6 @@ ComputeGravitation_AOS(
             reduction(+:acz)
         for ( size_t j = 0; j < N; j++ ) {
 
-            if ( i == j ) continue;
-
             float fx, fy, fz;
             const float bodyX = posMass[j*4+0];
             const float bodyY = posMass[j*4+1];
