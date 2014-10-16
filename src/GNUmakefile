@@ -24,7 +24,7 @@ ifneq ($(COMPILER_SUPPORTS_OPENMP),)
 CPPFLAGS += -DUSE_OPENMP
 CFLAGS += -fopenmp
 LIBIOMP5_PATH := $(shell ldconfig -N -v 2>/dev/null | awk '{ if (NF == 1) { sub(/:$$/, "", $$1); path=$$1; } else if (match($$1, /^libiomp5.so$$/)) { print path; } }' )
-LIBIOMP5_FOUND := $(shell gcc -c -fopenmp openmp-test.c && gcc -o openmp-test openmp-test.o -L$(LIBIOMP5_PATH) -liomp5 && echo Yes)
+LIBIOMP5_FOUND := $(shell gcc -c -fopenmp openmp-test.c && gcc -o openmp-test openmp-test.o -L$(LIBIOMP5_PATH) -liomp5 &>/dev/null && echo Yes)
 ifeq ($(LIBIOMP5_FOUND),Yes)
 LDFLAGS += -L$(LIBIOMP5_PATH) -liomp5
 else
