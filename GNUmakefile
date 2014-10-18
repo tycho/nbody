@@ -17,10 +17,16 @@ clean:
 src/$(BIN): libtime/libtime.a libc11/libc11.a
 	$(QUIET)$(MAKE) -C src $(BIN)
 
-libtime/libtime.a:
+libtime/.git:
+	git submodule update --init
+
+libc11/.git:
+	git submodule update --init
+
+libtime/libtime.a: libtime/.git
 	$(QUIET)$(MAKE) -C libtime libtime.a
 
-libc11/libc11.a:
+libc11/libc11.a: libc11/.git
 	$(QUIET)$(MAKE) -C libc11 libc11.a
 
 .PHONY: libc11/libc11.a libtime/libtime.a src/nbody
