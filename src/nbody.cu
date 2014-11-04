@@ -81,8 +81,8 @@ enum nbodyAlgorithm_enum {
     multiGPU,
 // SM 3.0 only
     GPU_Shuffle,
-    GPU_AOS_tiled,
-    GPU_AOS_tiled_const,
+    //GPU_AOS_tiled,
+    //GPU_AOS_tiled_const,
 //    GPU_Atomic
 };
 
@@ -100,8 +100,8 @@ static const char *rgszAlgorithmNames[] = {
     "multiGPU",
 // SM 3.0 only
     "GPU_Shuffle",
-    "GPU_AOS_tiled",
-    "GPU_AOS_tiled_const",
+    //"GPU_AOS_tiled",
+    //"GPU_AOS_tiled_const",
 //    "GPU_Atomic"
 };
 
@@ -210,8 +210,8 @@ static float g_dt = 0.016f;
 #include "bodybodyInteraction.cuh"
 #include "nbody_GPU_AOS.cuh"
 #include "nbody_GPU_AOS_const.cuh"
-#include "nbody_GPU_AOS_tiled.cuh"
-#include "nbody_GPU_AOS_tiled_const.cuh"
+//#include "nbody_GPU_AOS_tiled.cuh"
+//#include "nbody_GPU_AOS_tiled_const.cuh"
 //#include "nbody_GPU_SOA_tiled.cuh"
 #include "nbody_GPU_Shuffle.cuh"
 #include "nbody_GPU_Atomic.cuh"
@@ -396,6 +396,7 @@ ComputeGravitation(
                 g_N );
             CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 3*g_N*sizeof(float), cudaMemcpyDeviceToHost ) );
             break;
+            /*
         case GPU_AOS_tiled:
             *ms = ComputeGravitation_GPU_AOS_tiled(
                 g_dptrAOS_Force,
@@ -412,6 +413,7 @@ ComputeGravitation(
                 g_N );
             CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 3*g_N*sizeof(float), cudaMemcpyDeviceToHost ) );
             break;
+            */
 #if 0
 // commented out - too slow even on SM 3.0
         case GPU_Atomic:
@@ -813,7 +815,7 @@ main( int argc, char *argv[] )
     g_Algorithm = g_bCUDAPresent ? GPU_AOS : CPU_SOA;
     if ( g_bCUDAPresent || g_bNoCPU ) {
         // max algorithm is different depending on whether SM 3.0 is present
-        g_maxAlgorithm = g_bSM30Present ? GPU_AOS_tiled_const : multiGPU;
+        g_maxAlgorithm = g_bSM30Present ? GPU_Shuffle : multiGPU;
     }
 
     if (allocArrays() != 0)
