@@ -828,7 +828,7 @@ main( int argc, char *argv[] )
     }
 
     {
-        int kIterations = 0;
+        int kSteps = 0, kIterations = 0;
         int bStop = 0;
         while ( ! bStop ) {
             float ms, err;
@@ -858,20 +858,18 @@ main( int argc, char *argv[] )
             else
                 printf( "\n" );
 
-            kIterations++;
-            if (kMaxIterations) {
-                int kIterationRatio = kCycleAfter * (g_maxAlgorithm + 1);
-                if (!kIterationRatio)
-                    kIterationRatio = 1;
-                if (kIterations / kIterationRatio >= kMaxIterations) {
-                    bStop = 1;
-                }
-            }
-            if (kCycleAfter && kIterations % kCycleAfter == 0) {
+            kSteps++;
+            if (kCycleAfter && kSteps % kCycleAfter == 0) {
                 g_Algorithm = (enum nbodyAlgorithm_enum) (g_Algorithm+1);
                 if ( g_Algorithm > g_maxAlgorithm ) {
                     g_Algorithm = g_bNoCPU ? GPU_AOS : CPU_AOS;
+                    kIterations++;
                 }
+            } else if (!kCycleAfter) {
+                kIterations++;
+            }
+            if (kMaxIterations && kIterations >= kMaxIterations) {
+                bStop = 1;
             }
             if ( kbhit() ) {
                 char c = getch();
