@@ -659,7 +659,7 @@ main( int argc, char *argv[] )
 {
     cudaError_t status;
     // kiloparticles
-    int kParticles = 16, kMaxIterations = 0, kCycleAfter = 0;
+    int kParticles = 16, maxIterations = 0, cycleAfter = 0;
 
     static const struct option cli_options[] = {
         { "bodies", required_argument, NULL, 'b' },
@@ -696,7 +696,7 @@ main( int argc, char *argv[] )
                     fprintf(stderr, "ERROR: Requested cycle size less than 1\n");
                     return 1;
                 }
-                kCycleAfter = v;
+                cycleAfter = v;
             }
             break;
         case 'i':
@@ -710,7 +710,7 @@ main( int argc, char *argv[] )
                     fprintf(stderr, "ERROR: Requested number of iterations less than 1\n");
                     return 1;
                 }
-                kMaxIterations = v;
+                maxIterations = v;
             }
             break;
         case 'b':
@@ -828,7 +828,7 @@ main( int argc, char *argv[] )
     }
 
     {
-        int kSteps = 0, kIterations = 0;
+        int steps = 0, iterations = 0;
         int bStop = 0;
         while ( ! bStop ) {
             float ms, err;
@@ -858,17 +858,17 @@ main( int argc, char *argv[] )
             else
                 printf( "\n" );
 
-            kSteps++;
-            if (kCycleAfter && kSteps % kCycleAfter == 0) {
+            steps++;
+            if (cycleAfter && steps % cycleAfter == 0) {
                 g_Algorithm = (enum nbodyAlgorithm_enum) (g_Algorithm+1);
                 if ( g_Algorithm > g_maxAlgorithm ) {
                     g_Algorithm = g_bNoCPU ? GPU_AOS : CPU_AOS;
-                    kIterations++;
+                    iterations++;
                 }
-            } else if (!kCycleAfter) {
-                kIterations++;
+            } else if (!cycleAfter) {
+                iterations++;
             }
-            if (kMaxIterations && kIterations >= kMaxIterations) {
+            if (maxIterations && iterations >= maxIterations) {
                 bStop = 1;
             }
             if ( kbhit() ) {
