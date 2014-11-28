@@ -33,7 +33,11 @@
  *
  */
 
+#ifdef __SSE3__
+#include <pmmintrin.h>
+#else
 #include <xmmintrin.h>
+#endif
 
 static inline __m128
 rcp_sqrt_nr_ps(const __m128 x)
@@ -50,8 +54,14 @@ rcp_sqrt_nr_ps(const __m128 x)
 static inline __m128
 horizontal_sum_ps( const __m128 x )
 {
+#ifdef __SSE3__
+    const __m128 v1 = _mm_hadd_ps(x, x);
+    const __m128 v2 = _mm_hadd_ps(v1, v1);
+    return v2;
+#else
     const __m128 t = _mm_add_ps(x, _mm_movehl_ps(x, x));
     return _mm_add_ss(t, _mm_shuffle_ps(t, t, 1));
+#endif
 }
 
 static inline void
