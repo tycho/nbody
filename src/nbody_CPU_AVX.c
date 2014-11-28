@@ -1,10 +1,10 @@
 /*
  *
- * nbody_CPU_SSE.cpp
+ * nbody_CPU_AVX.cpp
  *
- * Multithreaded SSE CPU implementation of the O(N^2) N-body calculation.
+ * Multithreaded AVX CPU implementation of the O(N^2) N-body calculation.
  * Uses SOA (structure of arrays) representation because it is a much
- * better fit for SSE.
+ * better fit for AVX.
  *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
  * All rights reserved.
@@ -35,10 +35,10 @@
  *
  */
 
-#if defined(__SSE__) && !defined(__AVX__)
+#ifdef __AVX__
 #include "libtime.h"
 
-#include "bodybodyInteraction_SSE.h"
+#include "bodybodyInteraction_AVX.h"
 #include "nbody_CPU_SIMD.h"
 
 float
@@ -56,34 +56,30 @@ ComputeGravitation_SIMD(
 #pragma omp parallel for
     for ( size_t i = 0; i < N; i++ )
     {
-        __m128 ax = _mm_setzero_ps();
-        __m128 ay = _mm_setzero_ps();
-        __m128 az = _mm_setzero_ps();
-        __m128 *px = (__m128 *) pos[0];
-        __m128 *py = (__m128 *) pos[1];
-        __m128 *pz = (__m128 *) pos[2];
-        __m128 *pmass = (__m128 *) mass;
-        __m128 x0 = _mm_set_ps1( pos[0][i] );
-        __m128 y0 = _mm_set_ps1( pos[1][i] );
-        __m128 z0 = _mm_set_ps1( pos[2][i] );
+        __m256 ax = _mm256_setzero_ps();
+        __m256 ay = _mm256_setzero_ps();
+        __m256 az = _mm256_setzero_ps();
+        __m256 *px = (__m256 *) pos[0];
+        __m256 *py = (__m256 *) pos[1];
+        __m256 *pz = (__m256 *) pos[2];
+        __m256 *pmass = (__m256 *) mass;
+        __m256 x0 = _mm256_set1_ps( pos[0][i] );
+        __m256 y0 = _mm256_set1_ps( pos[1][i] );
+        __m256 z0 = _mm256_set1_ps( pos[2][i] );
 
-        for ( size_t j = 0; j < N/4; j++ ) {
+        for ( size_t j = 0; j < N/8; j++ ) {
 
             bodyBodyInteraction(
                 &ax, &ay, &az,
                 x0, y0, z0,
                 px[j], py[j], pz[j], pmass[j],
-                _mm_set_ps1( softeningSquared ) );
+                _mm256_set1_ps( softeningSquared ) );
 
         }
-        // Accumulate sum of four floats in the SSE register
-        ax = horizontal_sum_ps( ax );
-        ay = horizontal_sum_ps( ay );
-        az = horizontal_sum_ps( az );
 
-        _mm_store_ss( (float *) &force[0][i], ax );
-        _mm_store_ss( (float *) &force[1][i], ay );
-        _mm_store_ss( (float *) &force[2][i], az );
+        force[0][i] = horizontal_sum( ax );
+        force[1][i] = horizontal_sum( ay );
+        force[2][i] = horizontal_sum( az );
     }
 
     end = libtime_cpu();

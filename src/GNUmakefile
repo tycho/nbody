@@ -99,6 +99,7 @@ SOURCES := \
 	nbody_CPU_AltiVec.c \
 	nbody_CPU_NEON.c \
 	nbody_CPU_SSE.c \
+	nbody_CPU_AVX.c \
 	nbody_util.c
 
 ifeq ($(NO_CUDA),)
