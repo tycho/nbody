@@ -660,6 +660,7 @@ main( int argc, char *argv[] )
     cudaError_t status;
     // kiloparticles
     int kParticles = 16, maxIterations = 0, cycleAfter = 0;
+    static enum nbodyAlgorithm_enum firstAlgorithm;
 
     static const struct option cli_options[] = {
         { "bodies", required_argument, NULL, 'b' },
@@ -812,7 +813,7 @@ main( int argc, char *argv[] )
 #else
     g_maxAlgorithm = CPU_SOA_tiled;
 #endif
-    g_Algorithm = g_bCUDAPresent ? GPU_AOS : CPU_SOA;
+    g_Algorithm = firstAlgorithm = g_bCUDAPresent ? GPU_AOS : CPU_SOA;
     if ( g_bCUDAPresent || g_bNoCPU ) {
         // max algorithm is different depending on whether SM 3.0 is present
         g_maxAlgorithm = g_bSM30Present ? GPU_Shuffle : multiGPU;
@@ -863,6 +864,8 @@ main( int argc, char *argv[] )
                 g_Algorithm = (enum nbodyAlgorithm_enum) (g_Algorithm+1);
                 if ( g_Algorithm > g_maxAlgorithm ) {
                     g_Algorithm = g_bNoCPU ? GPU_AOS : CPU_AOS;
+                }
+                if ( g_Algorithm == firstAlgorithm) {
                     iterations++;
                 }
             } else if (!cycleAfter) {
