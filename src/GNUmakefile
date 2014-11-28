@@ -37,15 +37,15 @@ endif # NO_OPENMP
 
 ifeq ($(NO_SIMD),)
 ifeq ($(uname_M),ppc)
-CPPFLAGS += -DHAVE_ALTIVEC
+CPPFLAGS += -DHAVE_SIMD
 CFLAGS += -maltivec
 endif
 ifeq ($(uname_M),armv7l)
-CPPFLAGS += -DHAVE_NEON
+CPPFLAGS += -DHAVE_SIMD
 CFLAGS += -marm -mfpu=neon
 endif
 ifeq ($(uname_M),x86_64)
-CPPFLAGS += -DHAVE_SSE
+CPPFLAGS += -DHAVE_SIMD
 endif
 endif
 

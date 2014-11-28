@@ -34,10 +34,6 @@
  *
  */
 
-#if defined(HAVE_SSE) || defined(HAVE_ALTIVEC) || defined(HAVE_NEON)
-#define HAVE_SIMD
-#endif
-
 #include <stdlib.h>
 
 #ifdef __cplusplus
