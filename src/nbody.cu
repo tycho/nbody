@@ -92,7 +92,17 @@ static const char *rgszAlgorithmNames[] = {
     "CPU_SOA",
     "CPU_SOA_tiled",
 #ifdef HAVE_SIMD
-    "CPU_SIMD",
+#if defined(__ALTIVEC__)
+    "AltiVec intrin",
+#elif defined(__ARM_NEON__)
+    "NEON intrin",
+#elif defined(__AVX__)
+    "AVX intrin",
+#elif defined(__SSE__)
+    "SSE intrin",
+#else
+#error "Define a name for this platform's SIMD"
+#endif
 #endif
     "GPU_AOS",
     "GPU_Shared",
