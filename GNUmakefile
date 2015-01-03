@@ -18,10 +18,10 @@ src/$(BIN): libtime/libtime.a libc11/libc11.a
 	$(QUIET)$(MAKE) -C src $(BIN)
 
 libtime/.git:
-	git submodule update --init
+	git submodule update --init libtime
 
 libc11/.git:
-	git submodule update --init
+	git submodule update --init libc11
 
 libtime/libtime.a: libtime/.git
 	$(QUIET)$(MAKE) -C libtime libtime.a
