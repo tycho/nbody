@@ -60,6 +60,14 @@ AR         := ar rcu
 RM         := rm -f
 CP         := cp
 
+ifeq ($(CC),icc)
+AR         := xiar rcu
+export AR
+endif
+
+ifeq ($(CC),icc)
+CFOPTIMIZE ?= -Ofast -no-prec-sqrt
+else
 CFWARN     := \
 	-Wall \
 	-Wdeclaration-after-statement \
@@ -72,13 +80,17 @@ CFWARN     := \
 	-Wno-unknown-pragmas \
 	-Wold-style-definition \
 	-Wstrict-prototypes
-CPPFLAGS   := -D_GNU_SOURCE
 ifndef DEBUG
-CFOPTIMIZE := -O3 -ffast-math
+CFOPTIMIZE ?= -O3 -ffast-math
 else
-CFOPTIMIZE := -O0 -ggdb
+CFOPTIMIZE ?= -O0 -ggdb
 endif
-CFLAGS     := $(CFOPTIMIZE) \
+endif
+export CFOPTIMIZE
+
+CPPFLAGS   += -D_GNU_SOURCE
+
+CFLAGS     += $(CFOPTIMIZE) \
 	$(call cc-option,$(CC),-std=gnu11,-std=gnu99) \
 	$(call cc-option,$(CC),-fno-strict-aliasing,) \
 	$(CPPFLAGS) \

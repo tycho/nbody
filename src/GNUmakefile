@@ -132,11 +132,11 @@ ifndef NO_CUDA
 	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) $(INCLUDE) -c -o $@ $<
 else
 %.o: %.cu .cflags
-	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -xc -c -o $@ $<
+	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -xc -c -o $@ $<
 endif
 
 %.o: %.c .cflags
-	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -c -o $@ $<
+	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -c -o $@ $<
 
 $(BIN): $(OBJECTS) .cflags
 	$(QUIET_LINK)$(LINK) -o $@ $(OBJECTS) $(LDFLAGS)
