@@ -43,7 +43,11 @@
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_AOS_tiled.h"
 
+#ifdef _MSC_VER
+#define nTile 1024
+#else
 static const size_t nTile = 1024;
+#endif
 
 static void
 DoDiagonalTile(
@@ -151,12 +155,21 @@ DoNondiagonalTile(
             symmetricZ[_j] -= fz;
         }
 
+#ifdef _MSC_VER
+        #pragma omp critical
+        {
+            force[3 * i + 0] += ax;
+            force[3 * i + 1] += ay;
+            force[3 * i + 2] += az;
+        }
+#else
         #pragma omp atomic update
         force[3*i+0] += ax;
         #pragma omp atomic update
         force[3*i+1] += ay;
         #pragma omp atomic update
         force[3*i+2] += az;
+#endif
     }
 
     /* We parallelize DoNonDiagonalTile on the jTile axis, so there's no need
@@ -182,15 +195,17 @@ ComputeGravitation_AOS_tiled(
 )
 {
     uint64_t start, end;
+    int iTile;
 
     if (N % 1024 != 0)
         return 0.0f;
 
     memset( force, 0, 3*N*sizeof(float) );
     start = libtime_cpu();
-    for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
+    for ( iTile = 0; iTile < N/nTile; iTile++ ) {
+        int jTile;
         #pragma omp parallel for
-        for ( size_t jTile = 0; jTile < iTile; jTile++ ) {
+        for ( jTile = 0; jTile < iTile; jTile++ ) {
             DoNondiagonalTile(
                 force,
                 posMass,
@@ -199,7 +214,7 @@ ComputeGravitation_AOS_tiled(
         }
     }
     #pragma omp parallel for
-    for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
+    for ( iTile = 0; iTile < N/nTile; iTile++ ) {
         DoDiagonalTile(
             force,
             posMass,

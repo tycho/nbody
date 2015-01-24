@@ -35,7 +35,9 @@
  *
  */
 
-#ifdef __AVX__
+#include "nbody.h"
+
+#if defined(HAVE_AVX)
 #include "libtime.h"
 
 #include "bodybodyInteraction_AVX.h"
@@ -51,11 +53,14 @@ ComputeGravitation_SIMD(
 )
 {
     uint64_t start, end;
+    int i;
 
     start = libtime_cpu();
 #pragma omp parallel for
-    for ( size_t i = 0; i < N; i++ )
+    for ( i = 0; i < N; i++ )
     {
+        int j;
+
         __m256 ax = _mm256_setzero_ps();
         __m256 ay = _mm256_setzero_ps();
         __m256 az = _mm256_setzero_ps();
@@ -67,7 +72,7 @@ ComputeGravitation_SIMD(
         __m256 y0 = _mm256_set1_ps( pos[1][i] );
         __m256 z0 = _mm256_set1_ps( pos[2][i] );
 
-        for ( size_t j = 0; j < N/8; j++ ) {
+        for ( j = 0; j < N/8; j++ ) {
 
             bodyBodyInteraction(
                 &ax, &ay, &az,

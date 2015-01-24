@@ -50,70 +50,16 @@
 
 #ifdef _WIN32
 #include <conio.h>
+#define valloc malloc
+
+#pragma comment (lib, "libtime.lib")
+#pragma comment (lib, "libc11.lib")
 #else
 
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/select.h>
-
-#include <math.h>
-
-#include "libtime.h"
-
-#include "chThread.h"
-#include "chError.h"
-
-#include "nbody.h"
-#include "nbody_util.h"
-
-enum nbodyAlgorithm_enum {
-    CPU_AOS = 0,    /* This is the golden implementation */
-    CPU_AOS_tiled,
-    CPU_SOA,
-    CPU_SOA_tiled,
-#ifdef HAVE_SIMD
-    CPU_SIMD,
-#endif
-    GPU_AOS,
-    GPU_Shared,
-    GPU_Const,
-    multiGPU,
-// SM 3.0 only
-    GPU_Shuffle,
-    //GPU_AOS_tiled,
-    //GPU_AOS_tiled_const,
-//    GPU_Atomic
-};
-
-static const char *rgszAlgorithmNames[] = {
-    "CPU_AOS",
-    "CPU_AOS_tiled",
-    "CPU_SOA",
-    "CPU_SOA_tiled",
-#ifdef HAVE_SIMD
-#if defined(__ALTIVEC__)
-    "AltiVec intrin",
-#elif defined(__ARM_NEON__)
-    "NEON intrin",
-#elif defined(__AVX__)
-    "AVX intrin",
-#elif defined(__SSE__)
-    "SSE intrin",
-#else
-#error "Define a name for this platform's SIMD"
-#endif
-#endif
-    "GPU_AOS",
-    "GPU_Shared",
-    "GPU_Const",
-    "multiGPU",
-// SM 3.0 only
-    "GPU_Shuffle",
-    //"GPU_AOS_tiled",
-    //"GPU_AOS_tiled_const",
-//    "GPU_Atomic"
-};
 
 static int kbhit(void)
 {
@@ -151,6 +97,67 @@ getch(void)
 }
 
 #endif
+
+#include <math.h>
+
+#include "libtime.h"
+
+#include "chThread.h"
+#include "chError.h"
+
+#include "nbody.h"
+#include "nbody_util.h"
+
+// maximum number of GPUs supported by single-threaded multi-GPU
+const int g_maxGPUs = 32;
+
+enum nbodyAlgorithm_enum {
+	CPU_AOS = 0,    /* This is the golden implementation */
+	CPU_AOS_tiled,
+	CPU_SOA,
+	CPU_SOA_tiled,
+#ifdef HAVE_SIMD
+	CPU_SIMD,
+#endif
+	GPU_AOS,
+	GPU_Shared,
+	GPU_Const,
+	multiGPU,
+	// SM 3.0 only
+	GPU_Shuffle,
+	//GPU_AOS_tiled,
+	//GPU_AOS_tiled_const,
+	//    GPU_Atomic
+};
+
+static const char *rgszAlgorithmNames[] = {
+	"CPU_AOS",
+	"CPU_AOS_tiled",
+	"CPU_SOA",
+	"CPU_SOA_tiled",
+#ifdef HAVE_SIMD
+#if defined(__ALTIVEC__)
+	"AltiVec intrin",
+#elif defined(__ARM_NEON__)
+	"NEON intrin",
+#elif defined(__AVX__)
+	"AVX intrin",
+#elif defined(__SSE__)
+	"SSE intrin",
+#else
+#error "Define a name for this platform's SIMD"
+#endif
+#endif
+	"GPU_AOS",
+	"GPU_Shared",
+	"GPU_Const",
+	"multiGPU",
+	// SM 3.0 only
+	"GPU_Shuffle",
+	//"GPU_AOS_tiled",
+	//"GPU_AOS_tiled_const",
+	//    "GPU_Atomic"
+};
 
 static __inline void
 randomVector( float v[3] )

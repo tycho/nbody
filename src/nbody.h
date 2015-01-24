@@ -47,14 +47,32 @@ extern float *g_hostSOA_Force[3];
 extern float *g_hostSOA_Mass;
 extern float *g_hostSOA_InvMass;
 
-// maximum number of GPUs supported by single-threaded multi-GPU
-const int g_maxGPUs = 32;
-
 extern int g_numCPUCores;
 extern int g_numGPUs;
 
 extern float ComputeGravitation_GPU_Shared( float *force, float const * const posMass, float softeningSquared, size_t N );
 extern float ComputeGravitation_multiGPU  ( float *force, float const * const posMass, float softeningSquared, size_t N );
+
+#ifdef HAVE_SIMD
+#  ifdef _MSC_VER
+#    ifdef _M_X64
+#      ifdef __AVX__
+#        define HAVE_AVX
+#      else
+#        define HAVE_SSE
+#      endif
+#    else
+#      error "SSE/AVX intrinsics are unsupported for 32-bit targets."
+#    endif
+#  else
+#    if defined(__SSE__) && !defined(__AVX__)
+#      define HAVE_SSE
+#    elif defined(__AVX__)
+#      define HAVE_AVX
+#    endif
+#  endif
+#endif
+
 
 #endif
 

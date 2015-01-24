@@ -43,7 +43,11 @@
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_SOA_tiled.h"
 
+#ifdef _MSC_VER
+#define nTile 1024
+#else
 static const size_t nTile = 1024;
+#endif
 
 static void
 DoDiagonalTile(
@@ -54,9 +58,11 @@ DoDiagonalTile(
     size_t iTile, size_t jTile
 )
 {
-    for ( size_t _i = 0; _i < nTile; _i++ )
+    int _i;
+    for ( _i = 0; _i < nTile; _i++ )
     {
         const size_t i = iTile*nTile+_i;
+        int _j;
         float acx, acy, acz;
         const float myX = pos[0][i];
         const float myY = pos[1][i];
@@ -68,7 +74,7 @@ DoDiagonalTile(
             reduction(+:acx) \
             reduction(+:acy) \
             reduction(+:acz)
-        for ( size_t _j = 0; _j < nTile; _j++ ) {
+        for ( _j = 0; _j < nTile; _j++ ) {
             const size_t j = jTile*nTile+_j;
 
             float fx, fy, fz;
@@ -153,12 +159,21 @@ DoNondiagonalTile(
             symmetricZ[_j] -= fz;
         }
 
+#ifdef _MSC_VER
+        #pragma omp critical
+        {
+            force[0][i] += ax;
+            force[1][i] += ay;
+            force[2][i] += az;
+        }
+#else
         #pragma omp atomic update
         force[0][i] += ax;
         #pragma omp atomic update
         force[1][i] += ay;
         #pragma omp atomic update
         force[2][i] += az;
+#endif
     }
 
     /* We parallelize DoNonDiagonalTile on the jTile axis, so there's no need
@@ -185,6 +200,7 @@ ComputeGravitation_SOA_tiled(
 )
 {
     uint64_t start, end;
+    int iTile;
 
     if (N % 1024 != 0)
         return 0.0f;
@@ -194,9 +210,10 @@ ComputeGravitation_SOA_tiled(
     memset( force[2], 0, N * sizeof(float) );
 
     start = libtime_cpu();
-    for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
+    for ( iTile = 0; iTile < N/nTile; iTile++ ) {
+        int jTile;
         #pragma omp parallel for
-        for ( size_t jTile = 0; jTile < iTile; jTile++ ) {
+        for ( jTile = 0; jTile < iTile; jTile++ ) {
             DoNondiagonalTile(
                 force,
                 pos,
@@ -206,7 +223,7 @@ ComputeGravitation_SOA_tiled(
         }
     }
     #pragma omp parallel for
-    for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
+    for ( iTile = 0; iTile < N/nTile; iTile++ ) {
         DoDiagonalTile(
             force,
             pos,
