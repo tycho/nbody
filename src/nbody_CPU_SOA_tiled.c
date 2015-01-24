@@ -34,11 +34,11 @@
  *
  */
 
+#include "libtime.h"
 #ifndef NO_CUDA
 #define NO_CUDA
 #endif
 #include "chCUDA.h"
-#include "libtime.h"
 
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_SOA_tiled.h"
