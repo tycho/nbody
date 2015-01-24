@@ -47,7 +47,7 @@ rcp_sqrt_nr_ps(const __m256 x)
     return _mm256_mul_ps(beta, gamma);
 }
 
-static __inline float
+static inline float
 horizontal_sum(const __m256 a)
 {
     __m256 t1 = _mm256_hadd_ps(a,a);
@@ -57,7 +57,7 @@ horizontal_sum(const __m256 a)
     return _mm_cvtss_f32(t4);
 }
 
-static __inline void
+static inline void
 bodyBodyInteraction(
     __m256 *fx,
     __m256 *fy,

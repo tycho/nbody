@@ -159,7 +159,7 @@ static const char *rgszAlgorithmNames[] = {
 	//    "GPU_Atomic"
 };
 
-static __inline void
+static inline void
 randomVector( float v[3] )
 {
     float lenSqr;
