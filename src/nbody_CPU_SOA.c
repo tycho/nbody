@@ -93,7 +93,7 @@ ComputeGravitation_SOA(
         force[2][i] = acz;
     }
     end = libtime_cpu();
-    return libtime_cpu_to_wall(end - start) * 1e-6;
+    return libtime_cpu_to_wall(end - start) * 1e-6f;
 }
 
 /* vim: set ts=4 sts=4 sw=4 et: */

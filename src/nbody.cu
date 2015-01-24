@@ -152,7 +152,7 @@ getch(void)
 
 #endif
 
-static inline void
+static __inline void
 randomVector( float v[3] )
 {
     float lenSqr;

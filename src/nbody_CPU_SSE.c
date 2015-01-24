@@ -88,7 +88,7 @@ ComputeGravitation_SIMD(
 
     end = libtime_cpu();
 
-    return libtime_cpu_to_wall(end - start) * 1e-6;
+    return libtime_cpu_to_wall(end - start) * 1e-6f;
 }
 #endif
 
