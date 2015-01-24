@@ -57,7 +57,7 @@
 typedef int cudaError_t;
 static const cudaError_t cudaSuccess = 0;
 
-static inline cudaError_t cudaGetDeviceCount( int *p )
+static __inline cudaError_t cudaGetDeviceCount( int *p )
 {
     if (!p)
         return 1;
@@ -65,17 +65,17 @@ static inline cudaError_t cudaGetDeviceCount( int *p )
     return 0;
 }
 
-static inline cudaError_t cudaMalloc ( void **devPtr, size_t size )
+static __inline cudaError_t cudaMalloc ( void **devPtr, size_t size )
 {
     return 1;
 }
 
-static inline cudaError_t cudaDeviceReset ( void )
+static __inline cudaError_t cudaDeviceReset ( void )
 {
     return 1;
 }
 
-static inline cudaError_t cudaHostAlloc ( void ** pHost, size_t size, unsigned int flags )
+static __inline cudaError_t cudaHostAlloc ( void ** pHost, size_t size, unsigned int flags )
 {
     return 1;
 }
@@ -83,12 +83,12 @@ static inline cudaError_t cudaHostAlloc ( void ** pHost, size_t size, unsigned i
 #define cudaHostAllocMapped 0
 #define cudaHostAllocPortable 0
 
-static inline cudaError_t cudaFree ( void * devPtr )
+static __inline cudaError_t cudaFree ( void * devPtr )
 {
     return 1;
 }
 
-static inline cudaError_t cudaMemcpyAsync ( void * dst, const void * src, size_t count, int kind, int stream )
+static __inline cudaError_t cudaMemcpyAsync ( void * dst, const void * src, size_t count, int kind, int stream )
 {
     return 1;
 }
@@ -105,7 +105,7 @@ struct cudaDeviceProp
     int minor;
 };
 
-static inline cudaError_t cudaGetDeviceProperties ( struct cudaDeviceProp *  prop, int device )
+static __inline cudaError_t cudaGetDeviceProperties ( struct cudaDeviceProp *  prop, int device )
 {
     if (!prop)
         return 1;
@@ -113,19 +113,19 @@ static inline cudaError_t cudaGetDeviceProperties ( struct cudaDeviceProp *  pro
     return 0;
 }
 
-static inline cudaError_t cudaSetDeviceFlags ( unsigned int flags )
+static __inline cudaError_t cudaSetDeviceFlags ( unsigned int flags )
 {
     return 1;
 }
 
 #define cudaDeviceMapHost 0
 
-static inline cudaError_t cudaSetDevice ( int device )
+static __inline cudaError_t cudaSetDevice ( int device )
 {
     return 1;
 }
 
-static inline float rsqrtf(float f)
+static __inline float rsqrtf(float f)
 {
     return 1.0f / sqrtf(f);
 }
