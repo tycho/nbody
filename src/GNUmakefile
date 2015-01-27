@@ -47,6 +47,9 @@ endif
 ifeq ($(uname_M),x86_64)
 CPPFLAGS += -DHAVE_SIMD
 endif
+ifeq ($(uname_M),i686)
+CPPFLAGS += -DHAVE_SIMD
+endif
 endif
 
 CUDA_ROOT := $(dir $(shell which nvcc 2>/dev/null))..
