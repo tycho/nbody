@@ -293,7 +293,6 @@ static enum nbodyAlgorithm_enum g_Algorithm;
 //
 static enum nbodyAlgorithm_enum g_maxAlgorithm;
 static int g_bCrossCheck = 1;
-static int g_bUseSIMDForCrossCheck = 0;
 static int g_bNoCPU = 0;
 
 static int
@@ -318,24 +317,12 @@ ComputeGravitation(
     }
 
     if ( bCrossCheck ) {
-#ifdef HAVE_SIMD
-        if ( g_bUseSIMDForCrossCheck ) {
-            ComputeGravitation_SIMD(
-                            g_hostSOA_Force,
-                            g_hostSOA_Pos,
-                            g_hostSOA_Mass,
-                            g_softening*g_softening,
-                            g_N );
-        } else
-#endif
-        {
-            ComputeGravitation_SOA(
-                            g_hostSOA_Force,
-                            g_hostSOA_Pos,
-                            g_hostSOA_Mass,
-                            g_softening*g_softening,
-                            g_N );
-        }
+        ComputeGravitation_SOA(
+                        g_hostSOA_Force,
+                        g_hostSOA_Pos,
+                        g_hostSOA_Mass,
+                        g_softening*g_softening,
+                        g_N );
         for ( size_t i = 0; i < g_N; i++ ) {
             g_hostAOS_Force_Golden[3*i+0] = g_hostSOA_Force[0][i];
             g_hostAOS_Force_Golden[3*i+1] = g_hostSOA_Force[1][i];
