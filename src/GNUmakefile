@@ -77,6 +77,9 @@ LDFLAGS += -L../libc11 -lc11 -L../libtime -ltime
 ifneq (,$(findstring CYGWIN,$(uname_S)))
 LDFLAGS += -lwinmm
 endif
+ifneq (,$(findstring MINGW,$(uname_S)))
+LDFLAGS += -lwinmm
+endif
 
 ifneq ($(findstring nvcc,$(NVCC)),)
 NVCCFLAGS += \
