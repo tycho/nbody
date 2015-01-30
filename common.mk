@@ -81,7 +81,7 @@ CFWARN     := \
 	-Wold-style-definition \
 	-Wstrict-prototypes
 ifndef DEBUG
-CFOPTIMIZE ?= -O3 -ffast-math
+CFOPTIMIZE ?= -O3 -march=native -ffast-math
 else
 CFOPTIMIZE ?= -O0 -ggdb
 endif
