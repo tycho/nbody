@@ -195,17 +195,15 @@ ComputeGravitation_AOS_tiled(
 )
 {
     uint64_t start, end;
-    int iTile;
 
     if (N % 1024 != 0)
         return 0.0f;
 
     memset( force, 0, 3*N*sizeof(float) );
     start = libtime_cpu();
-    for ( iTile = 0; iTile < N/nTile; iTile++ ) {
-        int jTile;
+    for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
         #pragma omp parallel for
-        for ( jTile = 0; jTile < iTile; jTile++ ) {
+        for ( size_t jTile = 0; jTile < iTile; jTile++ ) {
             DoNondiagonalTile(
                 force,
                 posMass,
@@ -214,7 +212,7 @@ ComputeGravitation_AOS_tiled(
         }
     }
     #pragma omp parallel for
-    for ( iTile = 0; iTile < N/nTile; iTile++ ) {
+    for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
         DoDiagonalTile(
             force,
             posMass,

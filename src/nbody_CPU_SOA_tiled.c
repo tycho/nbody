@@ -58,11 +58,9 @@ DoDiagonalTile(
     size_t iTile, size_t jTile
 )
 {
-    int _i;
-    for ( _i = 0; _i < nTile; _i++ )
+    for ( size_t _i = 0; _i < nTile; _i++ )
     {
         const size_t i = iTile*nTile+_i;
-        int _j;
         float acx, acy, acz;
         const float myX = pos[0][i];
         const float myY = pos[1][i];
@@ -74,7 +72,7 @@ DoDiagonalTile(
             reduction(+:acx) \
             reduction(+:acy) \
             reduction(+:acz)
-        for ( _j = 0; _j < nTile; _j++ ) {
+        for ( size_t _j = 0; _j < nTile; _j++ ) {
             const size_t j = jTile*nTile+_j;
 
             float fx, fy, fz;
@@ -200,7 +198,6 @@ ComputeGravitation_SOA_tiled(
 )
 {
     uint64_t start, end;
-    int iTile;
 
     if (N % 1024 != 0)
         return 0.0f;
@@ -210,10 +207,9 @@ ComputeGravitation_SOA_tiled(
     memset( force[2], 0, N * sizeof(float) );
 
     start = libtime_cpu();
-    for ( iTile = 0; iTile < N/nTile; iTile++ ) {
-        int jTile;
+    for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
         #pragma omp parallel for
-        for ( jTile = 0; jTile < iTile; jTile++ ) {
+        for ( size_t jTile = 0; jTile < iTile; jTile++ ) {
             DoNondiagonalTile(
                 force,
                 pos,
@@ -223,7 +219,7 @@ ComputeGravitation_SOA_tiled(
         }
     }
     #pragma omp parallel for
-    for ( iTile = 0; iTile < N/nTile; iTile++ ) {
+    for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
         DoDiagonalTile(
             force,
             pos,

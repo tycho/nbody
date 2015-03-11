@@ -53,13 +53,11 @@ ComputeGravitation_SIMD(
 )
 {
     uint64_t start, end;
-    int i;
 
     start = libtime_cpu();
 #pragma omp parallel for
-    for ( i = 0; i < N; i++ )
+    for ( size_t i = 0; i < N; i++ )
     {
-        int j;
         __m128 ax = _mm_setzero_ps();
         __m128 ay = _mm_setzero_ps();
         __m128 az = _mm_setzero_ps();
@@ -71,7 +69,7 @@ ComputeGravitation_SIMD(
         __m128 y0 = _mm_set_ps1( pos[1][i] );
         __m128 z0 = _mm_set_ps1( pos[2][i] );
 
-        for ( j = 0; j < N/4; j++ ) {
+        for ( size_t j = 0; j < N/4; j++ ) {
 
             bodyBodyInteraction(
                 &ax, &ay, &az,

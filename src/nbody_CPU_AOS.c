@@ -51,11 +51,10 @@ ComputeGravitation_AOS(
 )
 {
     uint64_t start, end;
-    int i;
 
     start = libtime_cpu();
     #pragma omp parallel for
-    for ( i = 0; i < N; i++ )
+    for ( size_t i = 0; i < N; i++ )
     {
         float acx, acy, acz;
         const float myX = posMass[i*4+0];

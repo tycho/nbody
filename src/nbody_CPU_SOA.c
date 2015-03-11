@@ -54,12 +54,10 @@ ComputeGravitation_SOA(
 )
 {
     uint64_t start, end;
-    int i;
     start = libtime_cpu();
 #pragma omp parallel for
-    for ( i = 0; i < N; i++ )
+    for ( size_t i = 0; i < N; i++ )
     {
-        int j;
         float acx, acy, acz;
         const float myX = pos[0][i];
         const float myY = pos[1][i];
@@ -71,7 +69,7 @@ ComputeGravitation_SOA(
             reduction(+:acx) \
             reduction(+:acy) \
             reduction(+:acz)
-        for ( j = 0; j < N; j++ ) {
+        for ( size_t j = 0; j < N; j++ ) {
 
             const float bodyX = pos[0][j];
             const float bodyY = pos[1][j];
