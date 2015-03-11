@@ -108,9 +108,6 @@ getch(void)
 #include "nbody.h"
 #include "nbody_util.h"
 
-// maximum number of GPUs supported by single-threaded multi-GPU
-const int g_maxGPUs = 32;
-
 enum nbodyAlgorithm_enum {
 	CPU_AOS = 0,    /* This is the golden implementation */
 	CPU_AOS_tiled,

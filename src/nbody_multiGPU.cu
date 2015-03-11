@@ -44,6 +44,9 @@
 
 #include "bodybodyInteraction.cuh"
 
+// maximum number of GPUs supported by single-threaded multi-GPU
+const int g_maxGPUs = 32;
+
 __global__ void
 ComputeNBodyGravitation_multiGPU(
     float *force,
