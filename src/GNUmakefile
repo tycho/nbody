@@ -8,6 +8,10 @@ ifeq ($(shell type -P nvcc),)
 NO_CUDA := 1
 endif
 
+ifdef HIGH_ENTROPY
+CPPFLAGS  += -DHIGH_ENTROPY
+endif
+
 ifndef DEBUG
 NVCCFLAGS := -O3
 else

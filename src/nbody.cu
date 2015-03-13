@@ -156,14 +156,34 @@ static const char *rgszAlgorithmNames[] = {
 	//    "GPU_Atomic"
 };
 
+static unsigned int holdrand;
+
+static inline int seedRandom( unsigned int seed )
+{
+    holdrand = seed;
+}
+
+static inline int nbodyRandom( void )
+{
+    uint32_t v;
+#if defined(HIGH_ENTROPY) && defined __RDRND__
+    int i = _rdrand32_step(&v);
+    if (!i)
+        abort();
+#else
+    v = holdrand = ((holdrand * 214013L + 2531011L) >> 16) & 0x7fff;
+#endif
+    return v;
+}
+
 static inline void
 randomVector( float v[3] )
 {
     float lenSqr;
     do {
-        v[0] = rand() / (float) RAND_MAX * 2 - 1;
-        v[1] = rand() / (float) RAND_MAX * 2 - 1;
-        v[2] = rand() / (float) RAND_MAX * 2 - 1;
+        v[0] = nbodyRandom() / (float) RAND_MAX * 2 - 1;
+        v[1] = nbodyRandom() / (float) RAND_MAX * 2 - 1;
+        v[2] = nbodyRandom() / (float) RAND_MAX * 2 - 1;
         lenSqr = v[0]*v[0]+v[1]*v[1]+v[2]*v[2];
     } while ( lenSqr > 1.0f );
 }
@@ -758,7 +778,7 @@ main( int argc, char *argv[] )
     }
 
     // for reproducible results for a given N
-    srand(7);
+    seedRandom(7);
 
     g_bCUDAPresent = g_numGPUs > 0;
     if ( g_bCUDAPresent ) {
