@@ -158,7 +158,7 @@ static const char *rgszAlgorithmNames[] = {
 
 static unsigned int holdrand;
 
-static inline int seedRandom( unsigned int seed )
+static inline void seedRandom( unsigned int seed )
 {
     holdrand = seed;
 }
