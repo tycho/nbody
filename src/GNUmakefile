@@ -19,6 +19,10 @@ NVCCFLAGS := -O0 -g
 CPPFLAGS  += -DDEBUG
 endif
 
+ifneq ($(findstring clang,$(CC)),)
+CFLAGS += -Xclang -target-feature -Xclang +use-sqrt-est,+use-recip-est
+endif
+
 ifeq ($(NO_OPENMP),)
 COMPILER_SUPPORTS_OPENMP := \
 	$(shell $(CC) -fopenmp -E -dM -xc /dev/null 2>/dev/null | grep -q _OPENMP && \
