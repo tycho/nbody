@@ -153,7 +153,7 @@ endif
 	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -c -o $@ $<
 
 $(BIN): $(OBJECTS) .cflags
-	$(QUIET_LINK)$(LINK) -o $@ $(OBJECTS) $(LDFLAGS)
+	$(QUIET_LINK)$(LINK) -o $@ $(OBJECTS) $(LDFLAGS) $(CFLAGS)
 
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
 
