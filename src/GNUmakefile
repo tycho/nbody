@@ -69,7 +69,7 @@ endif
 
 ifeq ($(CC),icc)
 # Special Intel compiler options to give us more detail
-CFLAGS += -parallel -qopt-report -qopt-report-file=stderr
+CFLAGS += -parallel
 
 # Statically link Intel libraries so the executables are more portable
 LDFLAGS += -static-intel
