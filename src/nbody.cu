@@ -156,8 +156,6 @@ static const char *rgszAlgorithmNames[] = {
 	//    "GPU_Atomic"
 };
 
-static unsigned int holdrand;
-
 static inline void seedRandom( unsigned int seed )
 {
     srandom(seed);
