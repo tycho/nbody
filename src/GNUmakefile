@@ -83,7 +83,7 @@ NVCCFLAGS +=
 LDFLAGS += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
 endif
 
-LDFLAGS += -L../libc11 -lc11 -L../libtime -ltime
+LDFLAGS += ../libc11/libc11.a ../libtime/libtime.a
 
 ifneq (,$(findstring CYGWIN,$(uname_S)))
 LDFLAGS += -lwinmm
