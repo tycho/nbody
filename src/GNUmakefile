@@ -45,6 +45,16 @@ COMPILER_SUPPORTS_OPENMP := \
 endif
 
 ifneq ($(COMPILER_SUPPORTS_OPENMP),)
+
+# Hack for clang failing to understand "omp declare simd" in /usr/include/bits/math-vector.h
+COMPILER_NEEDS_OPENMP_HACK := \
+	$(shell $(CC) $(OPENMP_FLAG) -O3 -ffast-math -include math.h -c -xc /dev/null -o /dev/null 2>/dev/null || echo "Yes")
+ifneq (,$(COMPILER_NEEDS_OPENMP_HACK))
+$(warning Forcing OpenMP v3.1 to workaround compile failure in math.h)
+# Force version to OpenMP 3.1
+OPENMP_FLAG += -D_OPENMP=201107 -Wno-macro-redefined
+endif
+
 CPPFLAGS += -DUSE_OPENMP
 CFLAGS += $(OPENMP_FLAG)
 LIBIOMP5_PATHS := -L/usr/lib
