@@ -127,35 +127,6 @@ enum nbodyAlgorithm_enum {
 	//    GPU_Atomic
 };
 
-static const char *rgszAlgorithmNames[] = {
-	"CPU_AOS",
-	"CPU_AOS_tiled",
-	"CPU_SOA",
-	"CPU_SOA_tiled",
-#ifdef HAVE_SIMD
-#if defined(__ALTIVEC__)
-	"AltiVec intrin",
-#elif defined(__ARM_NEON__)
-	"NEON intrin",
-#elif defined(__AVX__)
-	"AVX intrin",
-#elif defined(__SSE__)
-	"SSE intrin",
-#else
-#error "Define a name for this platform's SIMD"
-#endif
-#endif
-	"GPU_AOS",
-	"GPU_Shared",
-	"GPU_Const",
-	"multiGPU",
-	// SM 3.0 only
-	"GPU_Shuffle",
-	//"GPU_AOS_tiled",
-	//"GPU_AOS_tiled_const",
-	//    "GPU_Atomic"
-};
-
 static inline void seedRandom( unsigned int seed )
 {
     srandom(seed);

@@ -38,6 +38,7 @@
 extern "C" {
 #endif
 
+extern const char *rgszAlgorithmNames[];
 int processorCount(void);
 
 #ifdef __cplusplus
