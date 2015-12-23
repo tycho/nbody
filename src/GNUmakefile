@@ -111,7 +111,11 @@ NVCCFLAGS +=
 LDFLAGS += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
 endif
 
-LDFLAGS += ../libc11/libc11.a ../libtime/libtime.a
+ifndef NATIVE_C11
+CPPFLAGS += -DUSE_LIBC11
+LDFLAGS += ../libc11/libc11.a
+endif
+LDFLAGS += ../libtime/libtime.a
 
 ifneq (,$(findstring CYGWIN,$(uname_S)))
 LDFLAGS += -lwinmm
@@ -130,7 +134,10 @@ NVCCFLAGS += \
 	-gencode=arch=compute_52,code=\"sm_52,compute_52\"
 endif
 
-INCLUDE := -I../libc11/include -I../libtime/include
+ifndef NATIVE_C11
+INCLUDE += -I../libc11/include
+endif
+INCLUDE += -I../libtime/include
 
 SOURCES := \
 	nbody.cu \

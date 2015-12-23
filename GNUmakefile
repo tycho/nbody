@@ -2,6 +2,11 @@ include common.mk
 
 BIN := nbody
 
+ifndef NATIVE_C11
+DEPS += libc11/libc11.a
+endif
+DEPS += libtime/libtime.a
+
 all: $(BIN)
 
 $(BIN): src/$(BIN)
@@ -15,19 +20,23 @@ clean:
 	$(MAKE) -C libtime clean
 	$(MAKE) -C libc11 clean
 
-src/$(BIN): libtime/libtime.a libc11/libc11.a
+src/$(BIN): $(DEPS)
 	$(QUIET)$(MAKE) -C src $(BIN)
+.PHONY: src/$(BIN)
 
 libtime/.git:
 	git submodule update --init libtime
 
+libtime/libtime.a: libtime/.git
+	$(QUIET)$(MAKE) -C libtime libtime.a
+.PHONY: libtime/libtime.a
+
+ifndef NATIVE_C11
 libc11/.git:
 	git submodule update --init libc11
 
-libtime/libtime.a: libtime/.git
-	$(QUIET)$(MAKE) -C libtime libtime.a
-
 libc11/libc11.a: libc11/.git
 	$(QUIET)$(MAKE) -C libc11 libc11.a
+.PHONY: libc11/libc11.a
+endif
 
-.PHONY: libc11/libc11.a libtime/libtime.a src/nbody
