@@ -10,6 +10,7 @@ $(BIN): src/$(BIN)
 distclean: clean
 
 clean:
+	$(RM) $(BIN)
 	$(MAKE) -C src clean
 	$(MAKE) -C libtime clean
 	$(MAKE) -C libc11 clean
