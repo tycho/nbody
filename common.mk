@@ -56,14 +56,15 @@ CC         := gcc
 #endif
 
 LINK       := $(CC)
-AR         := ar rcu
+AR         := ar
 RM         := rm -f
 CP         := cp
 
 ifeq ($(CC),icc)
-AR         := xiar rcu
-export AR
+AR         := xiar
 endif
+
+export AR
 
 ifeq ($(CC),icc)
 CFOPTIMIZE ?= -Ofast -no-prec-sqrt
