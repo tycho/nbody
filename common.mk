@@ -67,7 +67,7 @@ endif
 export AR
 
 ifeq ($(CC),icc)
-CFOPTIMIZE ?= -Ofast -no-prec-sqrt
+CFOPTIMIZE ?= -Ofast -xHOST -no-prec-sqrt
 else
 CFWARN     := \
 	-Wall \
