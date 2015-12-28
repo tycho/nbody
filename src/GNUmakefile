@@ -135,9 +135,9 @@ NVCCFLAGS += \
 endif
 
 ifndef NATIVE_C11
-INCLUDE += -I../libc11/include
+CPPFLAGS += -I../libc11/include
 endif
-INCLUDE += -I../libtime/include
+CPPFLAGS += -I../libtime/include
 
 SOURCES := \
 	nbody.cu \
@@ -178,21 +178,21 @@ clean:
 
 ifndef NO_CUDA
 %.o: %.cu .cflags
-	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) $(INCLUDE) -c -o $@ $<
+	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) -c -o $@ $<
 else
 %.o: %.cu .cflags
-	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -xc -c -o $@ $<
+	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) -xc -c -o $@ $<
 endif
 
 %.o: %.c .cflags
-	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) $(INCLUDE) -c -o $@ $<
+	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) -c -o $@ $<
 
 $(BIN): $(OBJECTS) .cflags
 	$(QUIET_LINK)$(LINK) -o $@ $(OBJECTS) $(LDFLAGS) $(CFLAGS)
 
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
 
-TRACK_CFLAGS = $(subst ','\'',$(CC) $(CXX) $(NVCC) $(LINK) $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(NVCCFLAGS) $(INCLUDE) $(LDFLAGS))
+TRACK_CFLAGS = $(subst ','\'',$(CC) $(CXX) $(NVCC) $(LINK) $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(NVCCFLAGS) $(LDFLAGS))
 
 .cflags: .force-cflags
 	@FLAGS='$(TRACK_CFLAGS)'; \
