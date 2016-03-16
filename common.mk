@@ -1,12 +1,16 @@
 all:
 
-SHELL      := /bin/bash
-MAKEFLAGS  += --no-print-directory -Rr
-.SUFFIXES:
-
 uname_S := $(shell uname -s 2>/dev/null || echo "not")
 uname_M := $(shell uname -m 2>/dev/null || echo "not")
 uname_O := $(shell uname -o 2>/dev/null || echo "not")
+
+ifeq ($(uname_S),FreeBSD)
+SHELL      := /usr/local/bin/bash
+else
+SHELL      := /bin/bash
+endif
+MAKEFLAGS  += --no-print-directory -Rr
+.SUFFIXES:
 
 ifneq ($(findstring $(MAKEFLAGS),s),s)
 ifndef V
@@ -49,11 +53,11 @@ define cc-option-add-closure
     endif
 endef
 
-#ifneq ($(shell type -P clang),)
-#CC         := clang
-#else
+ifneq ($(shell type -P gcc5),)
+CC         := gcc5
+else
 CC         := gcc
-#endif
+endif
 
 LINK       := $(CC)
 AR         := ar
