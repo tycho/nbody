@@ -86,11 +86,22 @@ CFWARN     := \
 	-Wold-style-definition \
 	-Wstrict-prototypes
 ifndef DEBUG
-CFOPTIMIZE ?= -O3 -march=native -ffast-math
+
+# Good optimization flags for x86/x86_64
+CFOPTIMIZE  = -O3 -march=native -ffast-math
+
+ifneq ($(findstring armv7,$(uname_M)),)
+# Good optimizations for modern ARMv7-a
+CFOPTIMIZE  = -O3 -mcpu=native -mfpu=neon -mfloat-abi=hard -ffast-math
+endif
+
 else
-CFOPTIMIZE ?= -O0 -ggdb
-endif
-endif
+
+CFOPTIMIZE  = -O0 -ggdb
+
+endif # DEBUG
+
+endif # icc
 export CFOPTIMIZE
 
 CPPFLAGS   += -D_GNU_SOURCE
