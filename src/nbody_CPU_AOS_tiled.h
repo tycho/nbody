@@ -40,8 +40,8 @@ extern "C" {
 
 float
 ComputeGravitation_AOS_tiled(
-    float *force,
-    float * const posMass,
+    float * restrict force,
+    float * restrict posMass,
     float softeningSquared,
     size_t N
 );

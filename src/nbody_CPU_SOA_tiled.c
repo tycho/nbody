@@ -51,9 +51,9 @@ static const size_t nTile = 1024;
 
 static void
 DoDiagonalTile(
-    float *force[3],
-    float * const pos[3],
-    float * const mass,
+    float ** force,
+    float ** pos,
+    float *  mass,
     float softeningSquared,
     size_t iTile, size_t jTile
 )
@@ -106,9 +106,9 @@ DoDiagonalTile(
 
 static void
 DoNondiagonalTile(
-    float *force[3],
-    float * const pos[3],
-    float * const mass,
+    float ** force,
+    float ** pos,
+    float *  mass,
     float softeningSquared,
     size_t iTile, size_t jTile
 )
@@ -194,9 +194,9 @@ DoNondiagonalTile(
 
 float
 ComputeGravitation_SOA_tiled(
-    float *force[3],
-    float * const pos[3],
-    float * const mass,
+    float ** restrict force,
+    float ** restrict pos,
+    float *  restrict mass,
     float softeningSquared,
     size_t N
 )

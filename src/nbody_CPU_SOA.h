@@ -41,9 +41,9 @@ extern "C" {
 
 float
 ComputeGravitation_SOA(
-    float *force[3],
-    float * const pos[3],
-    float * const mass,
+    float ** restrict force,
+    float ** restrict pos,
+    float *  restrict mass,
     float softeningSquared,
     size_t N
 );
