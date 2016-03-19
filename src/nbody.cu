@@ -61,16 +61,6 @@
 #include <fcntl.h>
 #include <sys/select.h>
 
-#include <math.h>
-
-#include "libtime.h"
-
-#include "chThread.h"
-#include "chError.h"
-
-#include "nbody.h"
-#include "nbody_util.h"
-
 static int kbhit(void)
 {
     struct termios oldt, newt;
@@ -107,6 +97,16 @@ getch(void)
 }
 
 #endif
+
+#include <math.h>
+
+#include "libtime.h"
+
+#include "chThread.h"
+#include "chError.h"
+
+#include "nbody.h"
+#include "nbody_util.h"
 
 enum nbodyAlgorithm_enum {
 	CPU_AOS = 0,    /* This is the golden implementation */
