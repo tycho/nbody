@@ -55,7 +55,10 @@ ComputeGravitation_SIMD(
     uint64_t start, end;
 
     start = libtime_cpu();
-#pragma omp parallel for
+
+    #pragma omp parallel for
+    #pragma vector aligned
+    #pragma ivdep
     for ( size_t i = 0; i < N; i++ )
     {
         __m256 ax = _mm256_setzero_ps();
@@ -69,6 +72,8 @@ ComputeGravitation_SIMD(
         __m256 y0 = _mm256_set1_ps( pos[1][i] );
         __m256 z0 = _mm256_set1_ps( pos[2][i] );
 
+        #pragma vector aligned
+        #pragma ivdep
         for ( size_t j = 0; j < N/8; j++ ) {
 
             bodyBodyInteraction(

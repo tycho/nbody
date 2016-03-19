@@ -57,6 +57,8 @@ DoDiagonalTile(
     size_t iTile, size_t jTile
 )
 {
+    #pragma vector aligned
+    #pragma ivdep
     for ( size_t _i = 0; _i < nTile; _i++ )
     {
         const size_t i = iTile*nTile+_i;
@@ -67,10 +69,8 @@ DoDiagonalTile(
 
         acx = acy = acz = 0;
 
-        #pragma simd vectorlengthfor(float) \
-            reduction(+:acx) \
-            reduction(+:acy) \
-            reduction(+:acz)
+        #pragma vector aligned
+        #pragma ivdep
         for ( size_t _j = 0; _j < nTile; _j++ ) {
             const size_t j = jTile*nTile+_j;
 
@@ -123,6 +123,8 @@ DoNondiagonalTile(
     memset( symmetricY, 0, sizeof(symmetricY) );
     memset( symmetricZ, 0, sizeof(symmetricZ) );
 
+    #pragma vector aligned
+    #pragma ivdep
     for ( size_t _i = 0; _i < nTile; _i++ )
     {
         const size_t i = iTile*nTile+_i;
@@ -131,6 +133,8 @@ DoNondiagonalTile(
         const float myY = posMass[i*4+1];
         const float myZ = posMass[i*4+2];
 
+        #pragma vector aligned
+        #pragma ivdep
         for ( size_t _j = 0; _j < nTile; _j++ ) {
             const size_t j = jTile*nTile+_j;
 

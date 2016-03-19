@@ -53,7 +53,10 @@ ComputeGravitation_AOS(
     uint64_t start, end;
 
     start = libtime_cpu();
+
     #pragma omp parallel for
+    #pragma vector aligned
+    #pragma ivdep
     for ( size_t i = 0; i < N; i++ )
     {
         float acx, acy, acz;
@@ -63,10 +66,8 @@ ComputeGravitation_AOS(
 
         acx = acy = acz = 0;
 
-        #pragma simd vectorlengthfor(float) \
-            reduction(+:acx) \
-            reduction(+:acy) \
-            reduction(+:acz)
+        #pragma vector aligned
+        #pragma ivdep
         for ( size_t j = 0; j < N; j++ ) {
 
             float fx, fy, fz;
@@ -90,6 +91,7 @@ ComputeGravitation_AOS(
         force[3*i+1] = acy;
         force[3*i+2] = acz;
     }
+
     end = libtime_cpu();
     return libtime_cpu_to_wall(end - start) * 1e-6f;
 }
