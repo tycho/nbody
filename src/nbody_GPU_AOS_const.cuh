@@ -69,9 +69,9 @@ ComputeNBodyGravitation_GPU_AOS_const(
             acc[1] += fy;
             acc[2] += fz;
         }
-        force[3*i+0] += acc[0];
-        force[3*i+1] += acc[1];
-        force[3*i+2] += acc[2];
+        force[4*i+0] += acc[0];
+        force[4*i+1] += acc[1];
+        force[4*i+2] += acc[2];
     }
 }
 

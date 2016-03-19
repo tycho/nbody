@@ -64,16 +64,16 @@ ComputeNBodyGravitation_Atomic( T *force, T const * const posMass, size_t N, T s
             acc[1] += fy;
             acc[2] += fz;
 
-            float *f = &force[3*j+0];
+            float *f = &force[4*j+0];
             atomicAdd( f+0, -fx );
             atomicAdd( f+1, -fy );
             atomicAdd( f+2, -fz );
 
         }
 
-        atomicAdd( &force[3*i+0], acc[0] );
-        atomicAdd( &force[3*i+1], acc[1] );
-        atomicAdd( &force[3*i+2], acc[2] );
+        atomicAdd( &force[4*i+0], acc[0] );
+        atomicAdd( &force[4*i+1], acc[1] );
+        atomicAdd( &force[4*i+2], acc[2] );
     }
 }
 #else
@@ -98,9 +98,9 @@ ComputeNBodyGravitation_Atomic( T *force, T const * const posMass, size_t N, T s
             acc[1] += fy;
             acc[2] += fz;
       }
-        force[3*i+0] = acc[0];
-        force[3*i+1] = acc[1];
-        force[3*i+2] = acc[2];
+        force[4*i+0] = acc[0];
+        force[4*i+1] = acc[1];
+        force[4*i+2] = acc[2];
     }
 }
 #endif

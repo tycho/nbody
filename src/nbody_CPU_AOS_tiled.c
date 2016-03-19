@@ -95,11 +95,11 @@ DoDiagonalTile(
          * need to atomically update here.
          */
         //#pragma omp atomic update
-        force[3*i+0] += acx;
+        force[4*i+0] += acx;
         //#pragma omp atomic update
-        force[3*i+1] += acy;
+        force[4*i+1] += acy;
         //#pragma omp atomic update
-        force[3*i+2] += acz;
+        force[4*i+2] += acz;
     }
 }
 
@@ -162,17 +162,17 @@ DoNondiagonalTile(
 #ifdef _MSC_VER
         #pragma omp critical
         {
-            force[3 * i + 0] += ax;
-            force[3 * i + 1] += ay;
-            force[3 * i + 2] += az;
+            force[4 * i + 0] += ax;
+            force[4 * i + 1] += ay;
+            force[4 * i + 2] += az;
         }
 #else
         #pragma omp atomic update
-        force[3*i+0] += ax;
+        force[4*i+0] += ax;
         #pragma omp atomic update
-        force[3*i+1] += ay;
+        force[4*i+1] += ay;
         #pragma omp atomic update
-        force[3*i+2] += az;
+        force[4*i+2] += az;
 #endif
     }
 
@@ -182,11 +182,11 @@ DoNondiagonalTile(
     for ( size_t _j = 0; _j < nTile; _j++ ) {
         const size_t j = jTile*nTile+_j;
         //#pragma omp atomic update
-        force[3*j+0] += symmetricXP[_j];
+        force[4*j+0] += symmetricXP[_j];
         //#pragma omp atomic update
-        force[3*j+1] += symmetricYP[_j];
+        force[4*j+1] += symmetricYP[_j];
         //#pragma omp atomic update
-        force[3*j+2] += symmetricZP[_j];
+        force[4*j+2] += symmetricZP[_j];
     }
 }
 
@@ -203,7 +203,7 @@ ComputeGravitation_AOS_tiled(
     if (N % 1024 != 0)
         return 0.0f;
 
-    memset( force, 0, 3*N*sizeof(float) );
+    memset( force, 0, 4*N*sizeof(float) );
     start = libtime_cpu();
     for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
         #pragma omp parallel for

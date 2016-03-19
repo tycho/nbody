@@ -69,9 +69,9 @@ DoDiagonalTile_GPU(
         acc[2] += fz;
     }
 
-    atomicAdd( &force[3*i+0], acc[0] );
-    atomicAdd( &force[3*i+1], acc[1] );
-    atomicAdd( &force[3*i+2], acc[2] );
+    atomicAdd( &force[4*i+0], acc[0] );
+    atomicAdd( &force[4*i+1], acc[1] );
+    atomicAdd( &force[4*i+2], acc[2] );
 }
 
 inline float
@@ -131,15 +131,15 @@ DoNondiagonalTile_GPU(
         fz = warpReduce( -fz );
 
         if ( laneid == 0 ) {
-            atomicAdd( &force[3*j+0], fx );
-            atomicAdd( &force[3*j+1], fy );
-            atomicAdd( &force[3*j+2], fz );
+            atomicAdd( &force[4*j+0], fx );
+            atomicAdd( &force[4*j+1], fy );
+            atomicAdd( &force[4*j+2], fz );
         }
     }
 
-    atomicAdd( &force[3*i+0], ax );
-    atomicAdd( &force[3*i+1], ay );
-    atomicAdd( &force[3*i+2], az );
+    atomicAdd( &force[4*i+0], ax );
+    atomicAdd( &force[4*i+1], ay );
+    atomicAdd( &force[4*i+2], az );
 
 }
 

@@ -75,9 +75,9 @@ ComputeNBodyGravitation_Shuffle(
             }
         }
 
-        force[3*i+0] = acc[0];
-        force[3*i+1] = acc[1];
-        force[3*i+2] = acc[2];
+        force[4*i+0] = acc[0];
+        force[4*i+1] = acc[1];
+        force[4*i+2] = acc[2];
     }
 }
 #else
@@ -104,9 +104,9 @@ ComputeNBodyGravitation_Shuffle( float *force, float const * const posMass, floa
             acc[1] += fy;
             acc[2] += fz;
         }
-        force[3*i+0] = acc[0];
-        force[3*i+1] = acc[1];
-        force[3*i+2] = acc[2];
+        force[4*i+0] = acc[0];
+        force[4*i+1] = acc[1];
+        force[4*i+2] = acc[2];
     }
 }
 #endif

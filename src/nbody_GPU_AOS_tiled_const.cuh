@@ -71,9 +71,9 @@ DoDiagonalTile_GPU_const(
         acc[2] += fz;
     }
 
-    atomicAdd( &force[3*i+0], acc[0] );
-    atomicAdd( &force[3*i+1], acc[1] );
-    atomicAdd( &force[3*i+2], acc[2] );
+    atomicAdd( &force[4*i+0], acc[0] );
+    atomicAdd( &force[4*i+1], acc[1] );
+    atomicAdd( &force[4*i+2], acc[2] );
 }
 
 inline float
@@ -139,16 +139,16 @@ DoNondiagonalTile_GPU_const(
         fz = warpReduce_const( -fz );
 
         if ( laneid == 0 ) {
-            atomicAdd( &force[3*j+0], fx );
-            atomicAdd( &force[3*j+1], fy );
-            atomicAdd( &force[3*j+2], fz );
+            atomicAdd( &force[4*j+0], fx );
+            atomicAdd( &force[4*j+1], fy );
+            atomicAdd( &force[4*j+2], fz );
         }
 #endif
     }
 
-    atomicAdd( &force[3*i+0], ax );
-    atomicAdd( &force[3*i+1], ay );
-    atomicAdd( &force[3*i+2], az );
+    atomicAdd( &force[4*i+0], ax );
+    atomicAdd( &force[4*i+1], ay );
+    atomicAdd( &force[4*i+2], az );
 
     __syncthreads();
 #if 0
@@ -164,9 +164,9 @@ DoNondiagonalTile_GPU_const(
 
     {
         size_t j = jTile*nTile+laneid;
-        atomicAdd( &force[3*j+0], ax );
-        atomicAdd( &force[3*j+1], ay );
-        atomicAdd( &force[3*j+2], az );
+        atomicAdd( &force[4*j+0], ax );
+        atomicAdd( &force[4*j+1], ay );
+        atomicAdd( &force[4*j+2], az );
     }
 #endif
 }
@@ -216,9 +216,9 @@ DoNondiagonalTile_GPU_const(
         sForces[2*1056+33*laneid+_j] = fz;
     }
 
-    atomicAdd( &force[3*i+0], ax );
-    atomicAdd( &force[3*i+1], ay );
-    atomicAdd( &force[3*i+2], az );
+    atomicAdd( &force[4*i+0], ax );
+    atomicAdd( &force[4*i+1], ay );
+    atomicAdd( &force[4*i+2], az );
 
     {
         size_t j = jTile*nTile+laneid;
@@ -228,21 +228,21 @@ DoNondiagonalTile_GPU_const(
         for ( int _j = 0; _j < nTile; _j++ ) {
             ax -= sForces[0*1056+33*_j+laneid];
         }
-        atomicAdd( &force[3*j+0], ax );
+        atomicAdd( &force[4*j+0], ax );
 
         ay = 0.0f;
 #pragma unroll 32
         for ( int _j = 0; _j < nTile; _j++ ) {
             ay -= sForces[1*1056+33*_j+laneid];
         }
-        atomicAdd( &force[3*j+1], ay );
+        atomicAdd( &force[4*j+1], ay );
 
         az = 0.0f;
 #pragma unroll 32
         for ( int _j = 0; _j < nTile; _j++ ) {
             az -= sForces[2*1056+33*_j+laneid];
         }
-        atomicAdd( &force[3*j+2], az );
+        atomicAdd( &force[4*j+2], az );
     }
 
 }

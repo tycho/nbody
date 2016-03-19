@@ -180,7 +180,7 @@ AOStoSOA_GPU_3( float *outX, float *outY, float *outZ, const float *in, size_t N
     for ( size_t i = blockIdx.x*blockDim.x + threadIdx.x;
                  i < N;
                  i += blockDim.x*gridDim.x ) {
-        float tmp[3] = { in[i*3+0], in[i*3+1], in[i*3+2] };
+        float tmp[3] = { in[4*i+0], in[4*i+1], in[4*i+2] };
         outX[i] = tmp[0];
         outY[i] = tmp[1];
         outZ[i] = tmp[2];
@@ -193,9 +193,9 @@ SOAtoAOS_GPU_3( float *out, const float *inX, const float *inY, const float *inZ
     for ( size_t i = blockIdx.x*blockDim.x + threadIdx.x;
                  i < N;
                  i += blockDim.x*gridDim.x ) {
-        out[3*i+0] = inX[i];
-        out[3*i+1] = inY[i];
-        out[3*i+2] = inZ[i];
+        out[4*i+0] = inX[i];
+        out[4*i+1] = inY[i];
+        out[4*i+2] = inZ[i];
     }
 }
 

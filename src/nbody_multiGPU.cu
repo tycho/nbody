@@ -98,7 +98,7 @@ ComputeGravitation_multiGPU(
     for ( size_t i = 0; i < g_numGPUs; i++ ) {
         CUDART_CHECK( cudaSetDevice( i ) );
         CUDART_CHECK( cudaMalloc( &dptrPosMass[i], 4*N*sizeof(float) ) );
-        CUDART_CHECK( cudaMalloc( &dptrForce[i], 3*bodiesPerGPU*sizeof(float) ) );
+        CUDART_CHECK( cudaMalloc( &dptrForce[i], 4*bodiesPerGPU*sizeof(float) ) );
         CUDART_CHECK( cudaMemcpyAsync(
             dptrPosMass[i],
             g_hostAOS_PosMass,
@@ -115,9 +115,9 @@ ComputeGravitation_multiGPU(
             bodiesPerGPU,
             N );
         CUDART_CHECK( cudaMemcpyAsync(
-            g_hostAOS_Force+3*bodiesPerGPU*i,
+            g_hostAOS_Force+4*bodiesPerGPU*i,
             dptrForce[i],
-            3*bodiesPerGPU*sizeof(float),
+            4*bodiesPerGPU*sizeof(float),
             cudaMemcpyDeviceToHost ) );
     }
     // Synchronize with each GPU in turn.

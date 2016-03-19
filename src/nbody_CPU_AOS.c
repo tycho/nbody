@@ -87,9 +87,9 @@ ComputeGravitation_AOS(
             acz += fz;
         }
 
-        force[3*i+0] = acx;
-        force[3*i+1] = acy;
-        force[3*i+2] = acz;
+        force[4*i+0] = acx;
+        force[4*i+1] = acy;
+        force[4*i+2] = acz;
     }
 
     end = libtime_cpu();

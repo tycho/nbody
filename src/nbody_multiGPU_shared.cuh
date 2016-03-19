@@ -78,9 +78,9 @@ ComputeNBodyGravitation_Shared_multiGPU(
             }
             __syncthreads();
         }
-        force[3*m+0] = acc[0];
-        force[3*m+1] = acc[1];
-        force[3*m+2] = acc[2];
+        force[4*m+0] = acc[0];
+        force[4*m+1] = acc[1];
+        force[4*m+2] = acc[2];
     }
 }
 
