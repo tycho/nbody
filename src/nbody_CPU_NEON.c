@@ -55,7 +55,7 @@ ComputeGravitation_SIMD(
 
     start = libtime_cpu();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(guided, 16)
     for (size_t i = 0; i < N; i++)
     {
         vf32x4_t ax = vec_zero;

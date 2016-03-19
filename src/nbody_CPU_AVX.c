@@ -56,7 +56,7 @@ ComputeGravitation_SIMD(
 
     start = libtime_cpu();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(guided, 16)
     #pragma vector aligned
     #pragma ivdep
     for ( size_t i = 0; i < N; i++ )
