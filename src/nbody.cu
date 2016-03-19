@@ -302,7 +302,7 @@ ComputeGravitation(
         g_hostSOA_InvMass[i] = 1.0f / g_hostSOA_Mass[i];
     }
 
-    if ( bCrossCheck ) {
+    if ( bCrossCheck && algorithm != CPU_SOA ) {
         ComputeGravitation_SOA(
                         g_hostSOA_Force,
                         g_hostSOA_Pos,
@@ -467,7 +467,7 @@ ComputeGravitation(
     }
 
     *maxRelError = 0.0f;
-    if ( bCrossCheck ) {
+    if ( bCrossCheck && algorithm != CPU_SOA ) {
         float max = 0.0f;
         for ( size_t i = 0; i < 3*g_N; i++ ) {
             float err = relError( g_hostAOS_Force[i], g_hostAOS_Force_Golden[i] );
