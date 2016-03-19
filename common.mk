@@ -64,13 +64,13 @@ AR         := ar
 RM         := rm -f
 CP         := cp
 
-ifeq ($(CC),icc)
+ifneq ($(findstring icc,$(CC)),)
 AR         := xiar
 endif
 
 export AR
 
-ifeq ($(CC),icc)
+ifneq ($(findstring icc,$(CC)),)
 CFOPTIMIZE ?= -Ofast -xHOST -no-prec-sqrt
 else
 CFWARN     := \
