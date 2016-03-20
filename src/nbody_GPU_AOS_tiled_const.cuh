@@ -212,7 +212,7 @@ ComputeGravitation_GPU_AOS_tiled_const(
     cudaError_t status;
     dim3 blocks( N/nTile, N/32, 1 );
 
-    CUDART_CHECK( cudaMemset( force, 0, 3*N*sizeof(float) ) );
+    CUDART_CHECK( cudaMemset( force, 0, 4*N*sizeof(float) ) );
     ComputeNBodyGravitation_GPU_tiled_const<nTile><<<blocks,nTile>>>( force, posMass, N, softeningSquared );
     CUDART_CHECK( cudaDeviceSynchronize() );
 Error:

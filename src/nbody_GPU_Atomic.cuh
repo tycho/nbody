@@ -91,7 +91,7 @@ ComputeGravitation_GPU_Atomic(
     CUDART_CHECK( cudaEventCreate( &evStart ) );
     CUDART_CHECK( cudaEventCreate( &evStop ) );
     CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
-    CUDART_CHECK( cudaMemset( force, 0, 3*N*sizeof(float) ) );
+    CUDART_CHECK( cudaMemset( force, 0, 4*N*sizeof(float) ) );
     ComputeNBodyGravitation_Atomic<float> <<<300,256>>>( force, posMass, N, softeningSquared );
     CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
     CUDART_CHECK( cudaDeviceSynchronize() );
