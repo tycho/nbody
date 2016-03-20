@@ -132,8 +132,9 @@ static inline void seedRandom( unsigned int seed )
     srandom(seed);
 }
 
-static inline int nbodyRandom( void )
+static inline float nbodyRandom( float randMin, float randMax )
 {
+    float result;
     uint32_t v;
 #if defined(HIGH_ENTROPY) && defined __RDRND__
     int i = _rdrand32_step(&v);
@@ -142,19 +143,16 @@ static inline int nbodyRandom( void )
 #else
     v = random();
 #endif
-    return v;
+    result = (float)v / (float)RAND_MAX;
+    return ((1.0f - result) * randMin + result * randMax);
 }
 
 static inline void
 randomVector( float v[3] )
 {
-    float lenSqr;
-    do {
-        v[0] = nbodyRandom() / (float) RAND_MAX * 2 - 1;
-        v[1] = nbodyRandom() / (float) RAND_MAX * 2 - 1;
-        v[2] = nbodyRandom() / (float) RAND_MAX * 2 - 1;
-        lenSqr = v[0]*v[0]+v[1]*v[1]+v[2]*v[2];
-    } while ( lenSqr > 1.0f );
+    v[0] = nbodyRandom( 3.0f, 50.0f );
+    v[1] = nbodyRandom( 3.0f, 50.0f );
+    v[2] = nbodyRandom( 3.0f, 50.0f );
 }
 
 static void
@@ -163,7 +161,7 @@ randomUnitBodies( float *pos, float *vel, size_t N )
     for ( size_t i = 0; i < N; i++ ) {
         randomVector( &pos[4*i] );
         randomVector( &vel[4*i] );
-        pos[4*i+3] = 1.0f;  // unit mass
+        pos[4*i+3] = nbodyRandom( 1.0f, 1000.0f );  // unit mass
         vel[4*i+3] = 1.0f;
     }
 }
