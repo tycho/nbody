@@ -454,6 +454,9 @@ ComputeGravitation(
             abort();
     }
 
+    if ( *ms < __FLT_EPSILON__ )
+        return 1;
+
     // SOA -> AOS
     if ( bSOA ) {
         for ( size_t i = 0; i < g_N; i++ ) {
@@ -823,33 +826,34 @@ main( int argc, char *argv[] )
         while ( ! bStop ) {
             float ms, err;
 
-            if (ComputeGravitation(&ms, &err, g_Algorithm, g_bCrossCheck)) {
-                fprintf( stderr, "Error computing timestep\n" );
-                exit(1);
+            if (!ComputeGravitation(&ms, &err, g_Algorithm, g_bCrossCheck)) {
+                double interactionsPerSecond = (double) g_N*g_N*1000.0f / ms,
+                       flops = interactionsPerSecond * (3 + 6 + 4 + 1 + 6) * 1e-3;
+                if ( interactionsPerSecond > 1e9 ) {
+                    printf ( "\r%13s: %8.2f ms = %8.3fx10^9 interactions/s (%9.2lf GFLOPS)",
+                        rgszAlgorithmNames[g_Algorithm],
+                        ms,
+                        interactionsPerSecond/1e9,
+                        flops * 1e-6 );
+                }
+                else {
+                    printf ( "\r%13s: %8.2f ms = %8.3fx10^6 interactions/s (%9.2lf GFLOPS)",
+                        rgszAlgorithmNames[g_Algorithm],
+                        ms,
+                        interactionsPerSecond/1e6,
+                        flops * 1e-6 );
+                }
+                if (g_bCrossCheck)
+                    printf( " (Rel. error: %E)\n", err );
+                else
+                    printf( "\n" );
+            } else {
+                goto next_algorithm;
             }
-            double interactionsPerSecond = (double) g_N*g_N*1000.0f / ms,
-                   flops = interactionsPerSecond * (3 + 6 + 4 + 1 + 6) * 1e-3;
-            if ( interactionsPerSecond > 1e9 ) {
-                printf ( "\r%13s: %8.2f ms = %8.3fx10^9 interactions/s (%9.2lf GFLOPS)",
-                    rgszAlgorithmNames[g_Algorithm],
-                    ms,
-                    interactionsPerSecond/1e9,
-                    flops * 1e-6 );
-            }
-            else {
-                printf ( "\r%13s: %8.2f ms = %8.3fx10^6 interactions/s (%9.2lf GFLOPS)",
-                    rgszAlgorithmNames[g_Algorithm],
-                    ms,
-                    interactionsPerSecond/1e6,
-                    flops * 1e-6 );
-            }
-            if (g_bCrossCheck)
-                printf( " (Rel. error: %E)\n", err );
-            else
-                printf( "\n" );
 
             steps++;
             if (cycleAfter && steps % cycleAfter == 0) {
+next_algorithm:
                 g_Algorithm = (enum nbodyAlgorithm_enum) (g_Algorithm+1);
                 if ( g_Algorithm > g_maxAlgorithm ) {
                     g_Algorithm = g_bNoCPU ? GPU_AOS : CPU_AOS;
