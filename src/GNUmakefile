@@ -15,9 +15,9 @@ endif
 CPPFLAGS  += -DLIBTIME_STATIC
 
 ifndef DEBUG
-NVCCFLAGS := -O3
+NVCCFLAGS := -O3 -Drestrict=
 else
-NVCCFLAGS := -O0 -g
+NVCCFLAGS := -O0 -g -Drestrict=
 CPPFLAGS  += -DDEBUG
 endif
 
