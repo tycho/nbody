@@ -117,10 +117,6 @@ DoNondiagonalTile(
     float symmetricY[nTile];
     float symmetricZ[nTile];
 
-    float *symmetricXP = symmetricX;
-    float *symmetricYP = symmetricY;
-    float *symmetricZP = symmetricZ;
-
     memset( symmetricX, 0, sizeof(symmetricX) );
     memset( symmetricY, 0, sizeof(symmetricY) );
     memset( symmetricZ, 0, sizeof(symmetricZ) );
@@ -184,11 +180,11 @@ DoNondiagonalTile(
     for ( size_t _j = 0; _j < nTile; _j++ ) {
         const size_t j = jTile*nTile+_j;
         //#pragma omp atomic update
-        force[0][j] += symmetricXP[_j];
+        force[0][j] += symmetricX[_j];
         //#pragma omp atomic update
-        force[1][j] += symmetricYP[_j];
+        force[1][j] += symmetricY[_j];
         //#pragma omp atomic update
-        force[2][j] += symmetricZP[_j];
+        force[2][j] += symmetricZ[_j];
     }
 }
 
