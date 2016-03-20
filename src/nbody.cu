@@ -109,22 +109,22 @@ getch(void)
 #include "nbody_util.h"
 
 enum nbodyAlgorithm_enum {
-	CPU_AOS = 0,    /* This is the golden implementation */
-	CPU_AOS_tiled,
-	CPU_SOA,
-	CPU_SOA_tiled,
+    CPU_AOS = 0,    /* This is the golden implementation */
+    CPU_AOS_tiled,
+    CPU_SOA,
+    CPU_SOA_tiled,
 #ifdef HAVE_SIMD
-	CPU_SIMD,
+    CPU_SIMD,
 #endif
-	GPU_AOS,
-	GPU_Shared,
-	GPU_Const,
-	multiGPU,
-	// SM 3.0 only
-	GPU_Shuffle,
-	//GPU_AOS_tiled,
-	//GPU_AOS_tiled_const,
-	//    GPU_Atomic
+    GPU_AOS,
+    GPU_Shared,
+    GPU_Const,
+    multiGPU,
+    // SM 3.0 only
+    GPU_Shuffle,
+    GPU_AOS_tiled,
+    GPU_AOS_tiled_const,
+    GPU_Atomic,
 };
 
 static inline void seedRandom( unsigned int seed )
