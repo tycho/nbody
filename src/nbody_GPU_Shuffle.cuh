@@ -33,7 +33,6 @@
  *
  */
 
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 300
 __global__ void
 ComputeNBodyGravitation_Shuffle(
     float *force,
@@ -80,36 +79,6 @@ ComputeNBodyGravitation_Shuffle(
         force[4*i+2] = acc[2];
     }
 }
-#else
-//
-// If SM 3.x not available, use naive algorithm
-//
-__global__ void
-ComputeNBodyGravitation_Shuffle( float *force, float const * const posMass, float softeningSquared, size_t N )
-{
-    for ( size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-                 i < N;
-                 i += blockDim.x*gridDim.x )
-    {
-        float acc[3] = {0};
-        float4 me = ((float4 *) posMass)[i];
-        float myX = me.x;
-        float myY = me.y;
-        float myZ = me.z;
-        for ( size_t j = 0; j < N; j++ ) {
-            float fx, fy, fz;
-            float4 body = ((float4 *) posMass)[j];
-            bodyBodyInteraction( &fx, &fy, &fz, myX, myY, myZ, body.x, body.y, body.z, body.w, softeningSquared);
-            acc[0] += fx;
-            acc[1] += fy;
-            acc[2] += fz;
-        }
-        force[4*i+0] = acc[0];
-        force[4*i+1] = acc[1];
-        force[4*i+2] = acc[2];
-    }
-}
-#endif
 
 float
 ComputeGravitation_GPU_Shuffle( float *force, float const * const posMass, float softeningSquared, size_t N )

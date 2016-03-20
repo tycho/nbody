@@ -35,8 +35,6 @@
  *
  */
 
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 300
-
 template<size_t nTile>
 __device__ void
 DoDiagonalTile_GPU(
@@ -220,16 +218,5 @@ Error:
     CUDART_CHECK( cudaEventDestroy( evStart ) );
     return ms;
 }
-#else
-float
-ComputeGravitation_GPU_AOS_tiled(
-    float *,
-    float const * const ,
-    float,
-    size_t )
-{
-    return 0.0f;
-}
-#endif
 
 /* vim: set ts=4 sts=4 sw=4 et: */

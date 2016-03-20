@@ -37,8 +37,6 @@
  *
  */
 
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 300
-
 template<int nTile>
 __device__ void
 DoDiagonalTile_GPU_const(
@@ -87,90 +85,6 @@ warpReduce_const( float x )
     x += __int_as_float( __shfl_xor( __float_as_int(x),  1 ) );
     return x;
 }
-
-#if 0
-template<int nTile>
-__device__ void
-DoNondiagonalTile_GPU_const(
-    float *force,
-    float const * const posMass,
-    float softeningSquared,
-    size_t iTile, size_t jTile,
-    volatile float *sForces
-)
-{
-    int laneid = threadIdx.x&0x1f;
-    size_t i = iTile*nTile+laneid;
-    float ax = 0.0f, ay = 0.0f, az = 0.0f;
-    float4 myPosMass = ((float4 *) posMass)[i];
-    float myX = myPosMass.x;
-    float myY = myPosMass.y;
-    float myZ = myPosMass.z;
-
-    float4 shufSrcPosMass = ((float4 *) posMass)[jTile*nTile+laneid];
-
-    for ( size_t _j = 0; _j < nTile; _j++ ) {
-
-        float fx, fy, fz;
-        float4 bodyPosMass;
-
-        bodyPosMass.x = __shfl( shufSrcPosMass.x, _j );
-        bodyPosMass.y = __shfl( shufSrcPosMass.y, _j );
-        bodyPosMass.z = __shfl( shufSrcPosMass.z, _j );
-        bodyPosMass.w = __shfl( shufSrcPosMass.w, _j );
-
-        bodyBodyInteraction(
-            &fx, &fy, &fz,
-            myX, myY, myZ,
-            bodyPosMass.x, bodyPosMass.y, bodyPosMass.z, bodyPosMass.w,
-            softeningSquared );
-
-        ax += fx;
-        ay += fy;
-        az += fz;
-
-        sForces[0*396+33*laneid+_j] = ax;
-        sForces[1*396+33*laneid+_j] = ay;
-        sForces[2*396+33*laneid+_j] = az;
-
-#if 0
-        fx = warpReduce_const( -fx );
-        fy = warpReduce_const( -fy );
-        fz = warpReduce_const( -fz );
-
-        if ( laneid == 0 ) {
-            atomicAdd( &force[4*j+0], fx );
-            atomicAdd( &force[4*j+1], fy );
-            atomicAdd( &force[4*j+2], fz );
-        }
-#endif
-    }
-
-    atomicAdd( &force[4*i+0], ax );
-    atomicAdd( &force[4*i+1], ay );
-    atomicAdd( &force[4*i+2], az );
-
-    __syncthreads();
-#if 0
-    ax = 0.0f;
-    ay = 0.0f;
-    az = 0.0f;
-    for ( size_t _j = 0; _j < nTile; _j++ ) {
-        ax -= sForces[0*396+33*laneid+_j];
-        ay -= sForces[1*396+33*laneid+_j];
-        az -= sForces[2*396+33*laneid+_j];
-
-    }
-
-    {
-        size_t j = jTile*nTile+laneid;
-        atomicAdd( &force[4*j+0], ax );
-        atomicAdd( &force[4*j+1], ay );
-        atomicAdd( &force[4*j+2], az );
-    }
-#endif
-}
-#endif
 
 template<int nTile>
 __device__ void
@@ -333,20 +247,5 @@ Error:
     CUDART_CHECK( cudaEventDestroy( evStart ) );
     return ms;
 }
-
-#else
-
-float
-ComputeGravitation_GPU_AOS_tiled_const(
-    float *force,
-    float const * const posMass,
-    float softeningSquared,
-    size_t N
-)
-{
-    return 0.0f;
-}
-
-#endif
 
 /* vim: set ts=4 sts=4 sw=4 et: */
