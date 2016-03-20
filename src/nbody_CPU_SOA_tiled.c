@@ -1,9 +1,8 @@
 /*
  *
- * nbody_CPU_SOA_tiled.cpp
+ * nbody_CPU_SOA_tiled.c
  *
- * Scalar CPU implementation of the O(N^2) N-body calculation.
- * Performs the computation in 1024x1024 tiles.
+ * Tiled SOA implementation of the n-body algorithm.
  *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
  * All rights reserved.
@@ -43,150 +42,7 @@
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_SOA_tiled.h"
 
-#ifdef _MSC_VER
-#define nTile 1024
-#else
-static const size_t nTile = 1024;
-#endif
-
-static void
-DoDiagonalTile(
-    float ** force,
-    float ** pos,
-    float *  mass,
-    float softeningSquared,
-    size_t iTile, size_t jTile
-)
-{
-    #pragma vector aligned
-    #pragma ivdep
-    for ( size_t _i = 0; _i < nTile; _i++ )
-    {
-        const size_t i = iTile*nTile+_i;
-        float acx, acy, acz;
-        const float myX = pos[0][i];
-        const float myY = pos[1][i];
-        const float myZ = pos[2][i];
-
-        acx = acy = acz = 0;
-
-        #pragma vector aligned
-        #pragma ivdep
-        for ( size_t _j = 0; _j < nTile; _j++ ) {
-            const size_t j = jTile*nTile+_j;
-
-            float fx, fy, fz;
-            const float bodyX = pos[0][j];
-            const float bodyY = pos[1][j];
-            const float bodyZ = pos[2][j];
-            const float bodyMass = mass[j];
-
-            bodyBodyInteraction(
-                &fx, &fy, &fz,
-                myX, myY, myZ,
-                bodyX, bodyY, bodyZ, bodyMass,
-                softeningSquared );
-
-            acx += fx;
-            acy += fy;
-            acz += fz;
-        }
-
-        /* We parallelize DoDiagonalTile along the iTile axis, so there's no
-         * need to atomically update here.
-         */
-        //#pragma omp atomic update
-        force[0][i] += acx;
-        //#pragma omp atomic update
-        force[1][i] += acy;
-        //#pragma omp atomic update
-        force[2][i] += acz;
-    }
-}
-
-static void
-DoNondiagonalTile(
-    float ** force,
-    float ** pos,
-    float *  mass,
-    float softeningSquared,
-    size_t iTile, size_t jTile
-)
-{
-    float symmetricX[nTile];
-    float symmetricY[nTile];
-    float symmetricZ[nTile];
-
-    memset( symmetricX, 0, sizeof(symmetricX) );
-    memset( symmetricY, 0, sizeof(symmetricY) );
-    memset( symmetricZ, 0, sizeof(symmetricZ) );
-
-    #pragma vector aligned
-    #pragma ivdep
-    for ( size_t _i = 0; _i < nTile; _i++ )
-    {
-        const size_t i = iTile*nTile+_i;
-        float ax = 0.0f, ay = 0.0f, az = 0.0f;
-        const float myX = pos[0][i];
-        const float myY = pos[1][i];
-        const float myZ = pos[2][i];
-
-        #pragma vector aligned
-        #pragma ivdep
-        for ( size_t _j = 0; _j < nTile; _j++ ) {
-            const size_t j = jTile*nTile+_j;
-
-            float fx, fy, fz;
-            const float bodyX = pos[0][j];
-            const float bodyY = pos[1][j];
-            const float bodyZ = pos[2][j];
-            const float bodyMass = mass[j];
-
-            bodyBodyInteraction(
-                &fx, &fy, &fz,
-                myX, myY, myZ,
-                bodyX, bodyY, bodyZ, bodyMass,
-                softeningSquared );
-
-            ax += fx;
-            ay += fy;
-            az += fz;
-
-            symmetricX[_j] -= fx;
-            symmetricY[_j] -= fy;
-            symmetricZ[_j] -= fz;
-        }
-
-#ifdef _MSC_VER
-        #pragma omp critical
-        {
-            force[0][i] += ax;
-            force[1][i] += ay;
-            force[2][i] += az;
-        }
-#else
-        #pragma omp atomic update
-        force[0][i] += ax;
-        #pragma omp atomic update
-        force[1][i] += ay;
-        #pragma omp atomic update
-        force[2][i] += az;
-#endif
-    }
-
-    /* We parallelize DoNonDiagonalTile on the jTile axis, so there's no need
-     * to atomically update here.
-     */
-    for ( size_t _j = 0; _j < nTile; _j++ ) {
-        const size_t j = jTile*nTile+_j;
-        //#pragma omp atomic update
-        force[0][j] += symmetricX[_j];
-        //#pragma omp atomic update
-        force[1][j] += symmetricY[_j];
-        //#pragma omp atomic update
-        force[2][j] += symmetricZ[_j];
-    }
-}
+#define BODIES_PER_TILE 2048
 
 float
 ComputeGravitation_SOA_tiled(
@@ -199,34 +55,53 @@ ComputeGravitation_SOA_tiled(
 {
     uint64_t start, end;
 
-    if (N % 1024 != 0)
+    if ( N % BODIES_PER_TILE != 0 )
         return 0.0f;
 
-    memset( force[0], 0, N * sizeof(float) );
-    memset( force[1], 0, N * sizeof(float) );
-    memset( force[2], 0, N * sizeof(float) );
-
     start = libtime_cpu();
-    for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
-        #pragma omp parallel for
-        for ( size_t jTile = 0; jTile < iTile; jTile++ ) {
-            DoNondiagonalTile(
-                force,
-                pos,
-                mass,
-                softeningSquared,
-                iTile, jTile );
+
+    #pragma omp parallel
+    for (size_t tileStart = 0; tileStart < N; tileStart += BODIES_PER_TILE )
+    {
+        int tileEnd = tileStart + BODIES_PER_TILE;
+
+        #pragma omp for schedule(guided)
+        #pragma unroll_and_jam(4)
+        for ( size_t i = 0; i < N; i++ )
+        {
+            float acx, acy, acz;
+            const float myX = pos[0][i];
+            const float myY = pos[1][i];
+            const float myZ = pos[2][i];
+
+            acx = acy = acz = 0;
+
+            for ( size_t j = tileStart; j < tileEnd; j++ ) {
+
+                const float bodyX = pos[0][j];
+                const float bodyY = pos[1][j];
+                const float bodyZ = pos[2][j];
+                const float bodyMass = mass[j];
+
+                float fx, fy, fz;
+
+                bodyBodyInteraction(
+                    &fx, &fy, &fz,
+                    myX, myY, myZ,
+                    bodyX, bodyY, bodyZ, bodyMass,
+                    softeningSquared );
+
+                acx += fx;
+                acy += fy;
+                acz += fz;
+            }
+
+            force[0][i] += acx;
+            force[1][i] += acy;
+            force[2][i] += acz;
         }
     }
-    #pragma omp parallel for
-    for ( size_t iTile = 0; iTile < N/nTile; iTile++ ) {
-        DoDiagonalTile(
-            force,
-            pos,
-            mass,
-            softeningSquared,
-            iTile, iTile );
-    }
+
     end = libtime_cpu();
     return libtime_cpu_to_wall(end - start) * 1e-6f;
 }
