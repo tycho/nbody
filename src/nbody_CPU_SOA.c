@@ -41,6 +41,8 @@
 #endif
 #include "chCUDA.h"
 
+#include "nbody_util.h"
+
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_SOA.h"
 
@@ -55,6 +57,9 @@ ComputeGravitation_SOA(
 {
     uint64_t start, end;
     start = libtime_cpu();
+
+    ASSUME(N >= 1024);
+    ASSUME(N % 1024 == 0);
 
     #pragma omp parallel for schedule(guided, 16)
     #pragma vector aligned

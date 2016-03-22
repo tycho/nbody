@@ -39,6 +39,8 @@
 
 #include "libtime.h"
 
+#include "nbody_util.h"
+
 #include "bodybodyInteraction_NEON.h"
 #include "nbody_CPU_SIMD.h"
 
@@ -54,6 +56,9 @@ ComputeGravitation_SIMD(
     uint64_t start, end;
 
     start = libtime_cpu();
+
+    ASSUME(N >= 1024);
+    ASSUME(N % 1024 == 0);
 
     #pragma omp parallel for schedule(guided, 16)
     for (size_t i = 0; i < N; i++)

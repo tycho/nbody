@@ -40,6 +40,8 @@
 #if defined(HAVE_AVX)
 #include "libtime.h"
 
+#include "nbody_util.h"
+
 #include "bodybodyInteraction_AVX.h"
 #include "nbody_CPU_SIMD.h"
 
@@ -55,6 +57,9 @@ ComputeGravitation_SIMD(
     uint64_t start, end;
 
     start = libtime_cpu();
+
+    ASSUME(N >= 1024);
+    ASSUME(N % 1024 == 0);
 
     #pragma omp parallel for schedule(guided, 16)
     #pragma vector aligned

@@ -39,6 +39,8 @@
 #endif
 #include "chCUDA.h"
 
+#include "nbody_util.h"
+
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_SOA_tiled.h"
 
@@ -59,6 +61,9 @@ ComputeGravitation_SOA_tiled(
         return 0.0f;
 
     start = libtime_cpu();
+
+    ASSUME(N >= 1024);
+    ASSUME(N % 1024 == 0);
 
     #pragma omp parallel
     for (size_t tileStart = 0; tileStart < N; tileStart += BODIES_PER_TILE )

@@ -38,6 +38,12 @@
 extern "C" {
 #endif
 
+#ifdef __GNUC__
+#define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
+#else
+#define ASSUME(cond)
+#endif
+
 extern const char *rgszAlgorithmNames[];
 int processorCount(void);
 
