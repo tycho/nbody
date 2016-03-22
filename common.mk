@@ -76,7 +76,8 @@ else
 CFWARN     := \
 	-Wall \
 	-Wdeclaration-after-statement \
-	-Wimplicit-function-declaration \
+	-Werror=implicit \
+	-Werror=undef \
 	-Wmissing-declarations \
 	-Wmissing-prototypes \
 	-Wno-declaration-after-statement \
