@@ -73,6 +73,7 @@ ComputeGravitation_AOS(
 
         #pragma vector aligned
         #pragma ivdep
+        #pragma clang loop vectorize(disable) interleave(enable) interleave_count(8)
         for ( size_t j = 0; j < N; j++ ) {
 
             float fx, fy, fz;

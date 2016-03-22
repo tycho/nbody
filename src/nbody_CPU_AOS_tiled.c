@@ -80,6 +80,7 @@ ComputeGravitation_AOS_tiled(
 
             acx = acy = acz = 0;
 
+            #pragma clang loop vectorize(disable) interleave(enable) interleave_count(8)
             for ( size_t j = tileStart; j < tileEnd; j++ ) {
 
                 const float bodyX = posMass[j*4+0];
