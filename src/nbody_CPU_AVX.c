@@ -61,25 +61,27 @@ ComputeGravitation_SIMD(
     #pragma ivdep
     for ( size_t i = 0; i < N; i++ )
     {
+        const __m256 x0 = _mm256_set1_ps( pos[0][i] );
+        const __m256 y0 = _mm256_set1_ps( pos[1][i] );
+        const __m256 z0 = _mm256_set1_ps( pos[2][i] );
+
         __m256 ax = _mm256_setzero_ps();
         __m256 ay = _mm256_setzero_ps();
         __m256 az = _mm256_setzero_ps();
-        __m256 *px = (__m256 *) pos[0];
-        __m256 *py = (__m256 *) pos[1];
-        __m256 *pz = (__m256 *) pos[2];
-        __m256 *pmass = (__m256 *) mass;
-        __m256 x0 = _mm256_set1_ps( pos[0][i] );
-        __m256 y0 = _mm256_set1_ps( pos[1][i] );
-        __m256 z0 = _mm256_set1_ps( pos[2][i] );
 
         #pragma vector aligned
         #pragma ivdep
-        for ( size_t j = 0; j < N/8; j++ ) {
+        for ( size_t j = 0; j < N; j += 8 )
+        {
+            const __m256 x1 = *(__m256 *) &pos[0][j];
+            const __m256 y1 = *(__m256 *) &pos[1][j];
+            const __m256 z1 = *(__m256 *) &pos[2][j];
+            const __m256 mass1 = *(__m256 *) &mass[j];
 
             bodyBodyInteraction(
                 &ax, &ay, &az,
                 x0, y0, z0,
-                px[j], py[j], pz[j], pmass[j],
+                x1, y1, z1, mass1,
                 _mm256_set1_ps( softeningSquared ) );
 
         }
