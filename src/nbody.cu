@@ -50,12 +50,12 @@
 
 #ifdef _WIN32
 #include <conio.h>
-#define valloc malloc
 
 #pragma comment (lib, "libtime.lib")
 #pragma comment (lib, "libc11.lib")
 #else
 
+#include <malloc.h>
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -528,6 +528,24 @@ Error:
     return 0;
 }
 
+static void *alignedAlloc(size_t alignment, size_t size)
+{
+#ifdef _WIN32
+    return VirtualAlloc(0, size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+#else
+    return memalign(alignment, size);
+#endif
+}
+
+static void alignedFree(void *p)
+{
+#ifdef _WIN32
+    VirtualFree(p, 0, MEM_RELEASE);
+#else
+    free(p);
+#endif
+}
+
 static int
 freeArrays(void)
 {
@@ -552,16 +570,16 @@ freeArrays(void)
     } else
 #endif
     {
-        free(g_hostAOS_PosMass);
+        alignedFree(g_hostAOS_PosMass);
         for ( size_t i = 0; i < 3; i++ ) {
-            free(g_hostSOA_Pos[i]);
-            free(g_hostSOA_Force[i]);
+            alignedFree(g_hostSOA_Pos[i]);
+            alignedFree(g_hostSOA_Force[i]);
         }
-        free(g_hostAOS_Force);
-        free(g_hostAOS_Force_Golden);
-        free(g_hostAOS_VelInvMass);
-        free(g_hostSOA_Mass);
-        free(g_hostSOA_InvMass);
+        alignedFree(g_hostAOS_Force);
+        alignedFree(g_hostAOS_Force_Golden);
+        alignedFree(g_hostAOS_VelInvMass);
+        alignedFree(g_hostSOA_Mass);
+        alignedFree(g_hostSOA_InvMass);
     }
     return 0;
 #ifndef NO_CUDA
@@ -594,36 +612,36 @@ allocArrays(void)
     } else
 #endif
     {
-        g_hostAOS_PosMass = (float *)valloc(sizeof(float) * 4 * g_N);
+        g_hostAOS_PosMass = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * 4 * g_N);
         if (!g_hostAOS_PosMass)
             goto Error;
 
         for ( size_t i = 0; i < 3; i++ ) {
-            g_hostSOA_Pos[i] = (float *)valloc(sizeof(float) * g_N);
+            g_hostSOA_Pos[i] = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
             if (!g_hostSOA_Pos[i])
                 goto Error;
 
-            g_hostSOA_Force[i] = (float *)valloc(sizeof(float) * g_N);
+            g_hostSOA_Force[i] = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
             if (!g_hostSOA_Force[i])
                 goto Error;
         }
-        g_hostSOA_Mass = (float *)valloc(sizeof(float) * g_N);
+        g_hostSOA_Mass = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
         if (!g_hostSOA_Mass)
             goto Error;
 
-        g_hostAOS_Force = (float *)valloc(sizeof(float) * 4 * g_N);
+        g_hostAOS_Force = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * 4 * g_N);
         if (!g_hostAOS_Force)
             goto Error;
 
-        g_hostAOS_Force_Golden = (float *)valloc(sizeof(float) * 4 * g_N);
+        g_hostAOS_Force_Golden = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * 4 * g_N);
         if (!g_hostAOS_Force_Golden)
             goto Error;
 
-        g_hostAOS_VelInvMass = (float *)valloc(sizeof(float) * 4 * g_N);
+        g_hostAOS_VelInvMass = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * 4 * g_N);
         if (!g_hostAOS_VelInvMass)
             goto Error;
 
-        g_hostSOA_InvMass = (float *)valloc(sizeof(float) * g_N);
+        g_hostSOA_InvMass = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
         if (!g_hostSOA_InvMass)
             goto Error;
     }
