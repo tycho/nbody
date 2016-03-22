@@ -65,6 +65,12 @@ ComputeGravitation_SOA_tiled(
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
 
+    ASSERT_ALIGNED(mass, NBODY_ALIGNMENT);
+    for ( size_t i = 0; i < 3; i++ ) {
+        ASSERT_ALIGNED(pos[i], NBODY_ALIGNMENT);
+        ASSERT_ALIGNED(force[i], NBODY_ALIGNMENT);
+    }
+
     #pragma omp parallel
     for (size_t tileStart = 0; tileStart < N; tileStart += BODIES_PER_TILE )
     {

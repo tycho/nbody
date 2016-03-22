@@ -34,22 +34,28 @@
 #ifndef __included_nbody_util_h
 #define __included_nbody_util_h
 
+#include <assert.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define NBODY_ALIGNMENT 64
+
 #ifdef __GNUC__
 #define ALIGNED(n) __attribute__((aligned(n)))
+#define ASSERT_ALIGNED(p,n) do { assert(((uintptr_t)(p) & (uintptr_t)(n-1)) == 0); } while (0)
 #define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 #else
 #define ALIGNED(n)
+#define ASSERT_ALIGNED(p,n)
 #define ASSUME(cond)
 #endif
 
 extern const char *rgszAlgorithmNames[];
 int processorCount(void);
 
-typedef float ALIGNED(64) afloat;
+typedef float ALIGNED(NBODY_ALIGNMENT) afloat;
 
 #ifdef __cplusplus
 }

@@ -60,6 +60,12 @@ ComputeGravitation_SIMD(
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
 
+    ASSERT_ALIGNED(mass, NBODY_ALIGNMENT);
+    for ( size_t i = 0; i < 3; i++ ) {
+        ASSERT_ALIGNED(pos[i], NBODY_ALIGNMENT);
+        ASSERT_ALIGNED(force[i], NBODY_ALIGNMENT);
+    }
+
     #pragma omp parallel for schedule(guided, 16)
     for (size_t i = 0; i < N; i++)
     {
