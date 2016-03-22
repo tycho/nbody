@@ -48,8 +48,8 @@
 
 float
 ComputeGravitation_AOS_tiled(
-    float * restrict force,
-    float * restrict posMass,
+    afloat * restrict force,
+    afloat * restrict posMass,
     float softeningSquared,
     size_t N
 )

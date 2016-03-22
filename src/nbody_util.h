@@ -39,13 +39,17 @@ extern "C" {
 #endif
 
 #ifdef __GNUC__
+#define ALIGNED(n) __attribute__((aligned(n)))
 #define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 #else
+#define ALIGNED(n)
 #define ASSUME(cond)
 #endif
 
 extern const char *rgszAlgorithmNames[];
 int processorCount(void);
+
+typedef float ALIGNED(64) afloat;
 
 #ifdef __cplusplus
 }

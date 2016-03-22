@@ -48,9 +48,9 @@
 
 float
 ComputeGravitation_SOA_tiled(
-    float ** restrict force,
-    float ** restrict pos,
-    float *  restrict mass,
+    afloat ** restrict force,
+    afloat ** restrict pos,
+    afloat *  restrict mass,
     float softeningSquared,
     size_t N
 )
