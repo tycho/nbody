@@ -132,7 +132,7 @@ static inline void seedRandom( unsigned int seed )
     srandom(seed);
 }
 
-static inline float nbodyRandom( float randMin, float randMax )
+static inline ufloat nbodyRandom( float randMin, float randMax )
 {
     float result;
     uint32_t v;
@@ -143,24 +143,24 @@ static inline float nbodyRandom( float randMin, float randMax )
 #else
     v = random();
 #endif
-    result = (float)v / (float)RAND_MAX;
+    result = (ufloat)v / (ufloat)RAND_MAX;
     return ((1.0f - result) * randMin + result * randMax);
 }
 
 static inline void
-randomVector( float v[3] )
+randomVector( afloat *v, size_t offset )
 {
-    v[0] = nbodyRandom( 3.0f, 50.0f );
-    v[1] = nbodyRandom( 3.0f, 50.0f );
-    v[2] = nbodyRandom( 3.0f, 50.0f );
+    v[offset+0] = nbodyRandom( 3.0f, 50.0f );
+    v[offset+1] = nbodyRandom( 3.0f, 50.0f );
+    v[offset+2] = nbodyRandom( 3.0f, 50.0f );
 }
 
 static void
-randomUnitBodies( float *pos, float *vel, size_t N )
+randomUnitBodies( afloat *pos, afloat *vel, size_t N )
 {
     for ( size_t i = 0; i < N; i++ ) {
-        randomVector( &pos[4*i] );
-        randomVector( &vel[4*i] );
+        randomVector( pos, 4 * i );
+        randomVector( vel, 4 * i );
         pos[4*i+3] = nbodyRandom( 1.0f, 1000.0f );  // unit mass
         vel[4*i+3] = 1.0f;
     }
@@ -176,30 +176,30 @@ relError( float a, float b )
 static int g_bCUDAPresent;
 static int g_bSM30Present;
 
-float *g_hostAOS_PosMass;
-float *g_hostAOS_VelInvMass;
-float *g_hostAOS_Force;
+afloat *g_hostAOS_PosMass;
+afloat *g_hostAOS_VelInvMass;
+afloat *g_hostAOS_Force;
 
 #ifndef NO_CUDA
-static float *g_dptrAOS_PosMass;
-static float *g_dptrAOS_Force;
+static afloat *g_dptrAOS_PosMass;
+static afloat *g_dptrAOS_Force;
 #endif
 
 // Buffer to hold the golden version of the forces, used for comparison
 // Along with timing results, we report the maximum relative error with
 // respect to this array.
-static float *g_hostAOS_Force_Golden;
+static afloat *g_hostAOS_Force_Golden;
 
-float *g_hostSOA_Pos[3];
-float *g_hostSOA_Force[3];
-float *g_hostSOA_Mass;
-float *g_hostSOA_InvMass;
+afloat *g_hostSOA_Pos[3];
+afloat *g_hostSOA_Force[3];
+afloat *g_hostSOA_Mass;
+afloat *g_hostSOA_InvMass;
 
 static size_t g_N;
 
-static float g_softening = 0.1f;
-static float g_damping = 0.995f;
-static float g_dt = 0.016f;
+static afloat g_softening = 0.1f;
+static afloat g_damping = 0.995f;
+static afloat g_dt = 0.016f;
 
 #include "nbody_CPU_AOS.h"
 #include "nbody_CPU_AOS_tiled.h"
@@ -219,16 +219,16 @@ static float g_dt = 0.016f;
 #endif
 
 static void
-integrateGravitation_AOS( float *ppos, float *pvel, float *pforce, float dt, float damping, size_t N )
+integrateGravitation_AOS( afloat *ppos, afloat *pvel, afloat *pforce, afloat dt, afloat damping, size_t N )
 {
     for ( size_t i = 0; i < N; i++ ) {
         const int index = 4*i;
 
-        float pos[3], vel[3], force[3];
+        ufloat pos[3], vel[3], force[3];
         pos[0] = ppos[index+0];
         pos[1] = ppos[index+1];
         pos[2] = ppos[index+2];
-        float invMass = pvel[index+3];
+        ufloat invMass = pvel[index+3];
 
         vel[0] = pvel[index+0];
         vel[1] = pvel[index+1];
@@ -314,10 +314,10 @@ ComputeGravitation(
     }
 
     /* Reset the force values so we know the function tested did work. */
-    memset(g_hostAOS_Force,    0, g_N * sizeof(float) * 4);
-    memset(g_hostSOA_Force[0], 0, g_N * sizeof(float));
-    memset(g_hostSOA_Force[1], 0, g_N * sizeof(float));
-    memset(g_hostSOA_Force[2], 0, g_N * sizeof(float));
+    memset(g_hostAOS_Force,    0, g_N * sizeof(afloat) * 4);
+    memset(g_hostSOA_Force[0], 0, g_N * sizeof(afloat));
+    memset(g_hostSOA_Force[1], 0, g_N * sizeof(afloat));
+    memset(g_hostSOA_Force[2], 0, g_N * sizeof(afloat));
 
 #ifndef NO_CUDA
     // CPU->GPU copies in case we are measuring GPU performance
@@ -325,7 +325,7 @@ ComputeGravitation(
         CUDART_CHECK( cudaMemcpyAsync(
             g_dptrAOS_PosMass,
             g_hostAOS_PosMass,
-            4*g_N*sizeof(float),
+            4*g_N*sizeof(afloat),
             cudaMemcpyHostToDevice ) );
     }
 #endif
@@ -381,7 +381,7 @@ ComputeGravitation(
                 g_dptrAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(float), cudaMemcpyDeviceToHost ) );
+            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
             break;
             /*
         case GPU_AOS_tiled:
@@ -390,7 +390,7 @@ ComputeGravitation(
                 g_dptrAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(float), cudaMemcpyDeviceToHost ) );
+            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
             break;
         case GPU_AOS_tiled_const:
             *ms = ComputeGravitation_GPU_AOS_tiled_const(
@@ -398,50 +398,50 @@ ComputeGravitation(
                 g_dptrAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(float), cudaMemcpyDeviceToHost ) );
+            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
             break;
             */
 #if 0
 // commented out - too slow even on SM 3.0
         case GPU_Atomic:
-            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*sizeof(float) ) );
+            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*sizeof(afloat) ) );
             *ms = ComputeGravitation_GPU_Atomic(
                 g_dptrAOS_Force,
                 g_dptrAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(float), cudaMemcpyDeviceToHost ) );
+            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
             break;
 #endif
         case GPU_Shared:
-            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(float) ) );
+            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(afloat) ) );
             *ms = ComputeGravitation_GPU_Shared(
                 g_dptrAOS_Force,
                 g_dptrAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(float), cudaMemcpyDeviceToHost ) );
+            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
             break;
         case GPU_Const:
-            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(float) ) );
+            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(afloat) ) );
             *ms = ComputeNBodyGravitation_GPU_AOS_const(
                 g_dptrAOS_Force,
                 g_dptrAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(float), cudaMemcpyDeviceToHost ) );
+            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
             break;
         case GPU_Shuffle:
-            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(float) ) );
+            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(afloat) ) );
             *ms = ComputeGravitation_GPU_Shuffle(
                 g_dptrAOS_Force,
                 g_dptrAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(float), cudaMemcpyDeviceToHost ) );
+            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
             break;
         case multiGPU:
-            memset( g_hostAOS_Force, 0, 4*g_N*sizeof(float) );
+            memset( g_hostAOS_Force, 0, 4*g_N*sizeof(afloat) );
             *ms = ComputeGravitation_multiGPU(
                 g_hostAOS_Force,
                 g_hostAOS_PosMass,
@@ -596,52 +596,52 @@ allocArrays(void)
     cudaError_t status;
 
     if ( g_bCUDAPresent ) {
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_PosMass, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
+        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_PosMass, 4*g_N*sizeof(afloat), cudaHostAllocPortable|cudaHostAllocMapped ) );
         for ( size_t i = 0; i < 3; i++ ) {
-            CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Pos[i], g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
-            CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Force[i], g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
+            CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Pos[i], g_N*sizeof(afloat), cudaHostAllocPortable|cudaHostAllocMapped ) );
+            CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Force[i], g_N*sizeof(afloat), cudaHostAllocPortable|cudaHostAllocMapped ) );
         }
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_Force, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_Force_Golden, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_VelInvMass, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Mass, g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_InvMass, g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
+        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_Force, 4*g_N*sizeof(afloat), cudaHostAllocPortable|cudaHostAllocMapped ) );
+        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_Force_Golden, 4*g_N*sizeof(afloat), cudaHostAllocPortable|cudaHostAllocMapped ) );
+        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_VelInvMass, 4*g_N*sizeof(afloat), cudaHostAllocPortable|cudaHostAllocMapped ) );
+        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Mass, g_N*sizeof(afloat), cudaHostAllocPortable|cudaHostAllocMapped ) );
+        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_InvMass, g_N*sizeof(afloat), cudaHostAllocPortable|cudaHostAllocMapped ) );
 
-        CUDART_CHECK( cudaMalloc( &g_dptrAOS_PosMass, 4*g_N*sizeof(float) ) );
-        CUDART_CHECK( cudaMalloc( (void **) &g_dptrAOS_Force, 4*g_N*sizeof(float) ) );
+        CUDART_CHECK( cudaMalloc( &g_dptrAOS_PosMass, 4*g_N*sizeof(afloat) ) );
+        CUDART_CHECK( cudaMalloc( (void **) &g_dptrAOS_Force, 4*g_N*sizeof(afloat) ) );
     } else
 #endif
     {
-        g_hostAOS_PosMass = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * 4 * g_N);
+        g_hostAOS_PosMass = (afloat *)alignedAlloc(NBODY_ALIGNMENT, sizeof(afloat) * 4 * g_N);
         if (!g_hostAOS_PosMass)
             goto Error;
 
         for ( size_t i = 0; i < 3; i++ ) {
-            g_hostSOA_Pos[i] = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
+            g_hostSOA_Pos[i] = (afloat *)alignedAlloc(NBODY_ALIGNMENT, sizeof(afloat) * g_N);
             if (!g_hostSOA_Pos[i])
                 goto Error;
 
-            g_hostSOA_Force[i] = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
+            g_hostSOA_Force[i] = (afloat *)alignedAlloc(NBODY_ALIGNMENT, sizeof(afloat) * g_N);
             if (!g_hostSOA_Force[i])
                 goto Error;
         }
-        g_hostSOA_Mass = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
+        g_hostSOA_Mass = (afloat *)alignedAlloc(NBODY_ALIGNMENT, sizeof(afloat) * g_N);
         if (!g_hostSOA_Mass)
             goto Error;
 
-        g_hostAOS_Force = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * 4 * g_N);
+        g_hostAOS_Force = (afloat *)alignedAlloc(NBODY_ALIGNMENT, sizeof(afloat) * 4 * g_N);
         if (!g_hostAOS_Force)
             goto Error;
 
-        g_hostAOS_Force_Golden = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * 4 * g_N);
+        g_hostAOS_Force_Golden = (afloat *)alignedAlloc(NBODY_ALIGNMENT, sizeof(afloat) * 4 * g_N);
         if (!g_hostAOS_Force_Golden)
             goto Error;
 
-        g_hostAOS_VelInvMass = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * 4 * g_N);
+        g_hostAOS_VelInvMass = (afloat *)alignedAlloc(NBODY_ALIGNMENT, sizeof(afloat) * 4 * g_N);
         if (!g_hostAOS_VelInvMass)
             goto Error;
 
-        g_hostSOA_InvMass = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
+        g_hostSOA_InvMass = (afloat *)alignedAlloc(NBODY_ALIGNMENT, sizeof(afloat) * g_N);
         if (!g_hostSOA_InvMass)
             goto Error;
     }

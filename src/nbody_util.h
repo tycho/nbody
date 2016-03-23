@@ -42,7 +42,7 @@ extern "C" {
 
 #define NBODY_ALIGNMENT 64
 
-#ifdef __GNUC__
+#if defined(__GNUC__)
 #define ALIGNED(n) __attribute__((aligned(n)))
 #define ASSERT_ALIGNED(p,n) do { assert(((uintptr_t)(p) & (uintptr_t)(n-1)) == 0); } while (0)
 #define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
@@ -55,7 +55,11 @@ extern "C" {
 extern const char *rgszAlgorithmNames[];
 int processorCount(void);
 
-typedef float ALIGNED(NBODY_ALIGNMENT) afloat;
+// "unaligned" float, or more accurately a float with no alignment guarantees.
+typedef float ufloat;
+
+// aligned float
+typedef ufloat ALIGNED(NBODY_ALIGNMENT) afloat;
 
 #ifdef __cplusplus
 }

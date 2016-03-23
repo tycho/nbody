@@ -33,25 +33,26 @@
  *
  */
 
-#ifndef __CUDAHANDBOOK_NBODY_H__
-#define __CUDAHANDBOOK_NBODY_H__
+#ifndef __NBODY_H__
+#define __NBODY_H__
 
+#include "nbody_util.h"
 #include "nbody_CPU_SIMD.h"
 
-extern float *g_hostAOS_PosMass;
-extern float *g_hostAOS_VelInvMass;
-extern float *g_hostAOS_Force;
+extern afloat *g_hostAOS_PosMass;
+extern afloat *g_hostAOS_VelInvMass;
+extern afloat *g_hostAOS_Force;
 
-extern float *g_hostSOA_Pos[3];
-extern float *g_hostSOA_Force[3];
-extern float *g_hostSOA_Mass;
-extern float *g_hostSOA_InvMass;
+extern afloat *g_hostSOA_Pos[3];
+extern afloat *g_hostSOA_Force[3];
+extern afloat *g_hostSOA_Mass;
+extern afloat *g_hostSOA_InvMass;
 
 extern int g_numCPUCores;
 extern int g_numGPUs;
 
-extern float ComputeGravitation_GPU_Shared( float *force, float const * const posMass, float softeningSquared, size_t N );
-extern float ComputeGravitation_multiGPU  ( float *force, float const * const posMass, float softeningSquared, size_t N );
+extern float ComputeGravitation_GPU_Shared( afloat *force, afloat const * const posMass, float softeningSquared, size_t N );
+extern float ComputeGravitation_multiGPU  ( afloat *force, afloat const * const posMass, float softeningSquared, size_t N );
 
 #ifdef HAVE_SIMD
 #  ifdef _MSC_VER
