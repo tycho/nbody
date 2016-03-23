@@ -46,6 +46,12 @@ line options:
 $ make NO_CUDA=1 NO_OPENMP=1
 ```
 
+The intrinsics-based implementation can also be disabled with:
+
+```
+$ make NO_SIMD=1
+```
+
 You can select your compiler by specifying it on the command line as well:
 
 ```
