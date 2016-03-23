@@ -1,0 +1,65 @@
+#!/bin/bash
+
+COMPILERS=(
+	gcc
+	clang
+	icc
+)
+
+ARGS="$@"
+if [[ -z "$ARGS" ]]; then
+	ARGS=(--bodies 16 --cycle-after 5 --iterations 1)
+fi
+
+for COMPILER in ${COMPILERS[@]}; do
+	NBODY=nbody.${COMPILER##*/}
+
+	if [[ -f ${NBODY} ]]; then
+		continue
+	fi
+
+	echo
+	echo "Building with ${COMPILER}..."
+
+	make CC=${COMPILER} NO_CUDA=1 info-flags info-compiler | fmt -80 -t 2>&1 > ${NBODY}.buildinfo
+	make CC=${COMPILER} NO_CUDA=1 -j8
+	mv nbody ${NBODY}
+	BUILT_SOMETHING=1
+done
+
+if [[ $BUILT_SOMETHING ]]; then
+	echo
+	echo "============================================"
+fi
+echo
+
+make info-cpu info-os
+
+for COMPILER in ${COMPILERS[@]}; do
+	NBODY=nbody.${COMPILER##*/}
+
+	if [[ ! -f ${NBODY} ]]; then
+		continue
+	fi
+
+	echo
+	echo "============================================"
+	echo
+	cat ${NBODY}.buildinfo
+
+	if [[ -z "$KMP_AFFINITY" ]]; then
+		# If you have the LLVM OpenMP Runtime linked in, this will help with
+		# thread placement and scheduling.
+		export KMP_AFFINITY=scatter
+	fi
+
+	# Do a quick warm-up to wake up the CPUs.
+	./${NBODY} --bodies 32 --iterations 2 &>/dev/null
+
+	# Now run with the requested arguments.
+	./${NBODY} "$@"
+
+	echo
+done
+
+exit 0
