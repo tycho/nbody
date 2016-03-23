@@ -22,7 +22,7 @@ before_install:
   - if [[ -n ${CUDA} ]]; then travis_retry sudo apt-get install -y cuda-drivers cuda-core-${CUDA_APT} cuda-cudart-dev-${CUDA_APT}; fi
   - if [[ -n ${CUDA} ]]; then travis_retry sudo apt-get clean; fi
   - if [[ -n ${CUDA} ]]; then export CUDA_HOME=/usr/local/cuda-${CUDA%%-*}; fi
-  - if [[ -n ${CUDA} ]]; then export LD_LIBRARY_PATH=${HOME}/lib64:${LD_LIBRARY_PATH}; fi
+  - if [[ -n ${CUDA} ]]; then export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}; fi
   - if [[ -n ${CUDA} ]]; then export PATH=${CUDA_HOME}/bin:${PATH}; fi
 
 script:
