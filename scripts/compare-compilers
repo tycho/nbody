@@ -6,9 +6,9 @@ COMPILERS=(
 	icc
 )
 
-ARGS="$@"
-if [[ -z "$ARGS" ]]; then
-	ARGS=(--bodies 16 --cycle-after 5 --iterations 1)
+ARGS=( $@ )
+if [[ ${#ARGS[@]} -eq 0 ]]; then
+	ARGS=(--bodies 32 --cycle-after 3 --iterations 1)
 fi
 
 for COMPILER in ${COMPILERS[@]}; do
@@ -57,7 +57,7 @@ for COMPILER in ${COMPILERS[@]}; do
 	./${NBODY} --bodies 32 --iterations 2 &>/dev/null
 
 	# Now run with the requested arguments.
-	./${NBODY} "$@"
+	./${NBODY} ${ARGS[@]}
 
 	echo
 done
