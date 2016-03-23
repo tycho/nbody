@@ -59,7 +59,7 @@ ComputeGravitation_AOS(
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
 
-    #pragma omp parallel for simd schedule(guided, 16)
+    #pragma omp parallel for schedule(guided, 16)
     #pragma vector aligned
     #pragma ivdep
     for ( size_t i = 0; i < N; i++ )
