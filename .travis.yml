@@ -28,3 +28,10 @@ before_install:
 script:
   - make CC=${CC} NO_OPENMP=${NO_OPENMP} NO_CUDA=${NO_CUDA}
   - ./nbody --bodies 8 --cycle-after 3 --iterations 1
+
+notifications:
+  pushover:
+    api_key:
+      secure: gsUWHn4C8WfV30HUnfUQFYSs9/prNNWI4WnuaHK7g33AnY+XqPM4h0sKfU9Wwlt0Uu13f9LNfIgk9nPnT9UxQoLzkG3uuVNWEQ3r62B76LzeBF9xprxMj/Ju9NP9SPqGnMAotKlAoNgQgrEf2B1hQV5RrLgsu8zdaatdDwLCoiU=
+    users:
+      secure: P09YDEei2k8LG9eRM/yW075iv9xNhxLpRLVzy8YP8kYhfDmhIFbc4eiYMCCKVxvUm654uWgmBfuQzGYTme+/YIs5D6itEwAu/It2d5TzwPkF743g90anz88bCUWZvfoj29Yd2OmtjJCpad6j6oq00nPqR5Oe/nXI7GfGS0V4p6U=
