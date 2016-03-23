@@ -9,6 +9,12 @@ DEPS += libtime/libtime.a
 
 all: $(BIN)
 
+info:
+	$(QUIET)$(MAKE) -C src $@
+
+info%:
+	$(QUIET)$(MAKE) -C src $@
+
 $(BIN): src/$(BIN)
 	$(QUIET)$(CP) $< $@
 

@@ -168,9 +168,36 @@ DEPS := $(OBJECTS:%.o=%.d)
 VALID_DEPS := $(shell ls $(DEPS) 2>/dev/null)
 -include $(VALID_DEPS)
 
+info: info-flags info-compiler info-os info-cpu
+
+info-flags:
+	$(QUIET)echo "CC      = $(CC)"
+	$(QUIET)echo "LINK    = $(LINK)"
+	$(QUIET)echo "CFLAGS  = $(CFLAGS)" | fmt -t -w 76
+	$(QUIET)echo "LDFLAGS = $(LDFLAGS)" | fmt -t -w 76
+	$(QUIET)echo
+
+info-compiler:
+	$(QUIET)echo "Compiler version: $(shell $(CC) --version 2>&1 | head -n 1)"
+ifneq ($(VERBOSE),)
+	$(QUIET)echo "Compiler invocation details:"
+	$(QUIET)gcc -### -o /dev/null -xc /dev/null 2>&1 | fmt -t -w 72
+endif
+	$(QUIET)echo
+
+info-os:
+	$(QUIET)echo "OS version: $(shell uname -m -s -r)"
+
+info-cpu:
+	$(QUIET)echo "CPU information:"
+	$(QUIET)lscpu | fmt -t -w 72 | sed 's/^/    /'
+	$(QUIET)echo
+
 clean:
 	rm -f $(BIN)
 	rm -f $(OBJECTS)
+
+.PHONY: clean info info-flags info-compiler info-os info-cpu
 
 ifndef NO_CUDA
 %.o: %.cu .cflags
