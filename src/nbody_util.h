@@ -49,7 +49,11 @@ extern "C" {
 #  else
 #    define ASSERT_ALIGNED(p,n)
 #  endif
-#  define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
+#  ifdef __clang__
+#    define ASSUME(cond) __builtin_assume(cond)
+#  else
+#    define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
+#  endif
 #else
 #  define ALIGNED(n)
 #  define ASSERT_ALIGNED(p,n)
