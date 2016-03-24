@@ -77,7 +77,6 @@ ComputeGravitation_SOA_tiled(
         int tileEnd = tileStart + BODIES_PER_TILE;
 
         #pragma omp for schedule(guided)
-        #pragma unroll_and_jam(4)
         for ( size_t i = 0; i < N; i++ )
         {
             float acx, acy, acz;
