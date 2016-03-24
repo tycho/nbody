@@ -46,6 +46,8 @@ for COMPILER in ${COMPILERS[@]}; do
 	echo "============================================"
 	echo
 	cat ${NBODY}.buildinfo
+	echo "Binary size: $(wc -c ${NBODY} | awk '{ print $ 1 }') bytes"
+	echo
 
 	if [[ -z "$KMP_AFFINITY" ]]; then
 		# If you have the LLVM OpenMP Runtime linked in, this will help with
