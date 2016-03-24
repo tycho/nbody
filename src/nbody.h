@@ -51,8 +51,29 @@ extern afloat *g_hostSOA_InvMass;
 extern int g_numCPUCores;
 extern int g_numGPUs;
 
-extern float ComputeGravitation_GPU_Shared( afloat *force, afloat const * const posMass, float softeningSquared, size_t N );
-extern float ComputeGravitation_multiGPU  ( afloat *force, afloat const * const posMass, float softeningSquared, size_t N );
+extern float ComputeGravitation_GPU_Shared( afloat *force, afloat *posMass, float softeningSquared, size_t N );
+extern float ComputeGravitation_multiGPU  ( afloat *force, afloat *posMass, float softeningSquared, size_t N );
+
+typedef enum {
+    ALGORITHM_NONE,
+    ALGORITHM_SOA,
+    ALGORITHM_AOS,
+    ALGORITHM_AOS_GPU,
+} algorithm_t;
+
+// There are two different function prototypes for ComputeGravitation,
+// depending on whether the algorithm uses the SOA or AOS structures.
+typedef float (*pfnComputeGravitation_AOS_t)( afloat * restrict force, afloat * restrict posMass, float softeningSquared, size_t N);
+typedef float (*pfnComputeGravitation_SOA_t)( afloat ** restrict force, afloat ** restrict pos, afloat * restrict mass, float softeningSquared, size_t N);
+
+typedef struct _algorithm_def_t {
+    const char *name;
+    algorithm_t type;
+    union {
+        pfnComputeGravitation_AOS_t aos;
+        pfnComputeGravitation_SOA_t soa;
+    };
+} algorithm_def_t, *palgorithm_def_t;
 
 #ifdef HAVE_SIMD
 #  ifdef _MSC_VER

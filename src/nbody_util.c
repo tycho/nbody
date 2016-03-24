@@ -40,10 +40,14 @@
  *
  */
 
+#include <stdint.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#ifndef _WIN32
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <malloc.h>
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
@@ -52,35 +56,6 @@
 #endif
 
 #include "nbody_util.h"
-
-const char *rgszAlgorithmNames[] = {
-	"CPU_AOS",
-	"CPU_AOS_tiled",
-	"CPU_SOA",
-	"CPU_SOA_tiled",
-#ifdef HAVE_SIMD
-#if defined(__ALTIVEC__)
-	"AltiVec intrin",
-#elif defined(__ARM_NEON__)
-	"NEON intrin",
-#elif defined(__AVX__)
-	"AVX intrin",
-#elif defined(__SSE__)
-	"SSE intrin",
-#else
-#error "Define a name for this platform's SIMD"
-#endif
-#endif
-	"GPU_AOS",
-	"GPU_Shared",
-	"GPU_Const",
-	"multiGPU",
-	// SM 3.0 only
-	"GPU_Shuffle",
-	"GPU_AOS_tiled",
-	"GPU_AOS_tiled_const",
-	"GPU_Atomic",
-};
 
 int processorCount(void)
 {
@@ -96,6 +71,61 @@ int processorCount(void)
     return k;
 #else
     return 1;
+#endif
+}
+
+void seedRandom(unsigned int seed)
+{
+    srandom(seed);
+}
+
+float nbodyRandom(float randMin, float randMax)
+{
+    float result;
+    uint32_t v;
+#if defined(HIGH_ENTROPY) && defined __RDRND__
+    int i = _rdrand32_step(&v);
+    if (!i)
+        abort();
+#else
+    v = random();
+#endif
+    result = (float)v / (float)RAND_MAX;
+    return ((1.0f - result) * randMin + result * randMax);
+}
+
+static inline void randomVector(float *v, size_t offset)
+{
+    v[offset+0] = nbodyRandom( 3.0f, 50.0f );
+    v[offset+1] = nbodyRandom( 3.0f, 50.0f );
+    v[offset+2] = nbodyRandom( 3.0f, 50.0f );
+}
+
+void randomUnitBodies(float *pos, float *vel, size_t N)
+{
+    for ( size_t i = 0; i < N; i++ ) {
+        randomVector( pos, 4 * i );
+        randomVector( vel, 4 * i );
+        pos[4*i+3] = nbodyRandom( 1.0f, 1000.0f );  // unit mass
+        vel[4*i+3] = 1.0f;
+    }
+}
+
+void *alignedAlloc(size_t alignment, size_t size)
+{
+#ifdef _WIN32
+    return VirtualAlloc(0, size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+#else
+    return memalign(alignment, size);
+#endif
+}
+
+void alignedFree(void *p)
+{
+#ifdef _WIN32
+    VirtualFree(p, 0, MEM_RELEASE);
+#else
+    free(p);
 #endif
 }
 

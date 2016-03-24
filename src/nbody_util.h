@@ -35,6 +35,7 @@
 #define __included_nbody_util_h
 
 #include <assert.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,8 +70,15 @@ extern "C" {
 #  define ASSUME(cond)
 #endif
 
-extern const char *rgszAlgorithmNames[];
 int processorCount(void);
+
+void seedRandom(unsigned int seed);
+float nbodyRandom(float randMin, float randMax);
+void randomUnitBodies(float *pos, float *vel, size_t N);
+
+void *alignedAlloc(size_t alignment, size_t size);
+void alignedFree(void *p);
+
 #ifndef _WIN32
 int kbhit(void);
 int getch(void);

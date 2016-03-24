@@ -42,7 +42,7 @@
 inline __device__ void
 ComputeNBodyGravitation_Shared_multiGPU(
     float *force,
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t base,
     size_t n,

@@ -40,7 +40,7 @@
 __global__ void
 ComputeNBodyGravitation_Shared(
     float *force,
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t N )
 {
@@ -82,7 +82,7 @@ ComputeNBodyGravitation_Shared(
 float
 ComputeGravitation_GPU_Shared(
     float *force,
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t N )
 {

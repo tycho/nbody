@@ -36,7 +36,7 @@
 __global__ void
 ComputeNBodyGravitation_Shuffle(
     float *force,
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t N )
 {
@@ -81,7 +81,7 @@ ComputeNBodyGravitation_Shuffle(
 }
 
 float
-ComputeGravitation_GPU_Shuffle( float *force, float const * const posMass, float softeningSquared, size_t N )
+ComputeGravitation_GPU_Shuffle( float *force, float *posMass, float softeningSquared, size_t N )
 {
     cudaError_t status;
     cudaEvent_t evStart = 0, evStop = 0;

@@ -7,10 +7,6 @@
  * parallelizable, with lots of FLOPS per unit of external
  * memory bandwidth required.
  *
- * Requires: No minimum SM requirement.  If SM 3.x is not available,
- * this application quietly replaces the shuffle and fast-atomic
- * implementations with the shared memory implementation.
- *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
  * All rights reserved.
  *
@@ -62,63 +58,62 @@
 #include "nbody.h"
 #include "nbody_util.h"
 
-enum nbodyAlgorithm_enum {
-    CPU_AOS = 0,    /* This is the golden implementation */
-    CPU_AOS_tiled,
-    CPU_SOA,
-    CPU_SOA_tiled,
+#include "nbody_CPU_AOS.h"
+#include "nbody_CPU_AOS_tiled.h"
+#include "nbody_CPU_SOA.h"
+#include "nbody_CPU_SOA_tiled.h"
+#include "nbody_CPU_SIMD.h"
+
+#ifndef NO_CUDA
+#include "bodybodyInteraction.cuh"
+#include "nbody_GPU_AOS.cuh"
+#include "nbody_GPU_AOS_const.cuh"
+//#include "nbody_GPU_AOS_tiled.cuh"
+//#include "nbody_GPU_AOS_tiled_const.cuh"
+//#include "nbody_GPU_SOA_tiled.cuh"
+#include "nbody_GPU_Shuffle.cuh"
+//#include "nbody_GPU_Atomic.cuh"
+#endif
+
 #ifdef HAVE_SIMD
-    CPU_SIMD,
-#endif
-    GPU_AOS,
-    GPU_Shared,
-    GPU_Const,
-    multiGPU,
-    // SM 3.0 only
-    GPU_Shuffle,
-    GPU_AOS_tiled,
-    GPU_AOS_tiled_const,
-    GPU_Atomic,
-};
-
-static inline void seedRandom( unsigned int seed )
-{
-    srandom(seed);
-}
-
-static inline ufloat nbodyRandom( float randMin, float randMax )
-{
-    float result;
-    uint32_t v;
-#if defined(HIGH_ENTROPY) && defined __RDRND__
-    int i = _rdrand32_step(&v);
-    if (!i)
-        abort();
+#if defined(__CUDA_ARCH__)
+// The platform-specific ISA macros aren't defined properly under CUDA, so we
+// wouldn't get the right name. Let the algorithm itself declare its name.
+extern const char *SIMD_ALGORITHM_NAME;
+#elif defined(__ALTIVEC__)
+#define SIMD_ALGORITHM_NAME "AltiVec intrin"
+#elif defined(__ARM_NEON__)
+#define SIMD_ALGORITHM_NAME "NEON intrin"
+#elif defined(__AVX__)
+#define SIMD_ALGORITHM_NAME "AVX intrin"
+#elif defined(__SSE__)
+#define SIMD_ALGORITHM_NAME "SSE intrin"
 #else
-    v = random();
+#error "Define a name for this platform's SIMD."
 #endif
-    result = (ufloat)v / (ufloat)RAND_MAX;
-    return ((1.0f - result) * randMin + result * randMax);
-}
+#endif
 
-static inline void
-randomVector( afloat *v, size_t offset )
-{
-    v[offset+0] = nbodyRandom( 3.0f, 50.0f );
-    v[offset+1] = nbodyRandom( 3.0f, 50.0f );
-    v[offset+2] = nbodyRandom( 3.0f, 50.0f );
-}
-
-static void
-randomUnitBodies( afloat *pos, afloat *vel, size_t N )
-{
-    for ( size_t i = 0; i < N; i++ ) {
-        randomVector( pos, 4 * i );
-        randomVector( vel, 4 * i );
-        pos[4*i+3] = nbodyRandom( 1.0f, 1000.0f );  // unit mass
-        vel[4*i+3] = 1.0f;
-    }
-}
+static const algorithm_def_t s_algorithms[] = {
+	{ "CPU_SOA",             ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA                 } },
+	{ "CPU_SOA_tiled",       ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA_tiled           } },
+#ifdef HAVE_SIMD
+	{ SIMD_ALGORITHM_NAME,   ALGORITHM_SOA,      { .soa = ComputeGravitation_SIMD                } },
+#endif
+	{ "CPU_AOS",             ALGORITHM_AOS,      { .aos = ComputeGravitation_AOS                 } },
+	{ "CPU_AOS_tiled",       ALGORITHM_AOS,      { .aos = ComputeGravitation_AOS_tiled           } },
+#ifndef NO_CUDA
+	{ "GPU_AOS",             ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS             } },
+	{ "GPU_Shared",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shared          } },
+	{ "GPU_Const",           ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_const       } },
+//	{ "MultiGPU",            ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_multiGPU            } },
+	{ "GPU_Shuffle",         ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shuffle         } },
+//	{ "GPU_SOA_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_SOA_tiled       } },
+//	{ "GPU_AOS_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_tiled       } },
+//	{ "GPU_AOS_tiled_const", ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_tiled_const } },
+//	{ "GPU_Atomic",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Atomic          } },
+#endif
+	{ 0 },
+};
 
 static float
 relError( float a, float b )
@@ -128,7 +123,6 @@ relError( float a, float b )
 }
 
 static int g_bCUDAPresent;
-static int g_bSM30Present;
 
 afloat *g_hostAOS_PosMass;
 afloat *g_hostAOS_VelInvMass;
@@ -154,23 +148,6 @@ static size_t g_N;
 static afloat g_softening = 0.1f;
 static afloat g_damping = 0.995f;
 static afloat g_dt = 0.016f;
-
-#include "nbody_CPU_AOS.h"
-#include "nbody_CPU_AOS_tiled.h"
-#include "nbody_CPU_SOA.h"
-#include "nbody_CPU_SOA_tiled.h"
-#include "nbody_CPU_SIMD.h"
-
-#ifndef NO_CUDA
-#include "bodybodyInteraction.cuh"
-#include "nbody_GPU_AOS.cuh"
-#include "nbody_GPU_AOS_const.cuh"
-//#include "nbody_GPU_AOS_tiled.cuh"
-//#include "nbody_GPU_AOS_tiled_const.cuh"
-//#include "nbody_GPU_SOA_tiled.cuh"
-#include "nbody_GPU_Shuffle.cuh"
-#include "nbody_GPU_Atomic.cuh"
-#endif
 
 static void
 integrateGravitation_AOS( afloat *ppos, afloat *pvel, afloat *pforce, afloat dt, afloat damping, size_t N )
@@ -217,18 +194,6 @@ integrateGravitation_AOS( afloat *ppos, afloat *pvel, afloat *pforce, afloat dt,
     }
 }
 
-static enum nbodyAlgorithm_enum g_Algorithm;
-
-//
-// g_maxAlgorithm is used to determine when to rotate g_Algorithm back to CPU_AOS
-// If CUDA is present, it depends on SM version
-//
-// The shuffle and tiled implementations are SM 3.0 only.
-//
-// The CPU and GPU algorithms must be contiguous, and the logic in main() to
-// initialize this value must be modified if any new algorithms are added.
-//
-static enum nbodyAlgorithm_enum g_maxAlgorithm;
 static int g_bCrossCheck = 1;
 static int g_bNoCPU = 0;
 
@@ -236,13 +201,16 @@ static int
 ComputeGravitation(
     float *ms,
     float *maxRelError,
-    enum nbodyAlgorithm_enum algorithm,
+    const algorithm_def_t *algorithm,
     int bCrossCheck )
 {
 #ifndef NO_CUDA
     cudaError_t status;
 #endif
     int bSOA = 0;
+
+    if (g_bNoCPU && algorithm->type != ALGORITHM_AOS_GPU)
+        return 1;
 
     // AOS -> SOA data structures in case we are measuring SOA performance
     for ( size_t i = 0; i < g_N; i++ ) {
@@ -253,7 +221,7 @@ ComputeGravitation(
         g_hostSOA_InvMass[i] = 1.0f / g_hostSOA_Mass[i];
     }
 
-    if ( bCrossCheck && algorithm != CPU_SOA ) {
+    if ( bCrossCheck && algorithm != &s_algorithms[0] ) {
         ComputeGravitation_SOA(
                         g_hostSOA_Force,
                         g_hostSOA_Pos,
@@ -273,127 +241,41 @@ ComputeGravitation(
     memset(g_hostSOA_Force[1], 0, g_N * sizeof(afloat));
     memset(g_hostSOA_Force[2], 0, g_N * sizeof(afloat));
 
-#ifndef NO_CUDA
-    // CPU->GPU copies in case we are measuring GPU performance
-    if ( g_bCUDAPresent ) {
-        CUDART_CHECK( cudaMemcpyAsync(
-            g_dptrAOS_PosMass,
-            g_hostAOS_PosMass,
-            4*g_N*sizeof(afloat),
-            cudaMemcpyHostToDevice ) );
-    }
-#endif
-
-    switch ( algorithm ) {
-        case CPU_AOS:
-            *ms = ComputeGravitation_AOS(
+    switch ( algorithm->type ) {
+        case ALGORITHM_SOA:
+            *ms = algorithm->soa(
+                g_hostSOA_Force,
+                g_hostSOA_Pos,
+                g_hostSOA_Mass,
+                g_softening*g_softening,
+                g_N );
+            bSOA = 1;
+            break;
+        case ALGORITHM_AOS:
+            *ms = algorithm->aos(
                 g_hostAOS_Force,
                 g_hostAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
             break;
-        case CPU_AOS_tiled:
-            *ms = ComputeGravitation_AOS_tiled(
-                g_hostAOS_Force,
+#ifndef NO_CUDA
+        case ALGORITHM_AOS_GPU:
+            CUDART_CHECK( cudaMemcpyAsync(
+                g_dptrAOS_PosMass,
                 g_hostAOS_PosMass,
+                4*g_N*sizeof(afloat),
+                cudaMemcpyHostToDevice ) );
+            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(afloat) ) );
+            *ms = algorithm->aos(
+                g_dptrAOS_Force,
+                g_dptrAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
-            break;
-        case CPU_SOA:
-            *ms = ComputeGravitation_SOA(
-                g_hostSOA_Force,
-                g_hostSOA_Pos,
-                g_hostSOA_Mass,
-                g_softening*g_softening,
-                g_N );
-            bSOA = 1;
-            break;
-        case CPU_SOA_tiled:
-            *ms = ComputeGravitation_SOA_tiled(
-                g_hostSOA_Force,
-                g_hostSOA_Pos,
-                g_hostSOA_Mass,
-                g_softening*g_softening,
-                g_N );
-            bSOA = 1;
-            break;
-#ifdef HAVE_SIMD
-        case CPU_SIMD:
-            *ms = ComputeGravitation_SIMD(
-                g_hostSOA_Force,
-                g_hostSOA_Pos,
-                g_hostSOA_Mass,
-                g_softening*g_softening,
-                g_N );
-            bSOA = 1;
+            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
             break;
 #endif
-#ifndef NO_CUDA
-        case GPU_AOS:
-            *ms = ComputeGravitation_GPU_AOS(
-                g_dptrAOS_Force,
-                g_dptrAOS_PosMass,
-                g_softening*g_softening,
-                g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
-            break;
-            /*
-        case GPU_AOS_tiled:
-            *ms = ComputeGravitation_GPU_AOS_tiled(
-                g_dptrAOS_Force,
-                g_dptrAOS_PosMass,
-                g_softening*g_softening,
-                g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
-            break;
-        case GPU_AOS_tiled_const:
-            *ms = ComputeGravitation_GPU_AOS_tiled_const(
-                g_dptrAOS_Force,
-                g_dptrAOS_PosMass,
-                g_softening*g_softening,
-                g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
-            break;
-            */
 #if 0
-// commented out - too slow even on SM 3.0
-        case GPU_Atomic:
-            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*sizeof(afloat) ) );
-            *ms = ComputeGravitation_GPU_Atomic(
-                g_dptrAOS_Force,
-                g_dptrAOS_PosMass,
-                g_softening*g_softening,
-                g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
-            break;
-#endif
-        case GPU_Shared:
-            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(afloat) ) );
-            *ms = ComputeGravitation_GPU_Shared(
-                g_dptrAOS_Force,
-                g_dptrAOS_PosMass,
-                g_softening*g_softening,
-                g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
-            break;
-        case GPU_Const:
-            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(afloat) ) );
-            *ms = ComputeNBodyGravitation_GPU_AOS_const(
-                g_dptrAOS_Force,
-                g_dptrAOS_PosMass,
-                g_softening*g_softening,
-                g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
-            break;
-        case GPU_Shuffle:
-            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(afloat) ) );
-            *ms = ComputeGravitation_GPU_Shuffle(
-                g_dptrAOS_Force,
-                g_dptrAOS_PosMass,
-                g_softening*g_softening,
-                g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
-            break;
+            // HOSTAOS?
         case multiGPU:
             memset( g_hostAOS_Force, 0, 4*g_N*sizeof(afloat) );
             *ms = ComputeGravitation_multiGPU(
@@ -404,7 +286,7 @@ ComputeGravitation(
             break;
 #endif
         default:
-            fprintf(stderr, "Unrecognized algorithm index: %d\n", algorithm);
+            fprintf(stderr, "Unrecognized algorithm index: %d\n", algorithm->type);
             abort();
     }
 
@@ -421,7 +303,7 @@ ComputeGravitation(
     }
 
     *maxRelError = 0.0f;
-    if ( bCrossCheck && algorithm != CPU_SOA ) {
+    if ( bCrossCheck && algorithm != &s_algorithms[0] ) {
         float max = 0.0f;
         for ( size_t i = 0; i < 4*g_N; i++ ) {
             if ((i + 1) % 4 == 0)
@@ -482,26 +364,7 @@ Error:
     return 0;
 }
 
-static void *alignedAlloc(size_t alignment, size_t size)
-{
-#ifdef _WIN32
-    return VirtualAlloc(0, size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-#else
-    return memalign(alignment, size);
-#endif
-}
-
-static void alignedFree(void *p)
-{
-#ifdef _WIN32
-    VirtualFree(p, 0, MEM_RELEASE);
-#else
-    free(p);
-#endif
-}
-
-static int
-freeArrays(void)
+static int freeArrays(void)
 {
 #ifndef NO_CUDA
     cudaError_t status;
@@ -543,8 +406,7 @@ Error:
 #endif
 }
 
-static int
-allocArrays(void)
+static int allocArrays(void)
 {
 #ifndef NO_CUDA
     cudaError_t status;
@@ -618,13 +480,12 @@ static void usage(const char *argv0)
     printf( "                  to the next available algorithm\n" );
 }
 
-int
-main( int argc, char *argv[] )
+int main(int argc, char **argv)
 {
     cudaError_t status;
+
     // kiloparticles
     int kParticles = 16, maxIterations = 0, cycleAfter = 0;
-    static enum nbodyAlgorithm_enum firstAlgorithm;
 
     static const struct option cli_options[] = {
         { "bodies", required_argument, NULL, 'b' },
@@ -727,7 +588,6 @@ main( int argc, char *argv[] )
     if ( g_bCUDAPresent ) {
         struct cudaDeviceProp prop;
         CUDART_CHECK( cudaGetDeviceProperties( &prop, 0 ) );
-        g_bSM30Present = prop.major >= 3;
     }
 
     if ( g_bNoCPU && ! g_bCUDAPresent ) {
@@ -772,17 +632,6 @@ main( int argc, char *argv[] )
         g_bNoCPU ? "disabled" : "enabled",
         processorCount() );
 
-#if defined(HAVE_SIMD)
-    g_maxAlgorithm = CPU_SIMD;
-#else
-    g_maxAlgorithm = CPU_SOA_tiled;
-#endif
-    g_Algorithm = firstAlgorithm = g_bCUDAPresent ? GPU_AOS : CPU_SOA;
-    if ( g_bCUDAPresent || g_bNoCPU ) {
-        // max algorithm is different depending on whether SM 3.0 is present
-        g_maxAlgorithm = g_bSM30Present ? GPU_Shuffle : multiGPU;
-    }
-
     if (allocArrays() != 0)
         return 1;
 
@@ -793,24 +642,30 @@ main( int argc, char *argv[] )
     }
 
     {
+        int algorithm_idx = 0;
         int steps = 0, iterations = 0;
         int bStop = 0;
         while ( ! bStop ) {
             float ms, err;
+            const algorithm_def_t *algorithm = &s_algorithms[algorithm_idx];
 
-            if (!ComputeGravitation(&ms, &err, g_Algorithm, g_bCrossCheck)) {
+            if (!ComputeGravitation(&ms, &err, algorithm, g_bCrossCheck))
+            {
                 double interactionsPerSecond = (double) g_N*g_N*1000.0f / ms,
                        flops = interactionsPerSecond * (3 + 6 + 4 + 1 + 6) * 1e-3;
-                if ( interactionsPerSecond > 1e9 ) {
+
+                if ( interactionsPerSecond > 1e9 )
+                {
                     printf ( "\r%13s: %8.2f ms = %8.3fx10^9 interactions/s (%9.2lf GFLOPS)",
-                        rgszAlgorithmNames[g_Algorithm],
+                        algorithm->name,
                         ms,
                         interactionsPerSecond/1e9,
                         flops * 1e-6 );
                 }
-                else {
+                else
+                {
                     printf ( "\r%13s: %8.2f ms = %8.3fx10^6 interactions/s (%9.2lf GFLOPS)",
-                        rgszAlgorithmNames[g_Algorithm],
+                        algorithm->name,
                         ms,
                         interactionsPerSecond/1e6,
                         flops * 1e-6 );
@@ -826,11 +681,9 @@ main( int argc, char *argv[] )
             steps++;
             if (cycleAfter && steps % cycleAfter == 0) {
 next_algorithm:
-                g_Algorithm = (enum nbodyAlgorithm_enum) (g_Algorithm+1);
-                if ( g_Algorithm > g_maxAlgorithm ) {
-                    g_Algorithm = g_bNoCPU ? GPU_AOS : CPU_AOS;
-                }
-                if ( g_Algorithm == firstAlgorithm) {
+                algorithm_idx++;
+                if ( !s_algorithms[algorithm_idx].name ) {
+                    algorithm_idx = 0;
                     iterations++;
                 }
             } else if (!cycleAfter) {
@@ -843,9 +696,10 @@ next_algorithm:
                 char c = getch();
                 switch ( c ) {
                     case ' ':
-                        g_Algorithm = (enum nbodyAlgorithm_enum) (g_Algorithm+1);
-                        if ( g_Algorithm > g_maxAlgorithm ) {
-                            g_Algorithm = g_bNoCPU ? GPU_AOS : CPU_AOS;
+                        algorithm_idx++;
+                        if ( !s_algorithms[algorithm_idx].name ) {
+                            algorithm_idx = 0;
+                            iterations++;
                         }
                         break;
                     case 'q':

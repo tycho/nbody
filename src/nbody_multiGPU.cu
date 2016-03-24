@@ -50,7 +50,7 @@ const int g_maxGPUs = 32;
 __global__ void
 ComputeNBodyGravitation_multiGPU(
     float *force,
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t base,
     size_t n,
@@ -68,7 +68,7 @@ ComputeNBodyGravitation_multiGPU(
 float
 ComputeGravitation_multiGPU(
     float *force,
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t N
 )

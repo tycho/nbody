@@ -39,7 +39,7 @@ template<size_t nTile>
 __device__ void
 DoDiagonalTile_GPU_SOA(
     float *forceX, float *forceY, float *forceZ,
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t iTile, size_t jTile
 )
@@ -76,7 +76,7 @@ template<size_t nTile>
 __device__ void
 DoNondiagonalTile_GPU_SOA(
     float *forceX, float *forceY, float *forceZ,
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t iTile, size_t jTile
 )
@@ -134,7 +134,7 @@ template<size_t nTile>
 __global__ void
 ComputeNBodyGravitation_GPU_SOA_tiled(
     float *forceX, float *forceY, float *forceZ,
-    float const * const posMass,
+    float *posMass,
     size_t N,
     float softeningSquared )
 {
@@ -157,7 +157,7 @@ template<size_t nTile>
 cudaError_t
 ComputeGravitation_GPU_SOA_tiled(
     float *forces[3],
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t N
 )
@@ -202,7 +202,7 @@ SOAtoAOS_GPU_3( float *out, const float *inX, const float *inY, const float *inZ
 float
 ComputeGravitation_GPU_SOA_tiled(
     float *force,
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t N
 )

@@ -45,6 +45,8 @@
 #include "bodybodyInteraction_SSE.h"
 #include "nbody_CPU_SIMD.h"
 
+const char *SIMD_ALGORITHM_NAME = "SSE intrin";
+
 float
 ComputeGravitation_SIMD(
     afloat ** restrict force,

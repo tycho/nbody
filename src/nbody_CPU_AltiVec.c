@@ -43,6 +43,8 @@
 #include "bodybodyInteraction_AltiVec.h"
 #include "nbody_CPU_SSE.h"
 
+const char *SIMD_ALGORITHM_NAME = "AltiVec intrin";
+
 float
 ComputeGravitation_SIMD(
     afloat ** restrict force,

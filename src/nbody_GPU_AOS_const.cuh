@@ -41,9 +41,9 @@ __constant__ __device__ float4 g_constantBodies[g_bodiesPerPass];
 
 template<typename T>
 __global__ void
-ComputeNBodyGravitation_GPU_AOS_const(
+ComputeGravitation_GPU_AOS_const(
     T *force,
-    T const * const posMass,
+    T *posMass,
     T softeningSquared,
     size_t n,
     size_t N )
@@ -76,9 +76,9 @@ ComputeNBodyGravitation_GPU_AOS_const(
 }
 
 float
-ComputeNBodyGravitation_GPU_AOS_const(
+ComputeGravitation_GPU_AOS_const(
     float *force,
-    float const * const posMass,
+    float *posMass,
     float softeningSquared,
     size_t N
 )
@@ -107,7 +107,7 @@ ComputeNBodyGravitation_GPU_AOS_const(
             0,
             cudaMemcpyDeviceToDevice,
             NULL ) );
-        ComputeNBodyGravitation_GPU_AOS_const<float> <<<300,256>>>(
+        ComputeGravitation_GPU_AOS_const<float> <<<300,256>>>(
             force, posMass, softeningSquared, bodiesThisPass, N );
         bodiesLeft -= bodiesThisPass;
     }
