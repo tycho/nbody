@@ -56,6 +56,9 @@ ComputeGravitation_AOS(
 
     start = libtime_cpu();
 
+    ASSERT_ALIGNED(force, NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(posMass, NBODY_ALIGNMENT);
+
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
 
