@@ -43,13 +43,13 @@ extern "C" {
 #define NBODY_ALIGNMENT 64
 
 #if defined(__GNUC__)
-#define ALIGNED(n) __attribute__((aligned(n)))
-#define ASSERT_ALIGNED(p,n) do { assert(((uintptr_t)(p) & (uintptr_t)(n-1)) == 0); } while (0)
-#define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
+#  define ALIGNED(n) __attribute__((aligned(n)))
+#  define ASSERT_ALIGNED(p,n) do { assert(((uintptr_t)(p) & (uintptr_t)(n-1)) == 0); } while (0)
+#  define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 #else
-#define ALIGNED(n)
-#define ASSERT_ALIGNED(p,n)
-#define ASSUME(cond)
+#  define ALIGNED(n)
+#  define ASSERT_ALIGNED(p,n)
+#  define ASSUME(cond)
 #endif
 
 extern const char *rgszAlgorithmNames[];
