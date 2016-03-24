@@ -44,7 +44,11 @@ extern "C" {
 
 #if defined(__GNUC__)
 #  define ALIGNED(n) __attribute__((aligned(n)))
-#  define ASSERT_ALIGNED(p,n) do { assert(((uintptr_t)(p) & (uintptr_t)(n-1)) == 0); } while (0)
+#  ifdef DEBUG
+#    define ASSERT_ALIGNED(p,n) do { assert(((uintptr_t)(p) & (uintptr_t)(n-1)) == 0); } while (0)
+#  else
+#    define ASSERT_ALIGNED(p,n)
+#  endif
 #  define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 #else
 #  define ALIGNED(n)
