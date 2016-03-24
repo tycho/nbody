@@ -71,6 +71,10 @@ extern "C" {
 
 extern const char *rgszAlgorithmNames[];
 int processorCount(void);
+#ifndef _WIN32
+int kbhit(void);
+int getch(void);
+#endif
 
 // "unaligned" float, or more accurately a float with no alignment guarantees.
 typedef float ufloat;
