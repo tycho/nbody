@@ -30,7 +30,7 @@ OPENMP_FLAG_FOUND := \
 endif
 
 ifeq (,$(OPENMP_FLAG_FOUND))
-OPENMP_FLAG := -fopenmp=libiomp5
+OPENMP_FLAG := -fopenmp=libomp
 OPENMP_FLAG_FOUND := \
 	$(shell $(CC) $(OPENMP_FLAG) -E -dM -xc /dev/null 2>/dev/null | grep -q _OPENMP && echo "Yes")
 endif
@@ -59,15 +59,15 @@ endif
 
 CPPFLAGS += -DUSE_OPENMP
 CFLAGS += $(OPENMP_FLAG)
-LIBIOMP5_PATHS := -L/usr/lib
-#LIBIOMP5_PATHS := $(shell ldconfig -N -v 2>/dev/null | awk '{ if (NF == 1) { sub(/:$$/, "", $$1); path=$$1; } else if (match($$1, /^libiomp5.so$$/)) { print "-L"path; } }' )
-LIBIOMP5_FOUND := $(shell $(CC) -c $(OPENMP_FLAG) openmp-test.c && $(LINK) -o openmp-test openmp-test.o $(LIBIOMP5_PATHS) -liomp5 >&2 && echo Yes)
-ifeq ($(LIBIOMP5_FOUND),Yes)
-LDFLAGS += $(LIBIOMP5_PATHS) -liomp5
+LIBOMP_PATHS := -L/usr/lib
+#LIBOMP_PATHS := $(shell ldconfig -N -v 2>/dev/null | awk '{ if (NF == 1) { sub(/:$$/, "", $$1); path=$$1; } else if (match($$1, /^libomp.so$$/)) { print "-L"path; } }' )
+LIBOMP_FOUND := $(shell $(CC) -c $(OPENMP_FLAG) openmp-test.c && $(LINK) -o openmp-test openmp-test.o $(LIBOMP_PATHS) -lomp >&2 && echo Yes)
+ifeq ($(LIBOMP_FOUND),Yes)
+LDFLAGS += $(LIBOMP_PATHS) -lomp
 else
 $(warning The Intel OpenMP runtime could not be found or is broken, using GNU OpenMP runtime)
 LDFLAGS += $(OPENMP_FLAG)
-endif # LIBIOMP5_FOUND
+endif # LIBOMP_FOUND
 endif # COMPILER_SUPPORTS_OPENMP
 endif # NO_OPENMP
 
