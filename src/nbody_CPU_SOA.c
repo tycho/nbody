@@ -79,6 +79,9 @@ ComputeGravitation_SOA(
 
         acx = acy = acz = 0;
 
+        ASSUME(N >= 1024);
+        ASSUME(N % 1024 == 0);
+
         #pragma vector aligned
         #pragma ivdep
         #pragma clang loop vectorize(enable) interleave(enable) interleave_count(4)
