@@ -72,6 +72,9 @@ ComputeGravitation_AOS_tiled(
     {
         int tileEnd = tileStart + BODIES_PER_TILE;
 
+        ASSUME(N >= 1024);
+        ASSUME(N % 1024 == 0);
+
         #pragma omp for schedule(guided)
         #pragma unroll_and_jam(4)
         for ( size_t i = 0; i < N; i++ )
@@ -83,7 +86,7 @@ ComputeGravitation_AOS_tiled(
 
             acx = acy = acz = 0;
 
-            #pragma clang loop vectorize(disable) interleave(enable) interleave_count(8)
+            #pragma clang loop vectorize(disable) interleave(enable) interleave_count(16)
             for ( size_t j = tileStart; j < tileEnd; j++ ) {
 
                 const float bodyX = posMass[j*4+0];
