@@ -74,9 +74,12 @@ ComputeGravitation_AOS(
 
         acx = acy = acz = 0;
 
+        ASSUME(N >= 1024);
+        ASSUME(N % 1024 == 0);
+
         #pragma vector aligned
         #pragma ivdep
-        #pragma clang loop vectorize(disable) interleave(enable) interleave_count(8)
+        #pragma clang loop vectorize(disable) interleave(enable) interleave_count(16)
         for ( size_t j = 0; j < N; j++ ) {
 
             float fx, fy, fz;
