@@ -70,23 +70,28 @@ ComputeGravitation_SIMD(
     #pragma omp parallel for schedule(guided, 16)
     for ( size_t i = 0; i < N; i++ )
     {
+        const v4sf x0 = _vec_set_ps1( pos[0][i] );
+        const v4sf y0 = _vec_set_ps1( pos[1][i] );
+        const v4sf z0 = _vec_set_ps1( pos[2][i] );
+
         v4sf ax = vec_zero;
         v4sf ay = vec_zero;
         v4sf az = vec_zero;
-        v4sf *px = (v4sf *) pos[0];
-        v4sf *py = (v4sf *) pos[1];
-        v4sf *pz = (v4sf *) pos[2];
-        v4sf *pmass = (v4sf *) mass;
-        v4sf x0 = _vec_set_ps1( pos[0][i] );
-        v4sf y0 = _vec_set_ps1( pos[1][i] );
-        v4sf z0 = _vec_set_ps1( pos[2][i] );
 
-        for ( size_t j = 0; j < N/4; j++ ) {
+        ASSUME(N >= 1024);
+        ASSUME(N % 1024 == 0);
+
+        for ( size_t j = 0; j < N; j += 4)
+        {
+            const v4sf x1 = *(v4sf *)&pos[0][j];
+            const v4sf y1 = *(v4sf *)&pos[1][j];
+            const v4sf z1 = *(v4sf *)&pos[2][j];
+            const v4sf mass1 = *(v4sf *)&mass[j];
 
             bodyBodyInteraction(
                 &ax, &ay, &az,
                 x0, y0, z0,
-                px[j], py[j], pz[j], pmass[j],
+                x1, y1, z1, mass1,
                 _vec_set_ps1( softeningSquared ) );
 
         }

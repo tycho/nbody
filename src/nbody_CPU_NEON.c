@@ -71,23 +71,28 @@ ComputeGravitation_SIMD(
     #pragma omp parallel for schedule(guided, 16)
     for (size_t i = 0; i < N; i++)
     {
+        const vf32x4_t x0 = _vec_set_ps1( pos[0][i] );
+        const vf32x4_t y0 = _vec_set_ps1( pos[1][i] );
+        const vf32x4_t z0 = _vec_set_ps1( pos[2][i] );
+
         vf32x4_t ax = vec_zero;
         vf32x4_t ay = vec_zero;
         vf32x4_t az = vec_zero;
-        vf32x4_t *px = (vf32x4_t *) pos[0];
-        vf32x4_t *py = (vf32x4_t *) pos[1];
-        vf32x4_t *pz = (vf32x4_t *) pos[2];
-        vf32x4_t *pmass = (vf32x4_t *) mass;
-        vf32x4_t x0 = _vec_set_ps1( pos[0][i] );
-        vf32x4_t y0 = _vec_set_ps1( pos[1][i] );
-        vf32x4_t z0 = _vec_set_ps1( pos[2][i] );
 
-        for ( size_t j = 0; j < N/4; j++ ) {
+        ASSUME(N >= 1024);
+        ASSUME(N % 1024 == 0);
+
+        for ( size_t j = 0; j < N; j += 4 )
+        {
+            const vf32x4_t x1 = *(vf32x4_t *)&pos[0][j];
+            const vf32x4_t y1 = *(vf32x4_t *)&pos[1][j];
+            const vf32x4_t z1 = *(vf32x4_t *)&pos[2][j];
+            const vf32x4_t mass1 = *(vf32x4_t *)&mass[j];
 
             bodyBodyInteraction(
                 &ax, &ay, &az,
                 x0, y0, z0,
-                px[j], py[j], pz[j], pmass[j],
+                x1, y1, z1, mass1,
                 _vec_set_ps1( softeningSquared ) );
 
         }

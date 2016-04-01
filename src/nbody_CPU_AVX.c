@@ -82,6 +82,9 @@ ComputeGravitation_SIMD(
         __m256 ay = _mm256_setzero_ps();
         __m256 az = _mm256_setzero_ps();
 
+        ASSUME(N >= 1024);
+        ASSUME(N % 1024 == 0);
+
         #pragma vector aligned
         #pragma ivdep
         for ( size_t j = 0; j < N; j += 8 )
