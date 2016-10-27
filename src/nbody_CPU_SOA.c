@@ -84,7 +84,7 @@ ComputeGravitation_SOA(
 
         #pragma vector aligned
         #pragma ivdep
-        #pragma clang loop vectorize(enable) interleave(enable) interleave_count(4)
+        #pragma clang loop vectorize(enable) interleave(enable)
         for ( size_t j = 0; j < N; j++ ) {
 
             const float bodyX = pos[0][j];
