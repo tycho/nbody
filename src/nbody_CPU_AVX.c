@@ -47,14 +47,7 @@
 
 const char *SIMD_ALGORITHM_NAME = "AVX intrin";
 
-float
-ComputeGravitation_SIMD(
-    afloat ** restrict force,
-    afloat ** restrict pos,
-    afloat *  restrict mass,
-    float softeningSquared,
-    size_t N
-)
+DEFINE_SOA(ComputeGravitation_SIMD)
 {
     uint64_t start, end;
 

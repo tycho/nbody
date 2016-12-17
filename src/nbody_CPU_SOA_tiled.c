@@ -46,14 +46,7 @@
 
 #define BODIES_PER_TILE 2048
 
-float
-ComputeGravitation_SOA_tiled(
-    afloat ** restrict force,
-    afloat ** restrict pos,
-    afloat *  restrict mass,
-    float softeningSquared,
-    size_t N
-)
+DEFINE_SOA(ComputeGravitation_SOA_tiled)
 {
     uint64_t start, end;
 

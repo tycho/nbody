@@ -38,13 +38,7 @@
 extern "C" {
 #endif
 
-float
-ComputeGravitation_AOS_tiled(
-    afloat * restrict force,
-    afloat * restrict posMass,
-    float softeningSquared,
-    size_t N
-);
+DECLARE_AOS(ComputeGravitation_AOS_tiled);
 
 #ifdef __cplusplus
 }

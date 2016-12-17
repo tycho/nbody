@@ -46,14 +46,7 @@
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_SOA.h"
 
-float
-ComputeGravitation_SOA(
-    afloat ** restrict force,
-    afloat ** restrict pos,
-    afloat *  restrict mass,
-    float softeningSquared,
-    size_t N
-)
+DEFINE_SOA(ComputeGravitation_SOA)
 {
     uint64_t start, end;
     start = libtime_cpu();

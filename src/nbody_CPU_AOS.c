@@ -44,13 +44,7 @@
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_AOS.h"
 
-float
-ComputeGravitation_AOS(
-    afloat * restrict force,
-    afloat * restrict posMass,
-    float softeningSquared,
-    size_t N
-)
+DEFINE_AOS(ComputeGravitation_AOS)
 {
     uint64_t start, end;
 

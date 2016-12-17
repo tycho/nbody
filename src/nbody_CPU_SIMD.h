@@ -40,14 +40,7 @@
 extern "C" {
 #endif
 
-float
-ComputeGravitation_SIMD(
-    float ** restrict force,
-    float ** restrict pos,
-    float *  restrict mass,
-    float softeningSquared,
-    size_t N
-);
+DECLARE_SOA(ComputeGravitation_SIMD);
 
 #ifdef __cplusplus
 }

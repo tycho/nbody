@@ -46,13 +46,7 @@
 
 #define BODIES_PER_TILE 2048
 
-float
-ComputeGravitation_AOS_tiled(
-    afloat * restrict force,
-    afloat * restrict posMass,
-    float softeningSquared,
-    size_t N
-)
+DEFINE_AOS(ComputeGravitation_AOS_tiled)
 {
     uint64_t start, end;
 

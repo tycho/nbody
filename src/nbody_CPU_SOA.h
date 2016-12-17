@@ -39,14 +39,7 @@
 extern "C" {
 #endif
 
-float
-ComputeGravitation_SOA(
-    afloat ** restrict force,
-    afloat ** restrict pos,
-    afloat *  restrict mass,
-    float softeningSquared,
-    size_t N
-);
+DECLARE_SOA(ComputeGravitation_SOA);
 
 #ifdef __cplusplus
 }

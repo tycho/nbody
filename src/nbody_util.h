@@ -43,6 +43,10 @@ extern "C" {
 
 #define NBODY_ALIGNMENT 64
 
+/* Temporary, until GCC PR78844 and PR78808 are fixed. Defining this here
+ * disables target_clones feature. */
+#define TARGET_DECL
+
 #if defined(__GNUC__)
 #  define ALIGNED(n) __attribute__((aligned(n)))
 #  ifdef DEBUG
@@ -58,6 +62,9 @@ extern "C" {
 #  if !defined(ASSUME)
 #    define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 #  endif
+#  if !defined(__clang__) && !defined(TARGET_DECL)
+#    define TARGET_DECL __attribute__((target_clones("arch=skylake", "arch=haswell", "arch=sandybridge", "default")))
+#  endif
 #endif
 
 #if !defined(ALIGNED)
@@ -69,6 +76,41 @@ extern "C" {
 #if !defined(ASSUME)
 #  define ASSUME(cond)
 #endif
+#if !defined(TARGET_DECL)
+#  define TARGET_DECL
+#endif
+
+#define DECLARE_SOA(Name) \
+	float \
+	Name( \
+		afloat ** restrict force, \
+		afloat ** restrict pos, \
+		afloat *  restrict mass, \
+		float softeningSquared, \
+		size_t N )
+
+#define DECLARE_AOS(Name) \
+	float \
+	Name( \
+		afloat * restrict force, \
+		afloat * restrict posMass, \
+		float softeningSquared, \
+		size_t N )
+
+#define DEFINE_SOA(Name) \
+	TARGET_DECL \
+	static DECLARE_SOA(_ ## Name); \
+	DECLARE_SOA(Name) { return _ ## Name(force, pos, mass, softeningSquared, N); } \
+	TARGET_DECL \
+	static DECLARE_SOA(_ ## Name)
+
+#define DEFINE_AOS(Name) \
+	TARGET_DECL \
+	static DECLARE_AOS(_ ## Name); \
+	DECLARE_AOS(Name) { return _ ## Name(force, posMass, softeningSquared, N); } \
+	TARGET_DECL \
+	static DECLARE_AOS(_ ## Name)
+
 
 int processorCount(void);
 
