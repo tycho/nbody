@@ -44,7 +44,7 @@
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_SOA_tiled.h"
 
-#define BODIES_PER_TILE 2048
+#define BODIES_PER_TILE 4096
 
 DEFINE_SOA(ComputeGravitation_SOA_tiled)
 {
