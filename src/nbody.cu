@@ -163,8 +163,10 @@ static afloat g_damping = 0.995f;
 static afloat g_dt = 0.016f;
 
 static void
-integrateGravitation_AOS( afloat *ppos, afloat *pvel, afloat *pforce, afloat dt, afloat damping, size_t N )
+integrateGravitation_AOS( afloat * restrict ppos, afloat * restrict pvel, afloat * restrict pforce, afloat dt, afloat damping, size_t N )
 {
+    ASSUME(N >= 1024);
+    ASSUME(N % 1024 == 0);
     for ( size_t i = 0; i < N; i++ ) {
         const int index = 4*i;
 
