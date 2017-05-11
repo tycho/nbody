@@ -480,6 +480,19 @@ Error:
     return 1;
 }
 
+static void print_algorithms(void)
+{
+    int idx = 0;
+    fprintf(stderr, "Algorithms available in this build:\n\n");
+    for (idx = 0; s_algorithms[idx].name; idx++) {
+        fprintf(stdout, "   %d - %s\n", idx, s_algorithms[idx].name);
+    }
+#ifdef NO_CUDA
+    fprintf(stderr, "\nThis build does not have CUDA support enabled. All GPU algorithms are unavailable.\n");
+#endif
+    fprintf(stderr, "\n");
+}
+
 static void print_usage(const char *argv0)
 {
 	fprintf(stderr, "Usage: nbody [arguments]\n");
@@ -509,6 +522,14 @@ static void print_usage(const char *argv0)
 	fprintf(stderr, "		Specifies the number of simulations steps to execute before cycling to\n");
 	fprintf(stderr, "		the next available algorithm. [default: none, don't cycle]\n");
 	fprintf(stderr, "\n");
+	fprintf(stderr, "	--list\n");
+	fprintf(stderr, "		Lists the available simulation algorithms.\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "	--algorithm=<name or index> | -a <name or index>\n");
+	fprintf(stderr, "		Specifies a specific algorithm name or index to start with. See --list\n");
+	fprintf(stderr, "		for the list of available algorithms for this argument.\n");
+	fprintf(stderr, "		[default: %s]\n", s_algorithms[0].name);
+	fprintf(stderr, "\n");
 	fprintf(stderr, "	--help\n");
 	fprintf(stderr, "		Prints this help text.\n");
 }
@@ -519,6 +540,7 @@ int main(int argc, char **argv)
 
     // kiloparticles
     int kParticles = DEFAULT_KPARTICLES, maxIterations = 0, cycleAfter = 0;
+    int idxFirstAlgorithm = 0;
 
     static const struct option cli_options[] = {
         { "bodies", required_argument, NULL, 'n' },
@@ -527,6 +549,8 @@ int main(int argc, char **argv)
         { "no-crosscheck", no_argument, &g_bCrossCheck, 0 },
         { "iterations", required_argument, NULL, 'i' },
         { "cycle-after", required_argument, NULL, 'c' },
+        { "list", no_argument, NULL, 'l' },
+        { "algorithm", required_argument, NULL, 'a' },
         { "help", no_argument, NULL, 'h' },
         { NULL, 0, NULL, 0 }
     };
@@ -538,7 +562,7 @@ int main(int argc, char **argv)
         g_numGPUs = g_maxGPUs;
 
     while (1) {
-        int option = getopt_long(argc, argv, "n:i:c:g:h", cli_options, NULL);
+        int option = getopt_long(argc, argv, "n:i:c:g:la:h", cli_options, NULL);
 
         if (option == -1)
             break;
@@ -614,6 +638,50 @@ int main(int argc, char **argv)
                 g_numGPUs = v;
             }
             break;
+        case 'a':
+            {
+                const char *type;
+                int v;
+
+                idxFirstAlgorithm = -1;
+
+                // First try to parse as an integer argument
+                if (sscanf(optarg, "%d", &v) == 1) {
+                    type = "index";
+                    if (v >= 0 && v <= maxAlgorithmIdx()) {
+                        idxFirstAlgorithm = v;
+                    }
+                } else {
+                    type = "name";
+                    // Alternatively, check if it's a valid algorithm name
+                    for (v = 0; s_algorithms[v].name; v++) {
+                        int n;
+                        n = strcasecmp(optarg, s_algorithms[v].name);
+                        if (n == 0) {
+                            // Exact match
+                            idxFirstAlgorithm = v;
+                            break;
+                        }
+                        n = strncasecmp(optarg, s_algorithms[v].name, strlen(optarg));
+                        if (n == 0) {
+                            // Partial match, keep searching in case there's an
+                            // exact match
+                            idxFirstAlgorithm = v;
+                            continue;
+                        }
+                    }
+                }
+
+                if (idxFirstAlgorithm == -1) {
+                    fprintf(stderr, "Invalid algorithm %s '%s'\n\n", type, optarg);
+                    print_algorithms();
+                    return 1;
+                }
+            }
+            break;
+        case 'l':
+            print_algorithms();
+            return 1;
         case 'h':
         case '?':
             print_usage(argv[0]);
@@ -684,7 +752,7 @@ int main(int argc, char **argv)
     }
 
     {
-        int algorithm_idx = 0;
+        int algorithm_idx = idxFirstAlgorithm;
         int steps = 0, iterations = 0;
         int bStop = 0;
         while ( ! bStop ) {
