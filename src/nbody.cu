@@ -480,17 +480,37 @@ Error:
     return 1;
 }
 
-static void usage(const char *argv0)
+static void print_usage(const char *argv0)
 {
-    printf( "Usage: nbody --bodies=N [--gpus=N] [--no-cpu] [--no-crosscheck] [--cycle-after=N] [--iterations=N]\n" );
-    printf( "    --bodies is multiplied by 1024 (default is 16)\n" );
-    printf( "    By default, the app checks results against a CPU implementation; \n" );
-    printf( "    disable this behavior with --no-crosscheck.\n" );
-    printf( "    The CPU implementation may be disabled with --no-cpu.\n" );
-    printf( "    --no-cpu implies --no-crosscheck.\n\n" );
-    printf( "    --iterations specifies a fixed number of iterations to execute\n" );
-    printf( "    --cycle-after specifies the number of iterations before rotating\n" );
-    printf( "                  to the next available algorithm\n" );
+	fprintf(stderr, "Usage: nbody [arguments]\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Available arguments:\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "	--bodies=<N> | -n <N>\n");
+	fprintf(stderr, "		Specifies the number of random bodies to use in the simulation. The\n");
+	fprintf(stderr, "		number is multiplied by 1024. [default: %d]\n", DEFAULT_KPARTICLES);
+	fprintf(stderr, "\n");
+	fprintf(stderr, "	--gpus=<N> | -g <N>\n");
+	fprintf(stderr, "		Specifies the number of GPUs to use for the GPU-based algorithms.\n");
+	fprintf(stderr, "		[default: number of available GPUs]\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "	--no-cpu\n");
+	fprintf(stderr, "		Disables all CPU-based simulations (including crosscheck). Only makes\n");
+	fprintf(stderr, "		sense if GPU-based algorithms are available.\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "	--no-crosscheck\n");
+	fprintf(stderr, "		Disables cross-validation of results against a CPU implementation.\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "	--iterations=<N> | -i <N>\n");
+	fprintf(stderr, "		Specifies the number of iterations through the algorithm list.\n");
+	fprintf(stderr, "		[default: loop forever]\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "	--cycle-after=<N> | -c <N>\n");
+	fprintf(stderr, "		Specifies the number of simulations steps to execute before cycling to\n");
+	fprintf(stderr, "		the next available algorithm. [default: none, don't cycle]\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "	--help\n");
+	fprintf(stderr, "		Prints this help text.\n");
 }
 
 int main(int argc, char **argv)
@@ -596,7 +616,7 @@ int main(int argc, char **argv)
             break;
         case 'h':
         case '?':
-            usage(argv[0]);
+            print_usage(argv[0]);
             return 1;
         }
     }
@@ -621,11 +641,11 @@ int main(int argc, char **argv)
         g_GPUThreadPool = (worker_thread_t *)malloc(sizeof(worker_thread_t) * g_numGPUs);
         for (int i = 0; i < g_numGPUs; i++) {
             if (worker_create(&g_GPUThreadPool[i])) {
-                fprintf( stderr, "Error initializing thread pool\n" );
+                fprintf(stderr, "Error initializing thread pool\n");
                 return 1;
             }
             if (worker_start(&g_GPUThreadPool[i])) {
-                fprintf( stderr, "Error starting thread pool\n" );
+                fprintf(stderr, "Error starting thread pool\n");
                 return 1;
             }
         }
@@ -633,11 +653,11 @@ int main(int argc, char **argv)
             struct gpuInit_struct initGPU = {i};
             worker_delegate(&g_GPUThreadPool[i], initializeGPU, &initGPU, 1);
             if ( cudaSuccess != initGPU.status ) {
-                fprintf( stderr, "Initializing GPU %d failed "
+                fprintf(stderr, "Initializing GPU %d failed "
                     " with %d (%s)\n",
                     i,
                     initGPU.status,
-                    cudaGetErrorString( initGPU.status ) );
+                    cudaGetErrorString( initGPU.status ));
                 return 1;
             }
         }
@@ -649,7 +669,7 @@ int main(int argc, char **argv)
 
     g_N = kParticles * 1024;
 
-    printf( "Running simulation with %d particles, crosscheck %s, CPU %s, %d threads\n", (int) g_N,
+    fprintf(stderr, "Running simulation with %d particles, crosscheck %s, CPU %s, %d threads\n", (int) g_N,
         g_bCrossCheck ? "enabled" : "disabled",
         g_bNoCPU ? "disabled" : "enabled",
         processorCount() );
@@ -678,7 +698,7 @@ int main(int argc, char **argv)
 
                 if ( interactionsPerSecond > 1e9 )
                 {
-                    printf ( "\r%13s: %8.2f ms = %8.3fx10^9 interactions/s (%9.2lf GFLOPS)",
+                    fprintf(stdout, "\r%13s: %8.2f ms = %8.3fx10^9 interactions/s (%9.2lf GFLOPS)",
                         algorithm->name,
                         ms,
                         interactionsPerSecond/1e9,
@@ -686,16 +706,16 @@ int main(int argc, char **argv)
                 }
                 else
                 {
-                    printf ( "\r%13s: %8.2f ms = %8.3fx10^6 interactions/s (%9.2lf GFLOPS)",
+                    fprintf(stdout, "\r%13s: %8.2f ms = %8.3fx10^6 interactions/s (%9.2lf GFLOPS)",
                         algorithm->name,
                         ms,
                         interactionsPerSecond/1e6,
                         flops * 1e-6 );
                 }
                 if (g_bCrossCheck)
-                    printf( " (Rel. error: %E)\n", err );
+                    fprintf(stdout, " (Rel. error: %E)\n", err );
                 else
-                    printf( "\n" );
+                    fprintf(stdout, "\n" );
             } else {
                 goto next_algorithm;
             }
@@ -740,7 +760,7 @@ next_algorithm:
         struct gpuInit_struct initGPU = {i};
         worker_delegate(&g_GPUThreadPool[i], teardownGPU, &initGPU, 1);
         if ( cudaSuccess != initGPU.status ) {
-            fprintf( stderr, "GPU %d teardown failed "
+            fprintf(stderr, "GPU %d teardown failed "
                 " with %d (%s)\n",
                 i,
                 initGPU.status,
@@ -758,7 +778,7 @@ next_algorithm:
     return 0;
 Error:
     if ( cudaSuccess != status ) {
-        printf( "CUDA Error: %s\n", cudaGetErrorString( status ) );
+        fprintf(stderr, "CUDA Error: %s\n", cudaGetErrorString( status ) );
     }
     return 1;
 }
