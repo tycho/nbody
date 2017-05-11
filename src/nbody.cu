@@ -486,7 +486,7 @@ static void print_algorithms(void)
     int idx = 0;
     bool bGPUsAvailable = g_maxGPUs > 0;
     bool bGPUsEnabled = g_numGPUs > 0;
-    fprintf(stderr, "Algorithms available in this build:\n\n");
+    fprintf(stderr, "\nAlgorithms available in this build:\n\n");
     for (idx = 0; s_algorithms[idx].name; idx++) {
         const char *suffix= "";
         bool bIsGPUAlgorithm = (s_algorithms[idx].type == ALGORITHM_AOS_GPU);
@@ -494,7 +494,10 @@ static void print_algorithms(void)
             if (!bGPUsAvailable)
                 suffix = " [disabled, no GPUs available]";
             else if (!bGPUsEnabled)
-                suffix = " [disabled, no GPUs enabled]";
+                suffix = " [disabled by user]";
+        } else {
+            if (g_bNoCPU)
+                suffix = " [disabled by user]";
         }
         fprintf(stdout, "   %d - %s%s\n", idx, s_algorithms[idx].name, suffix);
     }
@@ -639,8 +642,7 @@ int main(int argc, char **argv)
                 }
                 if (v < 1) {
                     fprintf(stderr, "Requested number of GPUs less than 1, disabling GPU algorithms.\n");
-                    g_numGPUs = 0;
-                    break;
+                    v = 0;
                 }
                 if (v > g_maxGPUs) {
                     fprintf(stderr, "Requested %d GPUs, but only have %d, using all available GPUs.\n",
@@ -712,14 +714,17 @@ int main(int argc, char **argv)
         CUDART_CHECK( cudaGetDeviceProperties( &prop, 0 ) );
     }
 
+    if ( g_bNoCPU ) {
+        if ( !g_bCUDAPresent ) {
+            fprintf(stderr, "ERROR: --no-cpu specified, but CUDA disabled or not available\n" );
+            exit(1);
+        }
+        fprintf(stderr, "CPU algorithms disabled\n");
+    }
+
     if (bPrintListOnly) {
         print_algorithms();
         return 0;
-    }
-
-    if ( g_bNoCPU && ! g_bCUDAPresent ) {
-        fprintf(stderr, "ERROR: --no-cpu specified, but no CUDA present\n" );
-        exit(1);
     }
 
     if ( g_numGPUs ) {
