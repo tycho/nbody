@@ -93,6 +93,8 @@ extern const char *SIMD_ALGORITHM_NAME;
 #endif
 #endif
 
+#define DEFAULT_KPARTICLES 16
+
 static const algorithm_def_t s_algorithms[] = {
 	{ "CPU_SOA",             ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA                 } },
 	{ "CPU_SOA_tiled",       ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA_tiled           } },
@@ -485,7 +487,7 @@ int main(int argc, char **argv)
     cudaError_t status;
 
     // kiloparticles
-    int kParticles = 16, maxIterations = 0, cycleAfter = 0;
+    int kParticles = DEFAULT_KPARTICLES, maxIterations = 0, cycleAfter = 0;
 
     static const struct option cli_options[] = {
         { "bodies", required_argument, NULL, 'b' },
