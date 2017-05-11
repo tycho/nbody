@@ -511,8 +511,6 @@ int main(int argc, char **argv)
         { NULL, 0, NULL, 0 }
     };
 
-    libtime_init();
-
     status = cudaGetDeviceCount( &g_maxGPUs );
     if (status != cudaSuccess)
         g_numGPUs = 0;
@@ -602,6 +600,8 @@ int main(int argc, char **argv)
             return 1;
         }
     }
+
+    libtime_init();
 
     // for reproducible results for a given N
     seedRandom(7);
