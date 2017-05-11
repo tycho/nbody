@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <getopt.h>
 
 #ifdef _WIN32
@@ -483,9 +484,19 @@ Error:
 static void print_algorithms(void)
 {
     int idx = 0;
+    bool bGPUsAvailable = g_maxGPUs > 0;
+    bool bGPUsEnabled = g_numGPUs > 0;
     fprintf(stderr, "Algorithms available in this build:\n\n");
     for (idx = 0; s_algorithms[idx].name; idx++) {
-        fprintf(stdout, "   %d - %s\n", idx, s_algorithms[idx].name);
+        const char *suffix= "";
+        bool bIsGPUAlgorithm = (s_algorithms[idx].type == ALGORITHM_AOS_GPU);
+        if (bIsGPUAlgorithm) {
+            if (!bGPUsAvailable)
+                suffix = " [disabled, no GPUs available]";
+            else if (!bGPUsEnabled)
+                suffix = " [disabled, no GPUs enabled]";
+        }
+        fprintf(stdout, "   %d - %s%s\n", idx, s_algorithms[idx].name, suffix);
     }
 #ifdef NO_CUDA
     fprintf(stderr, "\nThis build does not have CUDA support enabled. All GPU algorithms are unavailable.\n");
@@ -541,6 +552,7 @@ int main(int argc, char **argv)
     // kiloparticles
     int kParticles = DEFAULT_KPARTICLES, maxIterations = 0, cycleAfter = 0;
     int idxFirstAlgorithm = 0;
+    int bPrintListOnly = 0;
 
     static const struct option cli_options[] = {
         { "bodies", required_argument, NULL, 'n' },
@@ -680,8 +692,8 @@ int main(int argc, char **argv)
             }
             break;
         case 'l':
-            print_algorithms();
-            return 1;
+            bPrintListOnly = 1;
+            break;
         case 'h':
         case '?':
             print_usage(argv[0]);
@@ -698,6 +710,11 @@ int main(int argc, char **argv)
     if ( g_bCUDAPresent ) {
         struct cudaDeviceProp prop;
         CUDART_CHECK( cudaGetDeviceProperties( &prop, 0 ) );
+    }
+
+    if (bPrintListOnly) {
+        print_algorithms();
+        return 0;
     }
 
     if ( g_bNoCPU && ! g_bCUDAPresent ) {
