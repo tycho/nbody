@@ -81,13 +81,13 @@
 // wouldn't get the right name. Let the algorithm itself declare its name.
 extern const char *SIMD_ALGORITHM_NAME;
 #elif defined(__ALTIVEC__)
-#define SIMD_ALGORITHM_NAME "AltiVec intrin"
+#define SIMD_ALGORITHM_NAME "AltiVec"
 #elif defined(__ARM_NEON__)
-#define SIMD_ALGORITHM_NAME "NEON intrin"
+#define SIMD_ALGORITHM_NAME "NEON"
 #elif defined(__AVX__)
-#define SIMD_ALGORITHM_NAME "AVX intrin"
+#define SIMD_ALGORITHM_NAME "AVX"
 #elif defined(__SSE__)
-#define SIMD_ALGORITHM_NAME "SSE intrin"
+#define SIMD_ALGORITHM_NAME "SSE"
 #else
 #error "Define a name for this platform's SIMD."
 #endif

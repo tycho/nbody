@@ -44,7 +44,7 @@
 #include "bodybodyInteraction_NEON.h"
 #include "nbody_CPU_SIMD.h"
 
-const char *SIMD_ALGORITHM_NAME = "NEON intrin";
+const char *SIMD_ALGORITHM_NAME = "NEON";
 
 DEFINE_SOA(ComputeGravitation_SIMD)
 {

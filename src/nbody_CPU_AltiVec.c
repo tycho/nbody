@@ -43,7 +43,7 @@
 #include "bodybodyInteraction_AltiVec.h"
 #include "nbody_CPU_SSE.h"
 
-const char *SIMD_ALGORITHM_NAME = "AltiVec intrin";
+const char *SIMD_ALGORITHM_NAME = "AltiVec";
 
 DEFINE_SOA(ComputeGravitation_SIMD)
 {
