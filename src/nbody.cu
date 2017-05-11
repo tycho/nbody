@@ -500,7 +500,7 @@ int main(int argc, char **argv)
     int kParticles = DEFAULT_KPARTICLES, maxIterations = 0, cycleAfter = 0;
 
     static const struct option cli_options[] = {
-        { "bodies", required_argument, NULL, 'b' },
+        { "bodies", required_argument, NULL, 'n' },
         { "gpus", required_argument, NULL, 'g' },
         { "no-cpu", no_argument, &g_bNoCPU, 1 },
         { "no-crosscheck", no_argument, &g_bCrossCheck, 0 },
@@ -517,7 +517,7 @@ int main(int argc, char **argv)
         g_numGPUs = 0;
 
     while (1) {
-        int option = getopt_long(argc, argv, "n:i:c:", cli_options, NULL);
+        int option = getopt_long(argc, argv, "n:i:c:g:h", cli_options, NULL);
 
         if (option == -1)
             break;
@@ -551,7 +551,7 @@ int main(int argc, char **argv)
                 maxIterations = v;
             }
             break;
-        case 'b':
+        case 'n':
             {
                 int v;
                 if (sscanf(optarg, "%d", &v) != 1) {
@@ -559,7 +559,7 @@ int main(int argc, char **argv)
                     return 1;
                 }
                 if (v < 1) {
-                    printf("ERROR: Requested number of bodies less than 1");
+                    fprintf(stderr, "ERROR: Requested number of bodies less than 1\n");
                     return 1;
                 }
                 kParticles = v;
