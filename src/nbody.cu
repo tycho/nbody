@@ -343,6 +343,7 @@ Error:
 }
 
 static worker_thread_t *g_GPUThreadPool;
+int g_maxGPUs;
 int g_numGPUs;
 
 struct gpuInit_struct
@@ -512,9 +513,11 @@ int main(int argc, char **argv)
 
     libtime_init();
 
-    status = cudaGetDeviceCount( &g_numGPUs );
+    status = cudaGetDeviceCount( &g_maxGPUs );
     if (status != cudaSuccess)
         g_numGPUs = 0;
+    else
+        g_numGPUs = g_maxGPUs;
 
     while (1) {
         int option = getopt_long(argc, argv, "n:i:c:g:h", cli_options, NULL);
@@ -572,16 +575,23 @@ int main(int argc, char **argv)
                     fprintf(stderr, "ERROR: Couldn't parse integer argument for '--gpus'\n");
                     return 1;
                 }
+                if (g_maxGPUs < 1) {
+                    if (v == 0) {
+                        g_numGPUs = 0;
+                        break;
+                    }
+                    fprintf(stderr, "ERROR: No GPUs available, cannot handle '--gpus' argument.\n");
+                    return 1;
+                }
                 if (v < 1) {
-                    if (g_numGPUs > 0)
-                        fprintf(stderr, "Requested number of GPUs less than 1, disabling GPU algorithms.\n");
+                    fprintf(stderr, "Requested number of GPUs less than 1, disabling GPU algorithms.\n");
                     g_numGPUs = 0;
                     break;
                 }
-                if (v > g_numGPUs) {
+                if (v > g_maxGPUs) {
                     fprintf(stderr, "Requested %d GPUs, but only have %d, using all available GPUs.\n",
-                            v, g_numGPUs);
-                    break;
+                            v, g_maxGPUs);
+                    v = g_maxGPUs;
                 }
                 g_numGPUs = v;
             }
