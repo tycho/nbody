@@ -117,6 +117,16 @@ static const algorithm_def_t s_algorithms[] = {
 	{ 0 },
 };
 
+static int maxAlgorithmIdx(void)
+{
+    static int idx = -1;
+    if (idx != -1)
+        return idx;
+    for (idx = 0; s_algorithms[idx].name; idx++);
+    idx--;
+    return idx;
+}
+
 static float
 relError( float a, float b )
 {
