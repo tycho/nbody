@@ -76,7 +76,7 @@
 #endif
 
 #ifdef HAVE_SIMD
-#if defined(__CUDA_ARCH__)
+#if defined(__CUDACC__)
 // The platform-specific ISA macros aren't defined properly under CUDA, so we
 // wouldn't get the right name. Let the algorithm itself declare its name.
 extern const char *SIMD_ALGORITHM_NAME;
