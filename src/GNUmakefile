@@ -103,8 +103,11 @@ endif
 ifneq ($(NO_CUDA),)
 CPPFLAGS += -DNO_CUDA
 else
+GXX5_PATH := $(shell which g++-5 2>/dev/null)
 NVCC := nvcc
-NVCCFLAGS +=
+ifneq ($(GXX5_PATH),)
+NVCCFLAGS += -ccbin=$(GXX5_PATH)
+endif
 LDFLAGS += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
 endif
 
