@@ -1,4 +1,4 @@
-all:
+top-level-make:
 
 uname_S := $(shell uname -s 2>/dev/null || echo "not")
 uname_M := $(shell uname -m 2>/dev/null || echo "not")
