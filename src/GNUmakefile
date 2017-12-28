@@ -152,7 +152,8 @@ SOURCES := \
 
 ifeq ($(NO_CUDA),)
 SOURCES += \
-	nbody_GPU_shared.cu
+	nbody_GPU_shared.cu \
+	nbody_multiGPU.cu
 
 endif
 

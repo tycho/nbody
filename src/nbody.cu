@@ -108,7 +108,7 @@ static const algorithm_def_t s_algorithms[] = {
 	{ "GPU_AOS",             ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS             } },
 	{ "GPU_Shared",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shared          } },
 	{ "GPU_Const",           ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_const       } },
-//	{ "MultiGPU",            ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_multiGPU            } },
+	{ "MultiGPU",            ALGORITHM_AOS_MGPU, { .aos = ComputeGravitation_multiGPU            } },
 	{ "GPU_Shuffle",         ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shuffle         } },
 //	{ "GPU_SOA_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_SOA_tiled       } },
 //	{ "GPU_AOS_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_tiled       } },
@@ -224,7 +224,12 @@ ComputeGravitation(
 #endif
     int bSOA = 0;
 
-    if (g_bNoCPU && algorithm->type != ALGORITHM_AOS_GPU)
+    bool bIsGPUAlgorithm = (algorithm->type == ALGORITHM_AOS_GPU || algorithm->type == ALGORITHM_AOS_MGPU);
+
+    if (g_bNoCPU && !bIsGPUAlgorithm)
+        return 1;
+
+    if (!g_bCUDAPresent && bIsGPUAlgorithm)
         return 1;
 
     // AOS -> SOA data structures in case we are measuring SOA performance
@@ -266,6 +271,7 @@ ComputeGravitation(
                 g_N );
             bSOA = 1;
             break;
+        case ALGORITHM_AOS_MGPU:
         case ALGORITHM_AOS:
             *ms = algorithm->aos(
                 g_hostAOS_Force,
@@ -280,24 +286,20 @@ ComputeGravitation(
                 g_hostAOS_PosMass,
                 4*g_N*sizeof(afloat),
                 cudaMemcpyHostToDevice ) );
-            CUDART_CHECK( cudaMemset( g_dptrAOS_Force, 0, 4*g_N*sizeof(afloat) ) );
+            CUDART_CHECK( cudaMemset(
+                g_dptrAOS_Force,
+                0,
+                4*g_N*sizeof(afloat) ) );
             *ms = algorithm->aos(
                 g_dptrAOS_Force,
                 g_dptrAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
-            CUDART_CHECK( cudaMemcpy( g_hostAOS_Force, g_dptrAOS_Force, 4*g_N*sizeof(afloat), cudaMemcpyDeviceToHost ) );
-            break;
-#endif
-#if 0
-            // HOSTAOS?
-        case multiGPU:
-            memset( g_hostAOS_Force, 0, 4*g_N*sizeof(afloat) );
-            *ms = ComputeGravitation_multiGPU(
+            CUDART_CHECK( cudaMemcpy(
                 g_hostAOS_Force,
-                g_hostAOS_PosMass,
-                g_softening*g_softening,
-                g_N );
+                g_dptrAOS_Force,
+                4*g_N*sizeof(afloat),
+                cudaMemcpyDeviceToHost ) );
             break;
 #endif
         default:
@@ -491,7 +493,10 @@ static void print_algorithms(void)
     fprintf(stderr, "\nAlgorithms available in this build:\n\n");
     for (idx = 0; s_algorithms[idx].name; idx++) {
         const char *suffix= "";
-        bool bIsGPUAlgorithm = (s_algorithms[idx].type == ALGORITHM_AOS_GPU);
+        bool bIsGPUAlgorithm = (
+            s_algorithms[idx].type == ALGORITHM_AOS_GPU ||
+            s_algorithms[idx].type == ALGORITHM_AOS_MGPU
+        );
         if (bIsGPUAlgorithm) {
             if (!bGPUsAvailable)
                 suffix = " [disabled, no GPUs available]";
