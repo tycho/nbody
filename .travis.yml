@@ -139,6 +139,7 @@ before_install:
 
 script:
   - eval "${MATRIX_EVAL}"
+  - if [[ -z ${CUDA} ]]; then export NO_CUDA=1; fi
   - export
   - make CC=${CC} NO_OPENMP=${NO_OPENMP} NO_CUDA=${NO_CUDA}
   - ./nbody --bodies 8 --cycle-after 3 --iterations 1
