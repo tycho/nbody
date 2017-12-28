@@ -118,6 +118,12 @@ static const algorithm_def_t s_algorithms[] = {
 	{ 0 },
 };
 
+static inline bool isGPUAlgorithm(const algorithm_def_t *algorithm)
+{
+    return (algorithm->type == ALGORITHM_AOS_GPU ||
+            algorithm->type == ALGORITHM_AOS_MGPU);
+}
+
 static int maxAlgorithmIdx(void)
 {
     static int idx = -1;
@@ -224,7 +230,7 @@ ComputeGravitation(
 #endif
     int bSOA = 0;
 
-    bool bIsGPUAlgorithm = (algorithm->type == ALGORITHM_AOS_GPU || algorithm->type == ALGORITHM_AOS_MGPU);
+    bool bIsGPUAlgorithm = isGPUAlgorithm(algorithm);
 
     if (g_bNoCPU && !bIsGPUAlgorithm)
         return 1;
@@ -493,10 +499,7 @@ static void print_algorithms(void)
     fprintf(stderr, "\nAlgorithms available in this build:\n\n");
     for (idx = 0; s_algorithms[idx].name; idx++) {
         const char *suffix= "";
-        bool bIsGPUAlgorithm = (
-            s_algorithms[idx].type == ALGORITHM_AOS_GPU ||
-            s_algorithms[idx].type == ALGORITHM_AOS_MGPU
-        );
+        bool bIsGPUAlgorithm = isGPUAlgorithm(&s_algorithms[idx]);
         if (bIsGPUAlgorithm) {
             if (!bGPUsAvailable)
                 suffix = " [disabled, no GPUs available]";
