@@ -106,17 +106,6 @@ matrix:
       env:
         - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0" NO_OPENMP=1
 
-    # works on Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-5.0
-          packages:
-            - clang-5.0
-      env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0" NO_OPENMP=1
-
 env:
   - NO_CUDA=1 NO_OPENMP=1
   - NO_CUDA=1
