@@ -159,6 +159,8 @@ endif
 
 DEPS := $(OBJECTS:%.o=%.d)
 
+REBUILD_SENTINELS := .cflags .cc
+
 VALID_DEPS := $(shell ls $(DEPS) 2>/dev/null)
 -include $(VALID_DEPS)
 
@@ -195,17 +197,17 @@ clean:
 .PHONY: clean info info-flags info-compiler info-os info-cpu
 
 ifndef NO_CUDA
-%.o: %.cu .cflags
+%.o: %.cu $(REBUILD_SENTINELS)
 	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) -c -o $@ $<
 else
-%.o: %.cu .cflags
+%.o: %.cu $(REBUILD_SENTINELS)
 	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) -xc -c -o $@ $<
 endif
 
-%.o: %.c .cflags
+%.o: %.c $(REBUILD_SENTINELS)
 	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) -c -o $@ $<
 
-$(BIN): $(OBJECTS) .cflags
+$(BIN): $(OBJECTS) $(REBUILD_SENTINELS)
 	$(QUIET_LINK)$(LINK) -o $@ $(OBJECTS) $(LDFLAGS) $(CFLAGS)
 
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
