@@ -11,7 +11,6 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - libomp-dev
             - g++-4.9
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
@@ -23,7 +22,6 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - libomp-dev
             - g++-5
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
@@ -35,7 +33,6 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - libomp-dev
             - g++-6
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
@@ -47,7 +44,6 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - libomp-dev
             - g++-7
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
@@ -60,7 +56,6 @@ matrix:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.6
           packages:
-            - libomp-dev
             - clang-3.6
       env:
         - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
@@ -73,7 +68,6 @@ matrix:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.7
           packages:
-            - libomp-dev
             - clang-3.7
       env:
         - MATRIX_EVAL="CC=clang-3.7 && CXX=clang++-3.7"
@@ -86,7 +80,6 @@ matrix:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.8
           packages:
-            - libomp-dev
             - clang-3.8
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
@@ -98,7 +91,6 @@ matrix:
           sources:
             - llvm-toolchain-trusty-3.9
           packages:
-            - libomp-dev
             - clang-3.9
       env:
         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
@@ -110,7 +102,6 @@ matrix:
           sources:
             - llvm-toolchain-trusty-4.0
           packages:
-            - libomp-dev
             - clang-4.0
       env:
         - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
