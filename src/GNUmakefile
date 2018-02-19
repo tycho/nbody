@@ -99,11 +99,6 @@ endif
 
 CUDA_ROOT := $(dir $(shell which nvcc 2>/dev/null))..
 
-LDFLAGS += -lm
-ifeq ($(uname_S),Linux)
-LDFLAGS += -lrt
-endif
-
 ifeq ($(CC),icc)
 # Statically link Intel libraries so the executables are more portable
 LDFLAGS += -static-intel
@@ -125,6 +120,11 @@ CPPFLAGS += -DUSE_LIBC11
 LDFLAGS += ../libc11/libc11.a
 endif
 LDFLAGS += ../libtime/libtime.a
+
+LDFLAGS += -lm
+ifeq ($(uname_S),Linux)
+LDFLAGS += -lrt
+endif
 
 ifneq (,$(findstring CYGWIN,$(uname_S)))
 LDFLAGS += -lwinmm
