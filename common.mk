@@ -58,6 +58,7 @@ define cc-option-add-closure
 endef
 
 ifneq ($(shell type -P gcc5),)
+# For FreeBSD
 CC         := gcc5
 else
 CC         := gcc
