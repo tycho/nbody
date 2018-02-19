@@ -21,64 +21,34 @@ NVCCFLAGS := -O0 -g -Drestrict=
 CPPFLAGS  += -DDEBUG
 endif
 
-ifneq ($(TRAVIS),)
 ifneq ($(findstring clang,$(CC)),)
-# Until the LLVM OpenMP runtime can be reliably found and used on Travis-CI.
-OPENMP_FLAG :=
-OPENMP_FLAG_FOUND := Yes
-COMPILER_SUPPORTS_OPENMP :=
-endif
-endif
-
-ifeq ($(NO_OPENMP),)
-
-ifeq (,$(OPENMP_FLAG_FOUND))
-OPENMP_FLAG := -fopenmp
-OPENMP_FLAG_FOUND := \
-	$(shell $(CC) $(OPENMP_FLAG) -E -dM -xc /dev/null 2>/dev/null | grep -q _OPENMP && echo "Yes")
+  GCC := gcc
+  GCC_MACHINE := $(shell $(GCC) -dumpmachine)
+  GCC_VERSION := $(shell $(GCC) -dumpversion)
+  GCC_HEADER_PATH := /usr/lib/gcc/$(GCC_MACHINE)/$(GCC_VERSION)/include
+  ifneq ($(GCC_HEADER_PATH),)
+    CLANG_GCC_HEADER_FLAGS := -idirafter "$(GCC_HEADER_PATH)"
+    CFLAGS += -idirafter "$(GCC_HEADER_PATH)"
+  endif
 endif
 
-ifeq (,$(OPENMP_FLAG_FOUND))
-OPENMP_FLAG := -fopenmp=libomp
-OPENMP_FLAG_FOUND := \
-	$(shell $(CC) $(OPENMP_FLAG) -E -dM -xc /dev/null 2>/dev/null | grep -q _OPENMP && echo "Yes")
+ifeq (,$(findstring clean,$(MAKECMDGOALS)))
+openmp.mk: .cc
+	$(QUIET)./openmp-detect.sh "$(CC) $(CLANG_GCC_HEADER_FLAGS)"
+-include openmp.mk
 endif
 
-ifeq (,$(OPENMP_FLAG_FOUND))
-OPENMP_FLAG := -fopenmp=libgomp
-OPENMP_FLAG_FOUND := \
-	$(shell $(CC) $(OPENMP_FLAG) -E -dM -xc /dev/null 2>/dev/null | grep -q _OPENMP && echo "Yes")
+ifneq ($(OPENMP_SUPPORTED),)
+  ifeq ($(OPENMP_SUPPORTED),Yes)
+    CPPFLAGS += -DUSE_OPENMP
+    CFLAGS   += $(OPENMP_CFLAGS)
+    LDFLAGS  += $(OPENMP_LIBS)
+  else
+    ifeq (,$(findstring clean,$(MAKECMDGOALS)))
+      $(warning Could not detect OpenMP support in your compiler. Resulting binary will be slow.)
+    endif
+  endif
 endif
-
-ifneq (,$(OPENMP_FLAG_FOUND))
-COMPILER_SUPPORTS_OPENMP := \
-	$(shell $(CC) $(OPENMP_FLAG) -Werror -c -o /dev/null _cc_test_openmp_modern.c && echo "Yes")
-endif
-
-ifneq ($(COMPILER_SUPPORTS_OPENMP),)
-
-# Hack for clang failing to understand "omp declare simd" in /usr/include/bits/math-vector.h
-COMPILER_NEEDS_OPENMP_HACK := \
-	$(shell $(CC) $(OPENMP_FLAG) -O3 -ffast-math -include math.h -c -xc /dev/null -o /dev/null 2>/dev/null || echo "Yes")
-ifneq (,$(COMPILER_NEEDS_OPENMP_HACK))
-$(warning Forcing OpenMP v3.1 to workaround compile failure in math.h)
-# Force version to OpenMP 3.1
-OPENMP_FLAG += -D_OPENMP=201107 -Wno-macro-redefined
-endif
-
-CPPFLAGS += -DUSE_OPENMP
-CFLAGS += $(OPENMP_FLAG)
-LIBOMP_PATHS := -L/usr/lib
-#LIBOMP_PATHS := $(shell ldconfig -N -v 2>/dev/null | awk '{ if (NF == 1) { sub(/:$$/, "", $$1); path=$$1; } else if (match($$1, /^libomp.so$$/)) { print "-L"path; } }' )
-LIBOMP_FOUND := $(shell $(CC) -c $(OPENMP_FLAG) openmp-test.c && $(LINK) -o openmp-test openmp-test.o $(LIBOMP_PATHS) -lomp >&2 && echo Yes)
-ifeq ($(LIBOMP_FOUND),Yes)
-LDFLAGS += $(LIBOMP_PATHS) -lomp
-else
-$(warning The Intel OpenMP runtime could not be found or is broken, using GNU OpenMP runtime)
-LDFLAGS += $(OPENMP_FLAG)
-endif # LIBOMP_FOUND
-endif # COMPILER_SUPPORTS_OPENMP
-endif # NO_OPENMP
 
 ifeq ($(NO_SIMD),)
 ifeq ($(uname_M),ppc)
@@ -220,6 +190,7 @@ info-cpu:
 clean:
 	rm -f $(BIN)
 	rm -f $(OBJECTS)
+	rm -f .cflags .cc openmp.mk
 
 .PHONY: clean info info-flags info-compiler info-os info-cpu
 
@@ -239,12 +210,20 @@ $(BIN): $(OBJECTS) .cflags
 
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
 
-TRACK_CFLAGS = $(subst ','\'',$(CC) $(CXX) $(NVCC) $(LINK) $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(NVCCFLAGS) $(LDFLAGS))
+TRACK_CCONLY = $(subst ','\'',$(CC) $(CXX) $(NVCC) $(LINK))
+TRACK_CFLAGS = $(subst ','\'',$(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(NVCCFLAGS) $(LDFLAGS))
 
-.cflags: .force-cflags
+.cc: .force-cflags
+	@FLAGS='$(TRACK_CCONLY)'; \
+	if test x"$$FLAGS" != x"`cat .cc 2>/dev/null`" ; then \
+		echo "    * rebuilding $(BIN): new compiler"; \
+		echo "$$FLAGS" > .cc; \
+	fi
+
+.cflags: .cc .force-cflags
 	@FLAGS='$(TRACK_CFLAGS)'; \
 	if test x"$$FLAGS" != x"`cat .cflags 2>/dev/null`" ; then \
-		echo "    * rebuilding $(BIN): new build flags or prefix"; \
+		echo "    * rebuilding $(BIN): new build flags"; \
 		echo "$$FLAGS" > .cflags; \
 	fi
 
