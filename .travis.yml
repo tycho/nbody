@@ -109,16 +109,16 @@ matrix:
 env:
   - NO_CUDA=1 NO_OPENMP=1
   - NO_CUDA=1
-  - CUDA=6.5-14
   - CUDA=7.0-28
   - CUDA=7.5-18
+  - CUDA=8.0.61-1
 
 before_install:
   - eval "${MATRIX_EVAL}"
   - if [[ -n ${CUDA} ]]; then travis_retry wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_${CUDA}_amd64.deb; fi
   - if [[ -n ${CUDA} ]]; then travis_retry sudo dpkg -i cuda-repo-ubuntu1404_${CUDA}_amd64.deb; fi
   - if [[ -n ${CUDA} ]]; then travis_retry sudo apt-get update -qq; fi
-  - if [[ -n ${CUDA} ]]; then export CUDA_APT=${CUDA%-*}; fi
+  - if [[ -n ${CUDA} ]]; then export CUDA_APT=${CUDA:0:3}; fi
   - if [[ -n ${CUDA} ]]; then export CUDA_APT=${CUDA_APT/./-}; fi
   - if [[ -n ${CUDA} ]]; then travis_retry sudo apt-get install -y cuda-drivers cuda-core-${CUDA_APT} cuda-cudart-dev-${CUDA_APT}; fi
   - if [[ -n ${CUDA} ]]; then travis_retry sudo apt-get clean; fi
