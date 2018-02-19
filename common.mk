@@ -40,9 +40,13 @@ endif
 # of which would indicate an "unrecognized command-line option" warning/error.
 #
 # Usage: cflags-y += $(call cc-option,$(CC),-march=winchip-c6,-march=i586)
+ifeq (,$(findstring clean,$(MAKECMDGOALS)))
 cc-option = $(shell if test -z "`echo 'void*p=1;' | \
               $(1) $(2) -S -o /dev/null -xc - 2>&1 | grep -- $(2) -`"; \
               then echo "$(2)"; else echo "$(3)"; fi ;)
+else
+cc-option =
+endif
 
 # cc-option-add: Add an option to compilation flags, but only if supported.
 # Usage: $(call cc-option-add,CFLAGS,CC,-march=winchip-c6)
