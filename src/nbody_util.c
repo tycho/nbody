@@ -44,6 +44,9 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#ifdef HIGH_ENTROPY
+#include <immintrin.h>
+#endif
 #ifdef _WIN32
 #include <windows.h>
 #else
