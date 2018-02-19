@@ -21,6 +21,15 @@ NVCCFLAGS := -O0 -g -Drestrict=
 CPPFLAGS  += -DDEBUG
 endif
 
+ifneq ($(TRAVIS),)
+ifneq ($(findstring clang,$(CC)),)
+# Until the LLVM OpenMP runtime can be reliably found and used on Travis-CI.
+OPENMP_FLAG :=
+OPENMP_FLAG_FOUND := Yes
+COMPILER_SUPPORTS_OPENMP :=
+endif
+endif
+
 ifeq ($(NO_OPENMP),)
 
 ifeq (,$(OPENMP_FLAG_FOUND))
