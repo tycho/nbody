@@ -61,7 +61,7 @@ extern "C" {
 #      define ASSUME(cond) __builtin_assume(cond)
 #    endif
 #  endif
-#  if !defined(ASSUME)
+#  if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
 #    define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 #  endif
 #  if !defined(__clang__) && !defined(TARGET_DECL)
