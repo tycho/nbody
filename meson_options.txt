@@ -1,0 +1,2 @@
+option('cuda', type: 'boolean', value: false, description: 'NVIDIA CUDA support')
+option('openmp', type: 'boolean', description: 'OpenMP threading')
