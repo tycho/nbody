@@ -32,6 +32,7 @@ ifneq ($(findstring clang,$(CC)),)
   endif
 endif
 
+ifndef NO_OPENMP
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
 openmp.mk: .cc
 	$(QUIET)./openmp-detect.sh "$(CC) $(CLANG_GCC_HEADER_FLAGS)"
@@ -48,6 +49,7 @@ ifneq ($(OPENMP_SUPPORTED),)
       $(warning Could not detect OpenMP support in your compiler. Resulting binary will be slow.)
     endif
   endif
+endif
 endif
 
 ifeq ($(NO_SIMD),)
