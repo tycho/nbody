@@ -192,6 +192,7 @@ info-cpu:
 clean:
 	rm -f $(BIN)
 	rm -f $(OBJECTS)
+	rm -f $(DEPS)
 	rm -f .cflags .cc openmp.mk
 
 .PHONY: clean info info-flags info-compiler info-os info-cpu
