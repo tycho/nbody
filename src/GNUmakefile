@@ -87,9 +87,9 @@ endif
 
 ifndef NATIVE_C11
 CPPFLAGS += -DUSE_LIBC11
-LDFLAGS += ../libc11/libc11.a
+LDFLAGS += ../subprojects/c11/libc11.a
 endif
-LDFLAGS += ../libtime/libtime.a
+LDFLAGS += ../subprojects/time/libtime.a
 
 LDFLAGS += -lm
 ifeq ($(uname_S),Linux)
@@ -124,9 +124,9 @@ endif
 endif
 
 ifndef NATIVE_C11
-CPPFLAGS += -I../libc11/include
+CPPFLAGS += -I../subprojects/c11/include
 endif
-CPPFLAGS += -I../libtime/include
+CPPFLAGS += -I../subprojects/time/include
 
 SOURCES := \
 	nbody.cu \
