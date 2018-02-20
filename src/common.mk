@@ -112,11 +112,10 @@ export CFOPTIMIZE
 
 CPPFLAGS   += -D_GNU_SOURCE
 
-CFLAGS     += $(CFOPTIMIZE) \
-	$(call cc-option,$(CC),-std=gnu11,-std=gnu99) \
-	$(call cc-option,$(CC),-fno-strict-aliasing,) \
-	$(CPPFLAGS) \
-	$(CFWARN)
+CSTD       := $(call cc-option,$(CC),-std=gnu11,-std=gnu99) \
+              $(call cc-option,$(CC),-fno-strict-aliasing,)
+
+CFLAGS     += $(CFOPTIMIZE) $(CSTD) $(CPPFLAGS) $(CFWARN)
 
 ifeq ($(uname_S),Darwin)
 ifneq ($(findstring gcc,$(shell $(CC) -v 2>&1)),)

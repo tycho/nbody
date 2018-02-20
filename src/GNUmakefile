@@ -2,7 +2,7 @@ BIN := nbody
 
 all: $(BIN)
 
-include ../common.mk
+include common.mk
 
 ifeq ($(shell type -P nvcc),)
 NO_CUDA := 1

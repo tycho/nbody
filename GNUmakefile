@@ -1,6 +1,6 @@
-include common.mk
-
 BIN := nbody
+
+CP := cp
 
 ifndef NATIVE_C11
 DEPS += subprojects/c11/libc11.a
