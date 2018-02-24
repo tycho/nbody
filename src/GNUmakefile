@@ -91,6 +91,16 @@ endif
 LDFLAGS += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
 endif
 
+ifdef OPENGL
+CPPFLAGS      += -DUSE_GL
+SDL_CFLAGS    := $(shell pkg-config --cflags sdl2)
+GLEW_CFLAGS   := $(shell pkg-config --cflags glew)
+SDL_LDFLAGS   := $(shell pkg-config --libs sdl2)
+GLEW_LDFLAGS  := $(shell pkg-config --libs glew)
+CFLAGS        += $(SDL_CFLAGS) $(GLEW_CFLAGS)
+LDFLAGS       += $(SDL_LDFLAGS) $(GLEW_LDFLAGS)
+endif
+
 ifndef NATIVE_C11
 CPPFLAGS += -DUSE_LIBC11
 LDFLAGS += ../subprojects/c11/libc11.a
@@ -144,7 +154,8 @@ SOURCES := \
 	nbody_CPU_NEON.c \
 	nbody_CPU_SSE.c \
 	nbody_CPU_AVX.c \
-	nbody_util.c
+	nbody_util.c \
+	nbody_render_gl.c
 
 ifeq ($(NO_CUDA),)
 SOURCES += \

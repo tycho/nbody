@@ -57,6 +57,7 @@
 #include "chError.h"
 
 #include "nbody.h"
+#include "nbody_render_gl.h"
 #include "nbody_util.h"
 
 #include "nbody_CPU_AOS.h"
@@ -162,11 +163,14 @@ afloat *g_hostSOA_Force[3];
 afloat *g_hostSOA_Mass;
 afloat *g_hostSOA_InvMass;
 
-static size_t g_N;
+size_t g_N;
 
-static afloat g_softening = 0.1f;
-static afloat g_damping = 0.995f;
-static afloat g_dt = 0.016f;
+static float g_softening = 0.1f;
+static float g_damping = 0.95f;
+static float g_timestep = 0.016f;
+//static float g_scale = 1.54f;
+static float g_scale = 0.9f;
+static float g_velocityScale = 8.0f;
 
 static void
 integrateGravitation_AOS( afloat * restrict ppos, afloat * restrict pvel, afloat * restrict pforce, afloat dt, afloat damping, size_t N )
@@ -343,7 +347,7 @@ ComputeGravitation(
         g_hostAOS_PosMass,
         g_hostAOS_VelInvMass,
         g_hostAOS_Force,
-        g_dt,
+        g_timestep,
         g_damping,
         g_N );
     return 0;
@@ -354,6 +358,8 @@ Error:
 }
 
 static worker_thread_t *g_GPUThreadPool;
+static worker_thread_t g_renderThread;
+static int g_bRunning = 1;
 int g_maxGPUs;
 int g_numGPUs;
 
@@ -556,6 +562,17 @@ static void print_usage(const char *argv0)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "	--help\n");
 	fprintf(stderr, "		Prints this help text.\n");
+}
+
+static int render_loop(void *_unused)
+{
+    gl_init_window();
+    while(g_bRunning) {
+        if (gl_display() != 0)
+            break;
+    }
+    gl_quit();
+    return 0;
 }
 
 int main(int argc, char **argv)
@@ -767,6 +784,9 @@ int main(int argc, char **argv)
         g_bCrossCheck = 0;
     }
 
+    worker_create(&g_renderThread);
+    worker_start(&g_renderThread);
+
     g_N = kParticles * 1024;
 
     fprintf(stderr, "Running simulation with %d particles, crosscheck %s, CPU %s, %d threads\n", (int) g_N,
@@ -777,7 +797,7 @@ int main(int argc, char **argv)
     if (allocArrays() != 0)
         return 1;
 
-    randomUnitBodies( g_hostAOS_PosMass, g_hostAOS_VelInvMass, g_N );
+    randomUnitBodies( g_hostAOS_PosMass, g_hostAOS_VelInvMass, g_N, g_scale, g_velocityScale );
     for ( size_t i = 0; i < g_N; i++ ) {
         g_hostSOA_Mass[i] = g_hostAOS_PosMass[4*i+3];
         g_hostSOA_InvMass[i] = 1.0f / g_hostSOA_Mass[i];
@@ -787,14 +807,25 @@ int main(int argc, char **argv)
         int algorithm_idx = idxFirstAlgorithm;
         int steps = 0, iterations = 0;
         int bStop = 0;
-        while ( ! bStop ) {
+        int64_t print_deadline = 0, now;
+        worker_delegate(&g_renderThread, render_loop, (void*)1, 0);
+        while ( !bStop ) {
+            char ch;
             float ms, err;
             const algorithm_def_t *algorithm = &s_algorithms[algorithm_idx];
 
-            if (!ComputeGravitation(&ms, &err, algorithm, g_bCrossCheck))
+            now = libtime_wall();
+
+            if (ComputeGravitation(&ms, &err, algorithm, g_bCrossCheck))
+                goto next_algorithm;
+
+            if ((now - print_deadline) > 0)
             {
                 double interactionsPerSecond = (double) g_N*g_N*1000.0f / ms,
                        flops = interactionsPerSecond * (3 + 6 + 4 + 1 + 6) * 1e-3;
+
+                /* Throttle prints to every 100ms */
+                print_deadline = now + 100000000;
 
                 if ( interactionsPerSecond > 1e9 )
                 {
@@ -816,8 +847,6 @@ int main(int argc, char **argv)
                     fprintf(stdout, " (Rel. error: %E)\n", err );
                 else
                     fprintf(stdout, "\n" );
-            } else {
-                goto next_algorithm;
             }
 
             steps++;
@@ -834,25 +863,31 @@ next_algorithm:
             if (maxIterations && iterations >= maxIterations) {
                 bStop = 1;
             }
-            if ( kbhit() ) {
-                char c = getch();
-                switch ( c ) {
-                    case ' ':
-                        algorithm_idx++;
-                        if ( !s_algorithms[algorithm_idx].name ) {
-                            algorithm_idx = 0;
-                            iterations++;
-                        }
-                        break;
-                    case 'q':
-                    case 'Q':
-                        bStop = 1;
-                        break;
-                }
-
+            ch = gl_getch();
+            if ( !ch && kbhit() )
+                ch = getch();
+            switch ( ch ) {
+                case ' ':
+                    algorithm_idx++;
+                    if ( !s_algorithms[algorithm_idx].name ) {
+                        algorithm_idx = 0;
+                        iterations++;
+                    }
+                    break;
+                case 'q':
+                case 'Q':
+                    bStop = 1;
+                    break;
+                default:
+                    break;
             }
         }
     }
+
+    g_bRunning = 0;
+    worker_delegate(&g_renderThread, NULL, NULL, 0);
+    worker_join(&g_renderThread);
+    worker_destroy(&g_renderThread);
 
     freeArrays();
 

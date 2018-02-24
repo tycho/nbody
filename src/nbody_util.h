@@ -118,7 +118,8 @@ int processorCount(void);
 
 void seedRandom(unsigned int seed);
 float nbodyRandom(float randMin, float randMax);
-void randomUnitBodies(float *pos, float *vel, size_t N);
+
+void randomUnitBodies(float *pos, float *vel, size_t N, float scale, float velscale);
 
 void *alignedAlloc(size_t alignment, size_t size);
 void alignedFree(void *p);

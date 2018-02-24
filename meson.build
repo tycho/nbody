@@ -17,6 +17,7 @@ libtime = libtime_sp.get_variable('time_dep')
 
 enable_cuda = get_option('cuda')
 enable_openmp = get_option('openmp')
+enable_opengl = get_option('opengl')
 
 c_sources = [
     'src/nbody_CPU_AOS.c',
@@ -27,7 +28,8 @@ c_sources = [
     'src/nbody_CPU_SOA.c',
     'src/nbody_CPU_SOA_tiled.c',
     'src/nbody_CPU_SSE.c',
-    'src/nbody_util.c'
+    'src/nbody_render_gl.c',
+    'src/nbody_util.c',
 ]
 c_args = [
     '-march=native',
@@ -38,6 +40,8 @@ c_args = [
 cpp_args = [
     '-DUSE_LIBC11',
     '-DLIBTIME_STATIC',
+    '-DHAVE_SIMD',
+    #'-DHIGH_ENTROPY',
 ]
 nvcc_flags = [
     # TODO: These include args should be generated from the nbody target
@@ -53,6 +57,15 @@ nvcc_flags = [
 ]
 
 extra_deps = []
+
+if enable_opengl
+    extra_deps += [
+        dependency('gl'),
+        dependency('glew'),
+        dependency('sdl2'),
+    ]
+    cpp_args +=['-DUSE_GL']
+endif
 
 if enable_cuda
     cuda_sources = [

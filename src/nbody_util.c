@@ -51,6 +51,7 @@
 #include <windows.h>
 #else
 #include <malloc.h>
+#include <math.h>
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
@@ -163,19 +164,51 @@ float nbodyRandom(float randMin, float randMax)
     return ((1.0f - result) * randMin + result * randMax);
 }
 
-static inline void randomVector(float *v, size_t offset)
+static inline float dot(float *v0, float *v1)
 {
-    v[offset+0] = nbodyRandom( 3.0f, 50.0f );
-    v[offset+1] = nbodyRandom( 3.0f, 50.0f );
-    v[offset+2] = nbodyRandom( 3.0f, 50.0f );
+    return v0[0]*v1[0] + v0[1]*v1[1] + v0[2]*v1[2];
 }
 
-void randomUnitBodies(float *pos, float *vel, size_t N)
+void randomUnitBodies(float *pos, float *vel, size_t N, float gscale, float velscale)
 {
+    const float scale = gscale * (N / 1024.0f);
+    const float vscale = gscale * velscale;
+
     for ( size_t i = 0; i < N; i++ ) {
-        randomVector( pos, 4 * i );
-        randomVector( vel, 4 * i );
-        pos[4*i+3] = nbodyRandom( 1.0f, 1000.0f );  // unit mass
+        float point[3];
+        float velocity[3];
+        float lenSqr;
+
+        point[0] = nbodyRandom(-1.0f, 1.0f);
+        point[1] = nbodyRandom(-1.0f, 1.0f);
+        point[2] = nbodyRandom(-1.0f, 1.0f);
+
+        lenSqr = dot(point, point);
+        if (lenSqr > 1) {
+            // Try again
+            i--;
+            continue;
+        }
+
+        velocity[0] = nbodyRandom(-1.0f, 1.0f);
+        velocity[1] = nbodyRandom(-1.0f, 1.0f);
+        velocity[2] = nbodyRandom(-1.0f, 1.0f);
+
+        lenSqr = dot(velocity, velocity);
+        if (lenSqr > 1) {
+            // Try again
+            i--;
+            continue;
+        }
+
+        pos[4*i+0] = point[0] * scale;
+        pos[4*i+1] = point[1] * scale;
+        pos[4*i+2] = point[2] * scale;
+        pos[4*i+3] = 1.0f;
+
+        vel[4*i+0] = velocity[0] * vscale;
+        vel[4*i+1] = velocity[1] * vscale;
+        vel[4*i+2] = velocity[2] * vscale;
         vel[4*i+3] = 1.0f;
     }
 }
