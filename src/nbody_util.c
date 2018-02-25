@@ -84,45 +84,45 @@ static uint32_t *x = init+1;
 static volatile int lock[2];
 
 static uint32_t lcg31(uint32_t x) {
-	return (1103515245*x + 12345) & 0x7fffffff;
+    return (1103515245*x + 12345) & 0x7fffffff;
 }
 
 static uint64_t lcg64(uint64_t x) {
-	return 6364136223846793005ull*x + 1;
+    return 6364136223846793005ull*x + 1;
 }
 
 static void srandom(unsigned seed) {
-	int k;
-	uint64_t s = seed;
+    int k;
+    uint64_t s = seed;
 
-	if (n == 0) {
-		x[0] = s;
-		return;
-	}
-	i = n == 31 || n == 7 ? 3 : 1;
-	j = 0;
-	for (k = 0; k < n; k++) {
-		s = lcg64(s);
-		x[k] = s>>32;
-	}
-	/* make sure x contains at least one odd number */
-	x[0] |= 1;
+    if (n == 0) {
+        x[0] = s;
+        return;
+    }
+    i = n == 31 || n == 7 ? 3 : 1;
+    j = 0;
+    for (k = 0; k < n; k++) {
+        s = lcg64(s);
+        x[k] = s>>32;
+    }
+    /* make sure x contains at least one odd number */
+    x[0] |= 1;
 }
 
 static long random(void) {
-	long k;
+    long k;
 
-	if (n == 0) {
-		k = x[0] = lcg31(x[0]);
-		return k;
-	}
-	x[i] += x[j];
-	k = x[i]>>1;
-	if (++i == n)
-		i = 0;
-	if (++j == n)
-		j = 0;
-	return k;
+    if (n == 0) {
+        k = x[0] = lcg31(x[0]);
+        return k;
+    }
+    x[i] += x[j];
+    k = x[i]>>1;
+    if (++i == n)
+        i = 0;
+    if (++j == n)
+        j = 0;
+    return k;
 }
 #endif
 
@@ -233,3 +233,4 @@ int getch(void)
     return getchar();
 }
 #endif
+/* vim: set ts=4 sts=4 sw=4 et: */
