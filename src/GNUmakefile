@@ -21,6 +21,10 @@ NVCCFLAGS := -O0 -g -Drestrict=
 CPPFLAGS  += -DDEBUG
 endif
 
+NVCCFLAGS += -Xcompiler -fPIC
+CFLAGS    += -fPIC
+LDFLAGS   += -fPIC
+
 ifneq ($(findstring clang,$(CC)),)
   GCC := gcc
   GCC_MACHINE := $(shell $(GCC) -dumpmachine)
