@@ -89,8 +89,8 @@ matrix:
 #        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
 env:
-  - NO_CUDA=1 NO_OPENMP=1
-  - NO_CUDA=1
+  - CUDA= NO_OPENMP=1
+  - CUDA=
   - CUDA=7.0-28
   - CUDA=7.5-18
   - CUDA=8.0.61-1
@@ -110,10 +110,9 @@ before_install:
 
 script:
   - eval "${MATRIX_EVAL}"
-  - if [[ -z ${CUDA} ]]; then export NO_CUDA=1; fi
   - export
   - ${CC} -v
-  - make CC=${CC} NO_OPENMP=${NO_OPENMP} NO_CUDA=${NO_CUDA}
+  - make CC=${CC} NO_OPENMP=${NO_OPENMP} CUDA=${CUDA}
   - ./nbody --bodies 8 --cycle-after 3 --iterations 1
 
 notifications:

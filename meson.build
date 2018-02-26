@@ -68,6 +68,7 @@ if enable_opengl
 endif
 
 if enable_cuda
+    cpp_args += ['-DUSE_CUDA']
     cuda_sources = [
         'src/nbody.cu',
         'src/nbody_GPU_shared.cu',
@@ -81,7 +82,6 @@ if enable_cuda
     cudart_lib = compiler.find_library('cudart', dirs: ['/opt/cuda/lib64', '/usr/local/cuda/lib64'])
     extra_deps += [cudart_lib]
 else
-    cpp_args += ['-DNO_CUDA']
     cuda_sources = [
         'src/nbody.cu'
     ]

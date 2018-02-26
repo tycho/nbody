@@ -21,8 +21,8 @@ for COMPILER in ${COMPILERS[@]}; do
 	echo
 	echo "Building with ${COMPILER}..."
 
-	make CC=${COMPILER} NO_CUDA=1 info-flags info-compiler | fmt -80 -t 2>&1 > ${NBODY}.buildinfo
-	make CC=${COMPILER} NO_CUDA=1 -j8
+	make CC=${COMPILER} info-flags info-compiler | fmt -80 -t 2>&1 > ${NBODY}.buildinfo
+	make CC=${COMPILER} -j8
 	mv nbody ${NBODY}
 	BUILT_SOMETHING=1
 done

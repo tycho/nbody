@@ -36,8 +36,8 @@
  */
 
 #include "libtime.h"
-#ifndef NO_CUDA
-#define NO_CUDA
+#ifdef USE_CUDA
+#undef USE_CUDA
 #endif
 #include "chCUDA.h"
 

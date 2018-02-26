@@ -66,7 +66,7 @@
 #include "nbody_CPU_SOA_tiled.h"
 #include "nbody_CPU_SIMD.h"
 
-#ifndef NO_CUDA
+#ifdef USE_CUDA
 #include "bodybodyInteraction.cuh"
 #include "nbody_GPU_AOS.cuh"
 #include "nbody_GPU_AOS_const.cuh"
@@ -105,7 +105,7 @@ static const algorithm_def_t s_algorithms[] = {
 #endif
     { "CPU_AOS",             ALGORITHM_AOS,      { .aos = ComputeGravitation_AOS                 } },
     { "CPU_AOS_tiled",       ALGORITHM_AOS,      { .aos = ComputeGravitation_AOS_tiled           } },
-#ifndef NO_CUDA
+#ifdef USE_CUDA
     { "GPU_AOS",             ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS             } },
     { "GPU_Shared",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shared          } },
     { "GPU_Const",           ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_const       } },
@@ -148,7 +148,7 @@ afloat *g_hostAOS_PosMass;
 afloat *g_hostAOS_VelInvMass;
 afloat *g_hostAOS_Force;
 
-#ifndef NO_CUDA
+#ifdef USE_CUDA
 static afloat *g_dptrAOS_PosMass;
 static afloat *g_dptrAOS_Force;
 #endif
@@ -229,7 +229,7 @@ ComputeGravitation(
     const algorithm_def_t *algorithm,
     int bCrossCheck )
 {
-#ifndef NO_CUDA
+#ifdef USE_CUDA
     cudaError_t status;
 #endif
     int bSOA = 0;
@@ -289,7 +289,7 @@ ComputeGravitation(
                 g_softening*g_softening,
                 g_N );
             break;
-#ifndef NO_CUDA
+#ifdef USE_CUDA
         case ALGORITHM_AOS_GPU:
             CUDART_CHECK( cudaMemcpyAsync(
                 g_dptrAOS_PosMass,
@@ -351,7 +351,7 @@ ComputeGravitation(
         g_damping,
         g_N );
     return 0;
-#ifndef NO_CUDA
+#ifdef USE_CUDA
 Error:
     return 1;
 #endif
@@ -396,7 +396,7 @@ Error:
 
 static int freeArrays(void)
 {
-#ifndef NO_CUDA
+#ifdef USE_CUDA
     cudaError_t status;
 
     if ( g_bCUDAPresent ) {
@@ -429,7 +429,7 @@ static int freeArrays(void)
         alignedFree(g_hostSOA_InvMass);
     }
     return 0;
-#ifndef NO_CUDA
+#ifdef USE_CUDA
 Error:
     fprintf(stderr, "Failed to clean up memory.\n");
     return 1;
@@ -438,7 +438,7 @@ Error:
 
 static int allocArrays(void)
 {
-#ifndef NO_CUDA
+#ifdef USE_CUDA
     cudaError_t status;
 
     if ( g_bCUDAPresent ) {
@@ -517,7 +517,7 @@ static void print_algorithms(void)
         }
         fprintf(stdout, "   %d - %s%s\n", idx, s_algorithms[idx].name, suffix);
     }
-#ifdef NO_CUDA
+#ifndef USE_CUDA
     fprintf(stderr, "\nThis build does not have CUDA support enabled. All GPU algorithms are unavailable.\n");
 #endif
     fprintf(stderr, "\n");

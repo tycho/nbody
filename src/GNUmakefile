@@ -4,10 +4,6 @@ all: $(BIN)
 
 include common.mk
 
-ifeq ($(shell type -P nvcc),)
-NO_CUDA := 1
-endif
-
 ifdef HIGH_ENTROPY
 CPPFLAGS  += -DHIGH_ENTROPY
 endif
@@ -73,22 +69,20 @@ CPPFLAGS += -DHAVE_SIMD
 endif
 endif
 
-CUDA_ROOT := $(dir $(shell which nvcc 2>/dev/null))..
-
 ifeq ($(CC),icc)
 # Statically link Intel libraries so the executables are more portable
 LDFLAGS += -static-intel
 endif
 
-ifneq ($(NO_CUDA),)
-CPPFLAGS += -DNO_CUDA
-else
+ifdef CUDA
+CPPFLAGS  += -DUSE_CUDA
+NVCC      := nvcc
 GXX5_PATH := $(shell which g++-5 2>/dev/null)
-NVCC := nvcc
 ifneq ($(GXX5_PATH),)
 NVCCFLAGS += -ccbin=$(GXX5_PATH)
 endif
-LDFLAGS += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
+CUDA_ROOT := $(dir $(shell which nvcc 2>/dev/null))..
+LDFLAGS   += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
 endif
 
 ifdef OPENGL
@@ -157,11 +151,10 @@ SOURCES := \
 	nbody_util.c \
 	nbody_render_gl.c
 
-ifeq ($(NO_CUDA),)
+ifdef CUDA
 SOURCES += \
 	nbody_GPU_shared.cu \
 	nbody_multiGPU.cu
-
 endif
 
 OBJECTS := $(SOURCES:%.cu=%.o)
@@ -214,7 +207,7 @@ clean:
 
 .PHONY: clean info info-flags info-compiler info-os info-cpu
 
-ifndef NO_CUDA
+ifdef CUDA
 %.o: %.cu $(REBUILD_SENTINELS)
 	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) -c -o $@ $<
 else

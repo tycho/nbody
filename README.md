@@ -38,21 +38,42 @@ $ make
 ```
 
 But there are a few options you can use to customize the build as you see fit.
-OpenMP and CUDA are enabled automatically if the build system detects your
-system supports them, but you can disable one or both of them with some command
-line options:
+OpenMP is enabled automatically if the build system detects your system
+supports it, but you can disable the feature with a command-line option:
 
 ```
-$ make NO_CUDA=1 NO_OPENMP=1
+$ make NO_OPENMP=1
 ```
 
-The intrinsics-based implementation can also be disabled with:
+n-body also supports CUDA, and you can enable it with a flag on the build
+command line:
+
+```
+$ make CUDA=1
+```
+
+If you want to have pretty-pretty graphics to look at while n-body is running,
+you can also enable OpenGL support:
+
+```
+$ make OPENGL=1
+```
+
+Note also that multiple build options can be combined on the command line as
+well:
+
+```
+$ make CUDA=1 OPENGL=1
+```
+
+The intrinsics-based algorithms can be disabled with:
 
 ```
 $ make NO_SIMD=1
 ```
 
-You can select your compiler by specifying it on the command line as well:
+You can select your compiler by specifying it on the command line if you want
+to:
 
 ```
 $ make CC="clang"

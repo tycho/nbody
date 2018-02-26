@@ -46,7 +46,7 @@
 
 #include "chCUDA.h"
 
-#ifndef NO_CUDA
+#ifdef USE_CUDA
 
 static inline const char *
 chGetErrorString(cudaError_t status)

@@ -38,7 +38,7 @@
 #ifndef __CHCUDA_H__
 #define __CHCUDA_H__
 
-#ifndef NO_CUDA
+#ifdef USE_CUDA
 
 #ifndef __cuda_drvapi_dynlink_h__
 #include <cuda.h>
