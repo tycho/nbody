@@ -569,6 +569,10 @@ static void print_usage(const char *argv0)
     fprintf(stderr, "        for the list of available algorithms for this argument.\n");
     fprintf(stderr, "        [default: %s]\n", s_algorithms[0].name);
     fprintf(stderr, "\n");
+    fprintf(stderr, "    --verbose\n");
+    fprintf(stderr, "        By default, the output is rate limited to ten lines per seocnd. If this\n");
+    fprintf(stderr, "        argument is specified, a status update is printed for every iteration.\n");
+    fprintf(stderr, "\n");
     fprintf(stderr, "    --help\n");
     fprintf(stderr, "        Prints this help text.\n");
 }
@@ -593,6 +597,7 @@ int main(int argc, char **argv)
     int idxFirstAlgorithm = 0;
     int bPrintListOnly = 0;
     int bUseGraphics = 0;
+    int bVerbose = 0;
 
     static const struct option cli_options[] = {
         { "bodies", required_argument, NULL, 'n' },
@@ -604,6 +609,7 @@ int main(int argc, char **argv)
         { "list", no_argument, NULL, 'l' },
         { "algorithm", required_argument, NULL, 'a' },
         { "graphics", no_argument, NULL, 'G' },
+        { "verbose", no_argument, NULL, 2 },
         { "help", no_argument, NULL, 'h' },
         { NULL, 0, NULL, 0 }
     };
@@ -737,6 +743,9 @@ int main(int argc, char **argv)
         case 'l':
             bPrintListOnly = 1;
             break;
+        case 2:
+            bVerbose = 1;
+            break;
         case 'h':
         case '?':
             print_usage(argv[0]);
@@ -842,7 +851,7 @@ int main(int argc, char **argv)
             if (ComputeGravitation(&ms, &err, algorithm, g_bCrossCheck))
                 goto next_algorithm;
 
-            if ((now - print_deadline) > 0)
+            if (bVerbose || (now - print_deadline) > 0)
             {
                 double interactionsPerSecond = (double) g_N*g_N*1000.0f / ms,
                        flops = interactionsPerSecond * (3 + 6 + 4 + 1 + 6) * 1e-3;

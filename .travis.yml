@@ -113,7 +113,7 @@ script:
   - export
   - ${CC} -v
   - make CC=${CC} NO_OPENMP=${NO_OPENMP} CUDA=${CUDA}
-  - ./nbody --bodies 8 --cycle-after 3 --iterations 1
+  - ./nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
 
 notifications:
   pushover:
