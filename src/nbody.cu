@@ -98,25 +98,25 @@ extern const char *SIMD_ALGORITHM_NAME;
 #define DEFAULT_KPARTICLES 16
 
 static const algorithm_def_t s_algorithms[] = {
-	{ "CPU_SOA",             ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA                 } },
-	{ "CPU_SOA_tiled",       ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA_tiled           } },
+    { "CPU_SOA",             ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA                 } },
+    { "CPU_SOA_tiled",       ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA_tiled           } },
 #ifdef HAVE_SIMD
-	{ SIMD_ALGORITHM_NAME,   ALGORITHM_SOA,      { .soa = ComputeGravitation_SIMD                } },
+    { SIMD_ALGORITHM_NAME,   ALGORITHM_SOA,      { .soa = ComputeGravitation_SIMD                } },
 #endif
-	{ "CPU_AOS",             ALGORITHM_AOS,      { .aos = ComputeGravitation_AOS                 } },
-	{ "CPU_AOS_tiled",       ALGORITHM_AOS,      { .aos = ComputeGravitation_AOS_tiled           } },
+    { "CPU_AOS",             ALGORITHM_AOS,      { .aos = ComputeGravitation_AOS                 } },
+    { "CPU_AOS_tiled",       ALGORITHM_AOS,      { .aos = ComputeGravitation_AOS_tiled           } },
 #ifndef NO_CUDA
-	{ "GPU_AOS",             ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS             } },
-	{ "GPU_Shared",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shared          } },
-	{ "GPU_Const",           ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_const       } },
-	{ "MultiGPU",            ALGORITHM_AOS_MGPU, { .aos = ComputeGravitation_multiGPU            } },
-	{ "GPU_Shuffle",         ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shuffle         } },
-//	{ "GPU_SOA_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_SOA_tiled       } },
-//	{ "GPU_AOS_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_tiled       } },
-//	{ "GPU_AOS_tiled_const", ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_tiled_const } },
-//	{ "GPU_Atomic",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Atomic          } },
+    { "GPU_AOS",             ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS             } },
+    { "GPU_Shared",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shared          } },
+    { "GPU_Const",           ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_const       } },
+    { "MultiGPU",            ALGORITHM_AOS_MGPU, { .aos = ComputeGravitation_multiGPU            } },
+    { "GPU_Shuffle",         ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shuffle         } },
+//    { "GPU_SOA_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_SOA_tiled       } },
+//    { "GPU_AOS_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_tiled       } },
+//    { "GPU_AOS_tiled_const", ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_tiled_const } },
+//    { "GPU_Atomic",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Atomic          } },
 #endif
-	{ 0 },
+    { 0 },
 };
 
 static inline bool isGPUAlgorithm(const algorithm_def_t *algorithm)
@@ -525,52 +525,52 @@ static void print_algorithms(void)
 
 static void print_usage(const char *argv0)
 {
-	fprintf(stderr, "Usage: nbody [arguments]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Available arguments:\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "	--bodies=<N> | -n <N>\n");
-	fprintf(stderr, "		Specifies the number of random bodies to use in the simulation. The\n");
-	fprintf(stderr, "		number is multiplied by 1024. [default: %d]\n", DEFAULT_KPARTICLES);
-	fprintf(stderr, "\n");
-	fprintf(stderr, "	--gpus=<N> | -g <N>\n");
-	fprintf(stderr, "		Specifies the number of GPUs to use for the GPU-based algorithms.\n");
-	fprintf(stderr, "		[default: number of available GPUs]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "	--no-cpu\n");
-	fprintf(stderr, "		Disables all CPU-based simulations (including crosscheck). Only makes\n");
-	fprintf(stderr, "		sense if GPU-based algorithms are available.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "	--no-crosscheck\n");
-	fprintf(stderr, "		Disables cross-validation of results against a CPU implementation.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "	--iterations=<N> | -i <N>\n");
-	fprintf(stderr, "		Specifies the number of iterations through the algorithm list.\n");
-	fprintf(stderr, "		[default: loop forever]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "	--cycle-after=<N> | -c <N>\n");
-	fprintf(stderr, "		Specifies the number of simulations steps to execute before cycling to\n");
-	fprintf(stderr, "		the next available algorithm. [default: none, don't cycle]\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "Usage: nbody [arguments]\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Available arguments:\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "    --bodies=<N> | -n <N>\n");
+    fprintf(stderr, "        Specifies the number of random bodies to use in the simulation. The\n");
+    fprintf(stderr, "        number is multiplied by 1024. [default: %d]\n", DEFAULT_KPARTICLES);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "    --gpus=<N> | -g <N>\n");
+    fprintf(stderr, "        Specifies the number of GPUs to use for the GPU-based algorithms.\n");
+    fprintf(stderr, "        [default: number of available GPUs]\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "    --no-cpu\n");
+    fprintf(stderr, "        Disables all CPU-based simulations (including crosscheck). Only makes\n");
+    fprintf(stderr, "        sense if GPU-based algorithms are available.\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "    --no-crosscheck\n");
+    fprintf(stderr, "        Disables cross-validation of results against a CPU implementation.\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "    --iterations=<N> | -i <N>\n");
+    fprintf(stderr, "        Specifies the number of iterations through the algorithm list.\n");
+    fprintf(stderr, "        [default: loop forever]\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "    --cycle-after=<N> | -c <N>\n");
+    fprintf(stderr, "        Specifies the number of simulations steps to execute before cycling to\n");
+    fprintf(stderr, "        the next available algorithm. [default: none, don't cycle]\n");
+    fprintf(stderr, "\n");
 #ifdef USE_GL
     /* We only print the --graphics help section if we've got OpenGL support
      * compiled in. But we always accept the command line argument for
      * compatibility with other builds.
      */
-	fprintf(stderr, "	--graphics\n");
-	fprintf(stderr, "		Enables OpenGL rendering, if available.\n");
-	fprintf(stderr, "\n");
+    fprintf(stderr, "    --graphics\n");
+    fprintf(stderr, "        Enables OpenGL rendering, if available.\n");
+    fprintf(stderr, "\n");
 #endif
-	fprintf(stderr, "	--list\n");
-	fprintf(stderr, "		Lists the available simulation algorithms.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "	--algorithm=<name or index> | -a <name or index>\n");
-	fprintf(stderr, "		Specifies a specific algorithm name or index to start with. See --list\n");
-	fprintf(stderr, "		for the list of available algorithms for this argument.\n");
-	fprintf(stderr, "		[default: %s]\n", s_algorithms[0].name);
-	fprintf(stderr, "\n");
-	fprintf(stderr, "	--help\n");
-	fprintf(stderr, "		Prints this help text.\n");
+    fprintf(stderr, "    --list\n");
+    fprintf(stderr, "        Lists the available simulation algorithms.\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "    --algorithm=<name or index> | -a <name or index>\n");
+    fprintf(stderr, "        Specifies a specific algorithm name or index to start with. See --list\n");
+    fprintf(stderr, "        for the list of available algorithms for this argument.\n");
+    fprintf(stderr, "        [default: %s]\n", s_algorithms[0].name);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "    --help\n");
+    fprintf(stderr, "        Prints this help text.\n");
 }
 
 static int render_loop(void *_unused)
