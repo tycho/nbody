@@ -552,6 +552,15 @@ static void print_usage(const char *argv0)
 	fprintf(stderr, "		Specifies the number of simulations steps to execute before cycling to\n");
 	fprintf(stderr, "		the next available algorithm. [default: none, don't cycle]\n");
 	fprintf(stderr, "\n");
+#ifdef USE_GL
+    /* We only print the --graphics help section if we've got OpenGL support
+     * compiled in. But we always accept the command line argument for
+     * compatibility with other builds.
+     */
+	fprintf(stderr, "	--graphics\n");
+	fprintf(stderr, "		Enables OpenGL rendering, if available.\n");
+	fprintf(stderr, "\n");
+#endif
 	fprintf(stderr, "	--list\n");
 	fprintf(stderr, "		Lists the available simulation algorithms.\n");
 	fprintf(stderr, "\n");
@@ -583,6 +592,7 @@ int main(int argc, char **argv)
     int kParticles = DEFAULT_KPARTICLES, maxIterations = 0, cycleAfter = 0;
     int idxFirstAlgorithm = 0;
     int bPrintListOnly = 0;
+    int bUseGraphics = 0;
 
     static const struct option cli_options[] = {
         { "bodies", required_argument, NULL, 'n' },
@@ -593,6 +603,7 @@ int main(int argc, char **argv)
         { "cycle-after", required_argument, NULL, 'c' },
         { "list", no_argument, NULL, 'l' },
         { "algorithm", required_argument, NULL, 'a' },
+        { "graphics", no_argument, NULL, 'G' },
         { "help", no_argument, NULL, 'h' },
         { NULL, 0, NULL, 0 }
     };
@@ -604,7 +615,7 @@ int main(int argc, char **argv)
         g_numGPUs = g_maxGPUs;
 
     while (1) {
-        int option = getopt_long(argc, argv, "n:i:c:g:la:h", cli_options, NULL);
+        int option = getopt_long(argc, argv, "n:i:c:g:la:Gh", cli_options, NULL);
 
         if (option == -1)
             break;
@@ -720,6 +731,9 @@ int main(int argc, char **argv)
                 }
             }
             break;
+        case 'G':
+            bUseGraphics = 1;
+            break;
         case 'l':
             bPrintListOnly = 1;
             break;
@@ -748,6 +762,14 @@ int main(int argc, char **argv)
         }
         fprintf(stderr, "CPU algorithms disabled\n");
     }
+
+#ifndef USE_GL
+    if ( bUseGraphics ) {
+        /* This is a soft error. Things still work without graphics. */
+        fprintf(stderr, "Graphics requested, but OpenGL support not compiled in.\n");
+        bUseGraphics = 0;
+    }
+#endif
 
     if (bPrintListOnly) {
         print_algorithms();
@@ -808,7 +830,8 @@ int main(int argc, char **argv)
         int steps = 0, iterations = 0;
         int bStop = 0;
         int64_t print_deadline = 0, now;
-        worker_delegate(&g_renderThread, render_loop, (void*)1, 0);
+        if ( bUseGraphics )
+            worker_delegate(&g_renderThread, render_loop, (void*)1, 0);
         while ( !bStop ) {
             char ch;
             float ms, err;
