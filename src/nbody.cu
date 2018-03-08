@@ -731,7 +731,7 @@ int main(int argc, char **argv)
                 }
 
                 if (idxFirstAlgorithm == -1) {
-                    fprintf(stderr, "Invalid algorithm %s '%s'\n\n", type, optarg);
+                    fprintf(stderr, "Invalid algorithm %s '%s'\n", type, optarg);
                     print_algorithms();
                     return 1;
                 }
@@ -769,7 +769,6 @@ int main(int argc, char **argv)
             fprintf(stderr, "ERROR: --no-cpu specified, but CUDA disabled or not available\n" );
             exit(1);
         }
-        fprintf(stderr, "CPU algorithms disabled\n");
     }
 
 #ifndef USE_GL
@@ -820,10 +819,20 @@ int main(int argc, char **argv)
 
     g_N = kParticles * 1024;
 
-    fprintf(stderr, "Running simulation with %d particles, crosscheck %s, CPU %s, %d threads\n", (int) g_N,
-        g_bCrossCheck ? "enabled" : "disabled",
-        g_bNoCPU ? "disabled" : "enabled",
-        processorCount() );
+    fprintf(stderr, "Running simulation with %u particles", (unsigned int)g_N);
+
+    if (g_bCrossCheck)
+        fprintf(stderr, ", crosscheck enabled");
+
+    if (g_bNoCPU)
+        fprintf(stderr, ", CPU disabled");
+    else
+        fprintf(stderr, ", %d CPU threads", processorCount());
+
+    if (g_numGPUs)
+        fprintf(stderr, ", up to %u GPUs", g_numGPUs);
+
+    fprintf(stderr, "\n");
 
     if (allocArrays() != 0)
         return 1;
