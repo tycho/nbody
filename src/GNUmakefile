@@ -113,7 +113,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 LDFLAGS += -lwinmm
 endif
 
-ifneq ($(findstring nvcc,$(NVCC)),)
+ifdef CUDA
 ifeq ($(TRAVIS),)
 # There's a list of compute capabilities and the corresponding compatible GPUs
 # here: https://en.wikipedia.org/wiki/CUDA#GPUs_supported
