@@ -10,14 +10,10 @@ endif
 
 CPPFLAGS  += -DLIBTIME_STATIC
 
-ifndef DEBUG
-NVCCFLAGS := -O3 -Drestrict=
-else
-NVCCFLAGS := -O0 -g -Drestrict=
+ifdef DEBUG
 CPPFLAGS  += -DDEBUG
 endif
 
-NVCCFLAGS += -Xcompiler -fPIC
 CFLAGS    += -fPIC
 LDFLAGS   += -fPIC
 
@@ -53,32 +49,32 @@ endif
 endif
 
 ifeq ($(NO_SIMD),)
-ifeq ($(uname_M),ppc)
-CPPFLAGS += -DHAVE_SIMD
-CFLAGS += -maltivec
-endif
-ifeq ($(uname_M),armv7l)
-CPPFLAGS += -DHAVE_SIMD
-CFLAGS += -marm -mfpu=neon
-endif
-ifeq ($(uname_M),x86_64)
-CPPFLAGS += -DHAVE_SIMD
-endif
-ifeq ($(uname_M),i686)
-CPPFLAGS += -DHAVE_SIMD
-endif
+  ifeq ($(uname_M),ppc)
+    CPPFLAGS += -DHAVE_SIMD
+    CFLAGS += -maltivec
+  endif
+  ifeq ($(uname_M),armv7l)
+    CPPFLAGS += -DHAVE_SIMD
+    CFLAGS += -marm -mfpu=neon
+  endif
+  ifeq ($(uname_M),x86_64)
+    CPPFLAGS += -DHAVE_SIMD
+  endif
+  ifeq ($(uname_M),i686)
+    CPPFLAGS += -DHAVE_SIMD
+  endif
 endif
 
 ifeq ($(CC),icc)
-# Statically link Intel libraries so the executables are more portable
-LDFLAGS += -static-intel
+  # Statically link Intel libraries so the executables are more portable
+  LDFLAGS += -static-intel
 endif
 
 ifdef CUDA
-CPPFLAGS  += -DUSE_CUDA
-NVCC      := nvcc
-CUDA_ROOT := $(dir $(shell which nvcc 2>/dev/null))..
-LDFLAGS   += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
+  CPPFLAGS  += -DUSE_CUDA
+  NVCC      := nvcc
+  CUDA_ROOT := $(dir $(shell which nvcc 2>/dev/null))..
+  LDFLAGS   += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
 endif
 
 ifdef OPENGL
@@ -92,45 +88,60 @@ LDFLAGS       += $(SDL_LDFLAGS) $(GLEW_LDFLAGS)
 endif
 
 ifndef NATIVE_C11
-CPPFLAGS += -DUSE_LIBC11
-LDFLAGS += ../subprojects/c11/libc11.a
+  CPPFLAGS += -DUSE_LIBC11
+  LDFLAGS += ../subprojects/c11/libc11.a
 endif
 LDFLAGS += ../subprojects/time/libtime.a
 
 LDFLAGS += -lm
 ifeq ($(uname_S),Linux)
-LDFLAGS += -lrt
+  LDFLAGS += -lrt
 endif
 
 ifneq (,$(findstring CYGWIN,$(uname_S)))
-LDFLAGS += -lwinmm
+  LDFLAGS += -lwinmm
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-LDFLAGS += -lwinmm
+  LDFLAGS += -lwinmm
 endif
 
 ifdef CUDA
-ifeq ($(TRAVIS),)
-# There's a list of compute capabilities and the corresponding compatible GPUs
-# here: https://en.wikipedia.org/wiki/CUDA#GPUs_supported
-#
-# I've chosen to enable three of them, with a relatively broad compatibility set
-# for hardware made in the past few years.
-#
-NVCCFLAGS += \
-	-gencode=arch=compute_52,code=\"sm_52,compute_52\" \
-	-gencode=arch=compute_61,code=\"sm_61,compute_61\" \
-	-gencode=arch=compute_70,code=\"sm_70,compute_70\"
-else
-# Only use one target architecture for Travis builds. We just want to make sure
-# it compiles, not runs.
-NVCCFLAGS += \
-    -gencode=arch=compute_30,code=\"sm_30,compute_30\"
-endif
+  ifndef DEBUG
+    NVCCFLAGS := -O3
+  else
+    NVCCFLAGS := -O0 -g
+  endif
+  ifneq (,$(findstring clang,$(NVCC)))
+    NVCCFLAGS += -Drestrict=__restrict
+    NVCCFLAGS += --cuda-gpu-arch=sm_52 \
+                 --cuda-gpu-arch=sm_61 \
+                 --cuda-gpu-arch=sm_70
+  else
+    NVCCFLAGS += -Drestrict=
+    NVCCFLAGS += -Xcompiler -fPIC
+
+    ifeq ($(TRAVIS),)
+      # There's a list of compute capabilities and the corresponding compatible GPUs
+      # here: https://en.wikipedia.org/wiki/CUDA#GPUs_supported
+      #
+      # I've chosen to enable three of them, with a relatively broad compatibility set
+      # for hardware made in the past few years.
+      #
+      NVCCFLAGS += \
+          -gencode=arch=compute_52,code=\"sm_52,compute_52\" \
+          -gencode=arch=compute_61,code=\"sm_61,compute_61\" \
+          -gencode=arch=compute_70,code=\"sm_70,compute_70\"
+    else
+      # Only use one target architecture for Travis builds. We just want to make sure
+      # it compiles, not runs.
+      NVCCFLAGS += \
+          -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+    endif
+  endif
 endif
 
 ifndef NATIVE_C11
-CPPFLAGS += -I../subprojects/c11/include
+  CPPFLAGS += -I../subprojects/c11/include
 endif
 CPPFLAGS += -I../subprojects/time/include
 
@@ -159,8 +170,8 @@ OBJECTS := $(OBJECTS:%.c=%.o)
 # Dependency generation
 #
 ifndef NO_INLINE_DEPGEN
-# See info node: (gcc) Preprocessor Options
-INLINE_DEPGEN_CFLAGS = -MMD
+  # See info node: (gcc) Preprocessor Options
+  INLINE_DEPGEN_CFLAGS = -MMD
 endif
 
 DEPS := $(OBJECTS:%.o=%.d)
