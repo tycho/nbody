@@ -77,10 +77,6 @@ endif
 ifdef CUDA
 CPPFLAGS  += -DUSE_CUDA
 NVCC      := nvcc
-GXX5_PATH := $(shell which g++-5 2>/dev/null)
-ifneq ($(GXX5_PATH),)
-NVCCFLAGS += -ccbin=$(GXX5_PATH)
-endif
 CUDA_ROOT := $(dir $(shell which nvcc 2>/dev/null))..
 LDFLAGS   += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
 endif
