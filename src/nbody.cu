@@ -893,6 +893,7 @@ int main(int argc, char **argv)
             steps++;
             if (cycleAfter && steps % cycleAfter == 0) {
 next_algorithm:
+                steps = 0;
                 algorithm_idx++;
                 if ( !s_algorithms[algorithm_idx].name ) {
                     algorithm_idx = 0;
