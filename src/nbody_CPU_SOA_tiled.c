@@ -82,6 +82,7 @@ DEFINE_SOA(ComputeGravitation_SOA_tiled)
 
             acx = acy = acz = 0;
 
+            #pragma clang loop vectorize(enable) interleave(enable) interleave_count(2)
             for ( size_t j = tileStart; j < tileEnd; j++ ) {
 
                 const float bodyX = pos[0][j];
