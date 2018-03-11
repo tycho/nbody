@@ -59,7 +59,7 @@ for COMPILER in ${COMPILERS[@]}; do
 	./${NBODY} --bodies 32 --iterations 2 &>/dev/null
 
 	# Now run with the requested arguments.
-	./${NBODY} ${ARGS[@]}
+	env KMP_AFFINITY=scatter,granularity=fine ./${NBODY} ${ARGS[@]}
 
 	echo
 done
