@@ -98,111 +98,117 @@ the same ones you can put on the `nbody` command-line.
 $ scripts/compare-compilers --bodies 64 --no-crosscheck --iterations 1 --cycle-after 3
 
 CPU information:
-    Architecture:          x86_64
-    CPU op-mode(s):        32-bit, 64-bit
-    Byte Order:            Little Endian
-    CPU(s):                32
-    On-line CPU(s) list:   0-31
-    Thread(s) per core:    2
-    Core(s) per socket:    8
-    Socket(s):             2
-    NUMA node(s):          2
-    Vendor ID:             GenuineIntel
-    CPU family:            6
-    Model:                 63
-    Model name:            Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz
-    Stepping:              2
-    CPU MHz:               2401.000
-    CPU max MHz:           2401.0000
-    CPU min MHz:           1200.0000
-    BogoMIPS:              4802.19
-    Virtualization:        VT-x
-    L1d cache:             32K
-    L1i cache:             32K
-    L2 cache:              256K
-    L3 cache:              20480K
-    NUMA node0 CPU(s):     0-7,16-23
-    NUMA node1 CPU(s):     8-15,24-31
-    Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep
-       mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss
-       ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon
-       pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu
-       pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg
-       fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt
-       tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm epb
-       tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1
-       avx2 smep bmi2 erms invpcid cqm xsaveopt cqm_llc cqm_occup_llc
-       dtherm ida arat pln pts
+    Architecture:        x86_64
+    CPU op-mode(s):      32-bit, 64-bit
+    Byte Order:          Little Endian
+    CPU(s):              32
+    On-line CPU(s) list: 0-31
+    Thread(s) per core:  2
+    Core(s) per socket:  8
+    Socket(s):           2
+    NUMA node(s):        2
+    Vendor ID:           GenuineIntel
+    CPU family:          6
+    Model:               63
+    Model name:          Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz
+    Stepping:            2
+    CPU MHz:             1418.351
+    CPU max MHz:         2401.0000
+    CPU min MHz:         1200.0000
+    BogoMIPS:            4800.03
+    Virtualization:      VT-x
+    L1d cache:           32K
+    L1i cache:           32K
+    L2 cache:            256K
+    L3 cache:            20480K
+    NUMA node0 CPU(s):   0-7,16-23
+    NUMA node1 CPU(s):   8-15,24-31
+    Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr
+       pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm
+       pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts
+       rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq
+       dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm
+       pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes
+       xsave avx f16c rdrand lahf_lm abm cpuid_fault epb invpcid_single
+       pti intel_ppin tpr_shadow vnmi flexpriority ept vpid fsgsbase
+       tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm xsaveopt cqm_llc
+       cqm_occup_llc dtherm ida arat pln pts
 
-OS version: Linux 4.5.0-2-ec2 x86_64
+OS version: Linux 4.15.7-1-hsw x86_64
 
 ============================================
 
 CC      = gcc
 LINK    = gcc
 CFLAGS  = -O3 -march=native -ffast-math -std=gnu11 -fno-strict-aliasing
-   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD
-   -DNO_CUDA -DUSE_LIBC11 -I../libc11/include -I../libtime/include
-   -Wall -Wdeclaration-after-statement -Werror=implicit -Werror=undef
-   -Wmissing-declarations -Wmissing-prototypes -Wno-declaration-after-statement
-   -Wno-long-long -Wno-overlength-strings -Wno-unknown-pragmas
-   -Wold-style-definition -Wstrict-prototypes -pthread -fopenmp
-LDFLAGS = -pthread -L/usr/lib -liomp5 -lm -lrt ../libc11/libc11.a
-   ../libtime/libtime.a
+   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD -DUSE_LIBC11
+   -I../subprojects/c11/include -I../subprojects/time/include
+   -Wall -Wdeclaration-after-statement -Werror=implicit
+   -Werror=undef -Wmissing-declarations -Wmissing-prototypes
+   -Wno-declaration-after-statement -Wno-long-long -Wno-overlength-strings
+   -Wno-unknown-pragmas -Wold-style-definition -Wstrict-prototypes -pthread
+   -fPIC -fopenmp
+LDFLAGS = -pthread -fPIC -lomp ../subprojects/c11/libc11.a
+   ../subprojects/time/libtime.a -lm -lrt
 
-Compiler version: gcc (GCC) 5.3.0
+Compiler version: gcc (GCC) 7.3.1 20180307
 
-Running simulation with 65536 particles, crosscheck disabled, CPU enabled, 32 threads
-      CPU_SOA:   213.18 ms =   20.147x10^9 interactions/s (   402.95 GFLOPS)
-      CPU_SOA:   214.09 ms =   20.061x10^9 interactions/s (   401.22 GFLOPS)
-      CPU_SOA:   214.35 ms =   20.037x10^9 interactions/s (   400.74 GFLOPS)
-CPU_SOA_tiled:   204.92 ms =   20.959x10^9 interactions/s (   419.18 GFLOPS)
-CPU_SOA_tiled:   205.96 ms =   20.853x10^9 interactions/s (   417.07 GFLOPS)
-CPU_SOA_tiled:   204.93 ms =   20.958x10^9 interactions/s (   419.17 GFLOPS)
-   AVX intrin:   202.31 ms =   21.230x10^9 interactions/s (   424.60 GFLOPS)
-   AVX intrin:   200.21 ms =   21.452x10^9 interactions/s (   429.05 GFLOPS)
-   AVX intrin:   202.52 ms =   21.208x10^9 interactions/s (   424.15 GFLOPS)
-      CPU_AOS:   610.13 ms =    7.039x10^9 interactions/s (   140.79 GFLOPS)
-      CPU_AOS:   610.03 ms =    7.041x10^9 interactions/s (   140.81 GFLOPS)
-      CPU_AOS:   610.22 ms =    7.038x10^9 interactions/s (   140.77 GFLOPS)
-CPU_AOS_tiled:   611.14 ms =    7.028x10^9 interactions/s (   140.56 GFLOPS)
-CPU_AOS_tiled:   611.12 ms =    7.028x10^9 interactions/s (   140.56 GFLOPS)
-CPU_AOS_tiled:   611.48 ms =    7.024x10^9 interactions/s (   140.48 GFLOPS)
+Binary size: 50568 bytes
+
+Running simulation with 65536 particles, 32 CPU threads
+      CPU_SOA:   212.08 ms =   20.251x10^9 interactions/s (   405.03 GFLOPS)
+      CPU_SOA:   211.41 ms =   20.316x10^9 interactions/s (   406.32 GFLOPS)
+      CPU_SOA:   212.42 ms =   20.219x10^9 interactions/s (   404.38 GFLOPS)
+CPU_SOA_tiled:   214.81 ms =   19.994x10^9 interactions/s (   399.88 GFLOPS)
+CPU_SOA_tiled:   218.04 ms =   19.698x10^9 interactions/s (   393.96 GFLOPS)
+CPU_SOA_tiled:   223.74 ms =   19.196x10^9 interactions/s (   383.92 GFLOPS)
+          AVX:   204.43 ms =   21.009x10^9 interactions/s (   420.18 GFLOPS)
+          AVX:   204.25 ms =   21.028x10^9 interactions/s (   420.57 GFLOPS)
+          AVX:   204.19 ms =   21.034x10^9 interactions/s (   420.68 GFLOPS)
+      CPU_AOS:   619.51 ms =    6.933x10^9 interactions/s (   138.66 GFLOPS)
+      CPU_AOS:   619.09 ms =    6.938x10^9 interactions/s (   138.75 GFLOPS)
+      CPU_AOS:   617.79 ms =    6.952x10^9 interactions/s (   139.04 GFLOPS)
+CPU_AOS_tiled:   624.33 ms =    6.879x10^9 interactions/s (   137.59 GFLOPS)
+CPU_AOS_tiled:   616.61 ms =    6.966x10^9 interactions/s (   139.31 GFLOPS)
+CPU_AOS_tiled:   616.02 ms =    6.972x10^9 interactions/s (   139.44 GFLOPS)
 
 
 ============================================
 
-CC      = /usr/bin/clang
-LINK    = /usr/bin/clang
+CC      = clang
+LINK    = clang
 CFLAGS  = -O3 -march=native -ffast-math -std=gnu11 -fno-strict-aliasing
-   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD
-   -DNO_CUDA -DUSE_LIBC11 -I../libc11/include -I../libtime/include
-   -Wall -Wdeclaration-after-statement -Werror=implicit -Werror=undef
-   -Wmissing-declarations -Wmissing-prototypes -Wno-declaration-after-statement
-   -Wno-long-long -Wno-overlength-strings -Wno-unknown-pragmas
-   -Wold-style-definition -Wstrict-prototypes -pthread -fopenmp=libiomp5
-   -D_OPENMP=201107 -Wno-macro-redefined
-LDFLAGS = -pthread -L/usr/lib -liomp5 -lm -lrt ../libc11/libc11.a
-   ../libtime/libtime.a
+   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD -DUSE_LIBC11
+   -I../subprojects/c11/include -I../subprojects/time/include
+   -Wall -Wdeclaration-after-statement -Werror=implicit
+   -Werror=undef -Wmissing-declarations -Wmissing-prototypes
+   -Wno-declaration-after-statement -Wno-long-long -Wno-overlength-strings
+   -Wno-unknown-pragmas -Wold-style-definition -Wstrict-prototypes
+   -pthread -fPIC -idirafter /usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include
+   -fopenmp=libomp
+LDFLAGS = -pthread -fPIC -lomp ../subprojects/c11/libc11.a
+   ../subprojects/time/libtime.a -lm -lrt
 
-Compiler version: clang version 3.7.0 (tags/RELEASE_370/final)
+Compiler version: clang version 6.0.0 (tags/RELEASE_600/final)
 
-Running simulation with 65536 particles, crosscheck disabled, CPU enabled, 32 threads
-      CPU_SOA:   180.74 ms =   23.763x10^9 interactions/s (   475.27 GFLOPS)
-      CPU_SOA:   181.26 ms =   23.696x10^9 interactions/s (   473.91 GFLOPS)
-      CPU_SOA:   181.42 ms =   23.674x10^9 interactions/s (   473.48 GFLOPS)
-CPU_SOA_tiled:   177.51 ms =   24.195x10^9 interactions/s (   483.91 GFLOPS)
-CPU_SOA_tiled:   177.49 ms =   24.198x10^9 interactions/s (   483.97 GFLOPS)
-CPU_SOA_tiled:   178.94 ms =   24.003x10^9 interactions/s (   480.06 GFLOPS)
-   AVX intrin:   207.13 ms =   20.735x10^9 interactions/s (   414.71 GFLOPS)
-   AVX intrin:   206.88 ms =   20.761x10^9 interactions/s (   415.21 GFLOPS)
-   AVX intrin:   206.92 ms =   20.756x10^9 interactions/s (   415.13 GFLOPS)
-      CPU_AOS:   565.27 ms =    7.598x10^9 interactions/s (   151.96 GFLOPS)
-      CPU_AOS:   565.41 ms =    7.596x10^9 interactions/s (   151.92 GFLOPS)
-      CPU_AOS:   565.55 ms =    7.594x10^9 interactions/s (   151.89 GFLOPS)
-CPU_AOS_tiled:   568.02 ms =    7.561x10^9 interactions/s (   151.23 GFLOPS)
-CPU_AOS_tiled:   568.01 ms =    7.561x10^9 interactions/s (   151.23 GFLOPS)
-CPU_AOS_tiled:   568.00 ms =    7.562x10^9 interactions/s (   151.23 GFLOPS)
+Binary size: 49712 bytes
+
+Running simulation with 65536 particles, 32 CPU threads
+      CPU_SOA:   222.51 ms =   19.302x10^9 interactions/s (   386.04 GFLOPS)
+      CPU_SOA:   223.28 ms =   19.236x10^9 interactions/s (   384.72 GFLOPS)
+      CPU_SOA:   223.66 ms =   19.203x10^9 interactions/s (   384.06 GFLOPS)
+CPU_SOA_tiled:   234.22 ms =   18.338x10^9 interactions/s (   366.75 GFLOPS)
+CPU_SOA_tiled:   230.62 ms =   18.624x10^9 interactions/s (   372.48 GFLOPS)
+CPU_SOA_tiled:   231.35 ms =   18.564x10^9 interactions/s (   371.29 GFLOPS)
+          AVX:   223.30 ms =   19.234x10^9 interactions/s (   384.68 GFLOPS)
+          AVX:   223.22 ms =   19.241x10^9 interactions/s (   384.82 GFLOPS)
+          AVX:   223.16 ms =   19.246x10^9 interactions/s (   384.93 GFLOPS)
+      CPU_AOS:   437.75 ms =    9.811x10^9 interactions/s (   196.23 GFLOPS)
+      CPU_AOS:   436.60 ms =    9.837x10^9 interactions/s (   196.74 GFLOPS)
+      CPU_AOS:   438.13 ms =    9.803x10^9 interactions/s (   196.06 GFLOPS)
+CPU_AOS_tiled:   436.50 ms =    9.840x10^9 interactions/s (   196.79 GFLOPS)
+CPU_AOS_tiled:   444.67 ms =    9.659x10^9 interactions/s (   193.18 GFLOPS)
+CPU_AOS_tiled:   436.54 ms =    9.839x10^9 interactions/s (   196.78 GFLOPS)
 
 
 ============================================
@@ -210,27 +216,30 @@ CPU_AOS_tiled:   568.00 ms =    7.562x10^9 interactions/s (   151.23 GFLOPS)
 CC      = icc
 LINK    = icc
 CFLAGS  = -Ofast -xHOST -no-prec-sqrt -std=gnu11 -fno-strict-aliasing
-   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD -DNO_CUDA
-   -DUSE_LIBC11 -I../libc11/include -I../libtime/include  -pthread -fopenmp
-LDFLAGS = -pthread -L/usr/lib -liomp5 -lm -lrt -static-intel ../libc11/libc11.a
-   ../libtime/libtime.a
+   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD -DUSE_LIBC11
+   -I../subprojects/c11/include -I../subprojects/time/include  -pthread
+   -fPIC -fopenmp
+LDFLAGS = -pthread -fPIC -lomp -static-intel ../subprojects/c11/libc11.a
+   ../subprojects/time/libtime.a -lm -lrt
 
-Compiler version: icc (ICC) 16.0.2 20160204
+Compiler version: icc (ICC) 18.0.1 20171018
 
-Running simulation with 65536 particles, crosscheck disabled, CPU enabled, 32 threads
-      CPU_SOA:   195.51 ms =   21.968x10^9 interactions/s (   439.35 GFLOPS)
-      CPU_SOA:   195.43 ms =   21.977x10^9 interactions/s (   439.55 GFLOPS)
-      CPU_SOA:   196.90 ms =   21.813x10^9 interactions/s (   436.25 GFLOPS)
-CPU_SOA_tiled:   198.60 ms =   21.626x10^9 interactions/s (   432.53 GFLOPS)
-CPU_SOA_tiled:   198.59 ms =   21.628x10^9 interactions/s (   432.55 GFLOPS)
-CPU_SOA_tiled:   198.70 ms =   21.615x10^9 interactions/s (   432.31 GFLOPS)
-   AVX intrin:   198.88 ms =   21.596x10^9 interactions/s (   431.91 GFLOPS)
-   AVX intrin:   199.02 ms =   21.581x10^9 interactions/s (   431.61 GFLOPS)
-   AVX intrin:   198.47 ms =   21.641x10^9 interactions/s (   432.81 GFLOPS)
-      CPU_AOS:   271.50 ms =   15.819x10^9 interactions/s (   316.39 GFLOPS)
-      CPU_AOS:   270.97 ms =   15.850x10^9 interactions/s (   317.00 GFLOPS)
-      CPU_AOS:   271.09 ms =   15.844x10^9 interactions/s (   316.87 GFLOPS)
-CPU_AOS_tiled:   206.50 ms =   20.799x10^9 interactions/s (   415.97 GFLOPS)
-CPU_AOS_tiled:   204.26 ms =   21.027x10^9 interactions/s (   420.55 GFLOPS)
-CPU_AOS_tiled:   204.21 ms =   21.033x10^9 interactions/s (   420.65 GFLOPS)
+Binary size: 91640 bytes
+
+Running simulation with 65536 particles, 32 CPU threads
+      CPU_SOA:   202.46 ms =   21.214x10^9 interactions/s (   424.27 GFLOPS)
+      CPU_SOA:   202.30 ms =   21.231x10^9 interactions/s (   424.61 GFLOPS)
+      CPU_SOA:   202.35 ms =   21.226x10^9 interactions/s (   424.52 GFLOPS)
+CPU_SOA_tiled:   199.01 ms =   21.582x10^9 interactions/s (   431.64 GFLOPS)
+CPU_SOA_tiled:   200.82 ms =   21.387x10^9 interactions/s (   427.74 GFLOPS)
+CPU_SOA_tiled:   208.29 ms =   20.620x10^9 interactions/s (   412.40 GFLOPS)
+          AVX:   202.08 ms =   21.254x10^9 interactions/s (   425.07 GFLOPS)
+          AVX:   202.20 ms =   21.241x10^9 interactions/s (   424.83 GFLOPS)
+          AVX:   201.88 ms =   21.275x10^9 interactions/s (   425.51 GFLOPS)
+      CPU_AOS:   281.19 ms =   15.274x10^9 interactions/s (   305.48 GFLOPS)
+      CPU_AOS:   279.57 ms =   15.363x10^9 interactions/s (   307.25 GFLOPS)
+      CPU_AOS:   279.66 ms =   15.358x10^9 interactions/s (   307.16 GFLOPS)
+CPU_AOS_tiled:   202.61 ms =   21.198x10^9 interactions/s (   423.97 GFLOPS)
+CPU_AOS_tiled:   209.71 ms =   20.480x10^9 interactions/s (   409.60 GFLOPS)
+CPU_AOS_tiled:   211.19 ms =   20.337x10^9 interactions/s (   406.74 GFLOPS)
 ```
