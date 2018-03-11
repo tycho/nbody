@@ -2,6 +2,8 @@ BIN := nbody
 
 CP := cp
 
+QUIET := @
+
 ifndef NATIVE_C11
 DEPS += subprojects/c11/libc11.a
 endif

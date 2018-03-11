@@ -21,8 +21,8 @@ for COMPILER in ${COMPILERS[@]}; do
 	echo
 	echo "Building with ${COMPILER}..."
 
-	make CC=${COMPILER} info-flags info-compiler | fmt -80 -t 2>&1 > ${NBODY}.buildinfo
-	make CC=${COMPILER} -j8
+	make --no-print-directory CC=${COMPILER} info-flags info-compiler | fmt -80 -t 2>&1 > ${NBODY}.buildinfo
+	make --no-print-directory CC=${COMPILER}
 	mv nbody ${NBODY}
 	BUILT_SOMETHING=1
 done
@@ -33,7 +33,7 @@ if [[ $BUILT_SOMETHING ]]; then
 fi
 echo
 
-make info-cpu info-os
+make --no-print-directory info-cpu info-os
 
 for COMPILER in ${COMPILERS[@]}; do
 	NBODY=nbody.${COMPILER##*/}
