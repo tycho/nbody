@@ -21,7 +21,7 @@ for COMPILER in ${COMPILERS[@]}; do
 	echo
 	echo "Building with ${COMPILER}..."
 
-	make --no-print-directory CC=${COMPILER} info-flags info-compiler | fmt -80 -t 2>&1 > ${NBODY}.buildinfo
+	make --no-print-directory CC=${COMPILER} info-flags info-compiler 2>&1 > ${NBODY}.buildinfo
 	make --no-print-directory CC=${COMPILER}
 	mv nbody ${NBODY}
 	BUILT_SOMETHING=1
