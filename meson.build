@@ -18,6 +18,7 @@ libtime = libtime_sp.get_variable('time_dep')
 enable_cuda = get_option('cuda')
 enable_openmp = get_option('openmp')
 enable_opengl = get_option('opengl')
+nvcc_name = get_option('nvcc')
 
 c_sources = [
     'src/nbody_CPU_AOS.c',
@@ -50,11 +51,24 @@ nvcc_flags = [
     '-I' + join_paths(meson.current_source_dir(), 'subprojects', 'c11', 'include'),
     '-I' + join_paths(meson.current_source_dir(), 'subprojects', 'time', 'include'),
 
-    '-O3', '-Drestrict=',
-    '-gencode=arch=compute_52,code="sm_52,compute_52"',
-    '-gencode=arch=compute_61,code="sm_61,compute_61"',
-    '-gencode=arch=compute_70,code="sm_70,compute_70"'
+    '-O3',
 ]
+
+if nvcc_name == 'clang++'
+    nvcc_flags += [
+        '-Drestrict=__restrict',
+        '--cuda-gpu-arch=sm_52',
+        '--cuda-gpu-arch=sm_61',
+        '--cuda-gpu-arch=sm_70',
+    ]
+elif nvcc_name == 'nvcc'
+    nvcc_flags += [
+        '-Drestrict=',
+        '-gencode=arch=compute_52,code="sm_52,compute_52"',
+        '-gencode=arch=compute_61,code="sm_61,compute_61"',
+        '-gencode=arch=compute_70,code="sm_70,compute_70"'
+    ]
+endif
 
 extra_deps = []
 
@@ -74,7 +88,7 @@ if enable_cuda
         'src/nbody_GPU_shared.cu',
         'src/nbody_multiGPU.cu'
     ]
-    nvcc_bin = find_program(['nvcc'])
+    nvcc_bin = find_program([nvcc_name])
     cuda_gen = generator(nvcc_bin,
         output: '@BASENAME@.o',
         arguments: cpp_args + nvcc_flags +  ['-c', '@INPUT@', '-o', '@OUTPUT@'])
