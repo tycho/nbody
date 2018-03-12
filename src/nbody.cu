@@ -96,6 +96,7 @@ extern const char *SIMD_ALGORITHM_NAME;
 #endif
 
 #define DEFAULT_KPARTICLES 16
+#define DEFAULT_SEED 7
 
 static const algorithm_def_t s_algorithms[] = {
     { "CPU_SOA",             ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA                 } },
@@ -552,6 +553,10 @@ static void print_usage(const char *argv0)
     fprintf(stderr, "        Specifies the number of simulations steps to execute before cycling to\n");
     fprintf(stderr, "        the next available algorithm. [default: none, don't cycle]\n");
     fprintf(stderr, "\n");
+    fprintf(stderr, "    --seed=<N> | -s <N>\n");
+    fprintf(stderr, "        Specifies the seed value for the random number generatior. This value\n");
+    fprintf(stderr, "        determines the initial positions for the bodies in the system. [default: %d]\n", DEFAULT_SEED);
+    fprintf(stderr, "\n");
 #ifdef USE_GL
     /* We only print the --graphics help section if we've got OpenGL support
      * compiled in. But we always accept the command line argument for
@@ -598,6 +603,7 @@ int main(int argc, char **argv)
     int bPrintListOnly = 0;
     int bUseGraphics = 0;
     int bVerbose = 0;
+    unsigned int nSeed = DEFAULT_SEED;
 
     static const struct option cli_options[] = {
         { "bodies", required_argument, NULL, 'n' },
@@ -606,6 +612,7 @@ int main(int argc, char **argv)
         { "no-crosscheck", no_argument, &g_bCrossCheck, 0 },
         { "iterations", required_argument, NULL, 'i' },
         { "cycle-after", required_argument, NULL, 'c' },
+        { "seed", required_argument, NULL, 's' },
         { "list", no_argument, NULL, 'l' },
         { "algorithm", required_argument, NULL, 'a' },
         { "graphics", no_argument, NULL, 'G' },
@@ -621,7 +628,7 @@ int main(int argc, char **argv)
         g_numGPUs = g_maxGPUs;
 
     while (1) {
-        int option = getopt_long(argc, argv, "n:i:c:g:la:Gh", cli_options, NULL);
+        int option = getopt_long(argc, argv, "n:s:i:c:g:la:Gh", cli_options, NULL);
 
         if (option == -1)
             break;
@@ -667,6 +674,20 @@ int main(int argc, char **argv)
                     return 1;
                 }
                 kParticles = v;
+            }
+            break;
+        case 's':
+            {
+                unsigned int v;
+                if (sscanf(optarg, "%u", &v) != 1) {
+                    fprintf(stderr, "ERROR: Couldn't parse integer argument for '--seed'\n");
+                    return 1;
+                }
+                if (v < 1) {
+                    fprintf(stderr, "ERROR: Seed must be nonzero integer value\n");
+                    return 1;
+                }
+                nSeed = v;
             }
             break;
         case 'g':
@@ -756,7 +777,7 @@ int main(int argc, char **argv)
     libtime_init();
 
     // for reproducible results for a given N
-    seedRandom(7);
+    seedRandom(nSeed);
 
     g_bCUDAPresent = g_numGPUs > 0;
     if ( g_bCUDAPresent ) {
