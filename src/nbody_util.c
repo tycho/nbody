@@ -62,6 +62,7 @@
 #include "nbody_util.h"
 
 #ifdef _WIN32
+#define RANDOM_MAX 2147483647
 /*
 this code uses the same lagged fibonacci generator as the
 original bsd random implementation except for the seeding
@@ -125,6 +126,8 @@ static long random(void) {
         j = 0;
     return k;
 }
+#else
+#define RANDOM_MAX RAND_MAX
 #endif
 
 int processorCount(void)
@@ -160,7 +163,7 @@ float nbodyRandom(float randMin, float randMax)
 #else
     v = random();
 #endif
-    result = (float)v / (float)RAND_MAX;
+    result = (float)v / (float)RANDOM_MAX;
     return ((1.0f - result) * randMin + result * randMax);
 }
 
