@@ -582,15 +582,35 @@ static void print_usage(const char *argv0)
     fprintf(stderr, "        Prints this help text.\n");
 }
 
+static cnd_t g_cndRenderInitDone = 0;
+
 static int render_loop(void *_unused)
 {
     gl_init_window();
+    cnd_signal(&g_cndRenderInitDone);
     while(g_bRunning) {
         if (gl_display() != 0)
             break;
     }
     gl_quit();
     return 0;
+}
+
+static void render_init(void)
+{
+    mtx_t mtx;
+
+    mtx_init(&mtx, mtx_plain);
+    mtx_lock(&mtx);
+    cnd_init(&g_cndRenderInitDone);
+
+    worker_delegate(&g_renderThread, render_loop, (void*)1, 0);
+
+    // Wait for gl_init_window() to finish
+    cnd_wait(&g_cndRenderInitDone, &mtx);
+
+    cnd_destroy(&g_cndRenderInitDone);
+    mtx_destroy(&mtx);
 }
 
 int main(int argc, char **argv)
@@ -870,7 +890,7 @@ int main(int argc, char **argv)
         int bStop = 0;
         int64_t print_deadline = INT64_MIN, now;
         if ( bUseGraphics )
-            worker_delegate(&g_renderThread, render_loop, (void*)1, 0);
+            render_init();
         while ( !bStop ) {
             char ch;
             float ms, err;
