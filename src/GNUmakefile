@@ -85,6 +85,9 @@ SDL_LDFLAGS   := $(shell pkg-config --libs sdl2)
 GLEW_LDFLAGS  := $(shell pkg-config --libs glew)
 CFLAGS        += $(SDL_CFLAGS) $(GLEW_CFLAGS)
 LDFLAGS       += $(SDL_LDFLAGS) $(GLEW_LDFLAGS)
+ifneq (,$(findstring MINGW,$(uname_S)))
+LDFLAGS       += -lglu32 -lopengl32 -lmingw32
+endif
 endif
 
 ifndef NATIVE_C11
@@ -102,7 +105,8 @@ ifneq (,$(findstring CYGWIN,$(uname_S)))
   LDFLAGS += -lwinmm
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-  LDFLAGS += -lwinmm
+  CFLAGS += -fno-asynchronous-unwind-tables
+  LDFLAGS += -mconsole -lwinmm
 endif
 
 ifdef CUDA
