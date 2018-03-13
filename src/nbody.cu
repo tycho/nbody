@@ -868,7 +868,7 @@ int main(int argc, char **argv)
         int algorithm_idx = idxFirstAlgorithm;
         int steps = 0, iterations = 0;
         int bStop = 0;
-        int64_t print_deadline = 0, now;
+        int64_t print_deadline = INT64_MIN, now;
         if ( bUseGraphics )
             worker_delegate(&g_renderThread, render_loop, (void*)1, 0);
         while ( !bStop ) {
@@ -881,7 +881,7 @@ int main(int argc, char **argv)
             if (ComputeGravitation(&ms, &err, algorithm, g_bCrossCheck))
                 goto next_algorithm;
 
-            if (bVerbose || (now - print_deadline) > 0)
+            if (bVerbose || now >= print_deadline)
             {
                 double interactionsPerSecond = (double) g_N*g_N*1000.0f / ms,
                        flops = interactionsPerSecond * (3 + 6 + 4 + 1 + 6) * 1e-3;
