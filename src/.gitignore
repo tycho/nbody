@@ -1,5 +1,6 @@
 /.cflags
 /openmp-test
+/openmp-test.exe
 /openmp.mk
 /nbody
 /nbody.exe
