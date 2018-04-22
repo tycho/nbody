@@ -45,7 +45,7 @@ extern "C" {
 
 /* Temporary, until GCC PR78844 and PR78808 are fixed. Defining this here
  * disables target_clones feature. */
-#if !defined(__GNUC__) || __GNUC__ < 9
+#if !defined(__GNUC__) || __GNUC__ < 8
 #define TARGET_DECL
 #endif
 
