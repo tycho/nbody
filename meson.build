@@ -37,6 +37,7 @@ c_args = [
     '-ffast-math',
 ] + compiler.get_supported_arguments([
     '-Wno-unknown-pragmas',
+    '-fno-asynchronous-unwind-tables',
 ])
 cpp_args = [
     '-DUSE_LIBC11',
@@ -153,6 +154,12 @@ if enable_openmp
     result = compiler.run(omp_test_code, args: omp_arg, name: 'OpenMP test program', dependencies: omp_lib)
     cpp_args += [omp_arg]
     extra_deps += [omp_lib]
+endif
+
+if target_machine.system() == 'windows'
+    winmm = compiler.find_library('winmm')
+    glu = compiler.find_library('glu32')
+    extra_deps += [winmm, glu]
 endif
 
 executable('nbody',
