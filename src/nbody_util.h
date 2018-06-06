@@ -43,9 +43,8 @@ extern "C" {
 
 #define NBODY_ALIGNMENT 64
 
-/* Temporary, until GCC PR78844 and PR78808 are fixed. Defining this here
- * disables target_clones feature. */
-#if !defined(__GNUC__) || __GNUC__ < 8
+/* Disabled until GCC 9, when some of the target_clones bugs are hopefully fixed. */
+#if !defined(__GNUC__) || __GNUC__ < 9
 #define TARGET_DECL
 #endif
 
@@ -65,7 +64,7 @@ extern "C" {
 #    define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 #  endif
 #  if !defined(__clang__) && !defined(TARGET_DECL)
-#    define TARGET_DECL __attribute__((target_clones("arch=skylake", "arch=haswell", "arch=sandybridge", "default")))
+#    define TARGET_DECL __attribute__((target_clones("arch=haswell", "arch=sandybridge", "default")))
 #  endif
 #endif
 
