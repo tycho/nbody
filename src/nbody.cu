@@ -586,11 +586,26 @@ static cnd_t g_cndRenderInitDone = 0;
 
 static int render_loop(void *_unused)
 {
+    const uint64_t cpu_time_2sec = libtime_wall_to_cpu(2 * 1e9);
+    uint32_t frames = 0;
+    uint64_t now, deadline;
     gl_init_window();
     cnd_signal(&g_cndRenderInitDone);
+    now = libtime_cpu();
+    deadline = now + cpu_time_2sec;
     while(g_bRunning) {
         if (gl_display() != 0)
             break;
+        frames++;
+        now = libtime_cpu();
+        if (now >= deadline)
+        {
+#ifdef _DEBUG
+            fprintf(stderr, "%0.1f FPS\n", frames / 2.0);
+#endif
+            frames = 0;
+            deadline = libtime_cpu() + cpu_time_2sec;
+        }
     }
     gl_quit();
     return 0;
