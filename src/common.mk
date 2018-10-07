@@ -123,7 +123,10 @@ CFLAGS     += -Wa,-q
 endif
 endif
 
-ifneq ($(uname_O),Cygwin)
+ifeq ($(uname_O),Cygwin)
+CFLAGS += -fno-asynchronous-unwind-tables
+LDFLAGS += -fno-asynchronous-unwind-tables
+else
 CFLAGS += -pthread
 LDFLAGS += -pthread
 endif
