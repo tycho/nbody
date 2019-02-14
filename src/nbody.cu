@@ -875,6 +875,8 @@ int main(int argc, char **argv)
 
     g_N = kParticles * 1024;
 
+    int numThreads = processorCount();
+
     fprintf(stderr, "Running simulation with %u particles", (unsigned int)g_N);
 
     if (g_bCrossCheck)
@@ -883,7 +885,7 @@ int main(int argc, char **argv)
     if (g_bNoCPU)
         fprintf(stderr, ", CPU disabled");
     else
-        fprintf(stderr, ", %d CPU threads", processorCount());
+        fprintf(stderr, ", %d CPU threads", numThreads);
 
     if (g_numGPUs)
         fprintf(stderr, ", up to %u GPUs", g_numGPUs);
