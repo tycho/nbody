@@ -638,6 +638,7 @@ int main(int argc, char **argv)
     int bPrintListOnly = 0;
     int bUseGraphics = 0;
     int bVerbose = 0;
+    int numThreads;
     unsigned int nSeed = DEFAULT_SEED;
 
     static const struct option cli_options[] = {
@@ -875,7 +876,7 @@ int main(int argc, char **argv)
 
     g_N = kParticles * 1024;
 
-    int numThreads = processorCount();
+    numThreads = processorCount();
 
     fprintf(stderr, "Running simulation with %u particles", (unsigned int)g_N);
 
