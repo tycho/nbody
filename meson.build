@@ -18,6 +18,7 @@ libtime = libtime_sp.get_variable('libtime')
 enable_cuda = get_option('cuda')
 enable_openmp = get_option('openmp')
 enable_opengl = get_option('opengl')
+enable_simd = get_option('intrinsics')
 nvcc_name = get_option('nvcc')
 
 c_sources = [
@@ -42,7 +43,6 @@ c_args = [
 cpp_args = [
     '-DUSE_LIBC11',
     '-DLIBTIME_STATIC',
-    '-DHAVE_SIMD',
     #'-DHIGH_ENTROPY',
 ]
 nvcc_flags = [
@@ -79,7 +79,11 @@ if enable_opengl
         dependency('glew'),
         dependency('sdl2'),
     ]
-    cpp_args +=['-DUSE_GL']
+    cpp_args += ['-DUSE_GL']
+endif
+
+if enable_simd
+    cpp_args += ['-DHAVE_SIMD']
 endif
 
 if enable_cuda
