@@ -61,7 +61,7 @@ DEFINE_SOA(ComputeGravitation_SIMD)
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
 
-    #pragma omp parallel for schedule(guided, 16)
+    #pragma omp parallel for schedule(guided)
     for (size_t i = 0; i < N; i++)
     {
         const vf32x4_t x0 = _vec_set_ps1( pos[0][i] );

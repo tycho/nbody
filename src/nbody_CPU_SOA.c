@@ -60,7 +60,7 @@ DEFINE_SOA(ComputeGravitation_SOA)
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
 
-    #pragma omp parallel for schedule(guided, 16)
+    #pragma omp parallel for schedule(guided)
     for ( size_t i = 0; i < N; i++ )
     {
         float acx, acy, acz;
