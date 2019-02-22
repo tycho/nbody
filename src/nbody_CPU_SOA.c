@@ -61,8 +61,6 @@ DEFINE_SOA(ComputeGravitation_SOA)
     ASSUME(N % 1024 == 0);
 
     #pragma omp parallel for schedule(guided, 16)
-    #pragma vector aligned
-    #pragma ivdep
     for ( size_t i = 0; i < N; i++ )
     {
         float acx, acy, acz;
@@ -72,12 +70,7 @@ DEFINE_SOA(ComputeGravitation_SOA)
 
         acx = acy = acz = 0;
 
-        ASSUME(N >= 1024);
-        ASSUME(N % 1024 == 0);
-
-        #pragma vector aligned
-        #pragma ivdep
-        #pragma clang loop vectorize(enable) interleave(enable) interleave_count(2)
+        #pragma omp simd reduction(+:acx,acy,acz)
         for ( size_t j = 0; j < N; j++ ) {
 
             const float bodyX = pos[0][j];

@@ -63,8 +63,6 @@ DEFINE_SOA(ComputeGravitation_SIMD)
     ASSUME(N % 1024 == 0);
 
     #pragma omp parallel for schedule(guided, 16)
-    #pragma vector aligned
-    #pragma ivdep
     for ( size_t i = 0; i < N; i++ )
     {
         const __m128 x0 = _mm_set_ps1( pos[0][i] );
@@ -75,11 +73,6 @@ DEFINE_SOA(ComputeGravitation_SIMD)
         __m128 ay = _mm_setzero_ps();
         __m128 az = _mm_setzero_ps();
 
-        ASSUME(N >= 1024);
-        ASSUME(N % 1024 == 0);
-
-        #pragma vector aligned
-        #pragma ivdep
         for ( size_t j = 0; j < N; j += 4 )
         {
             const __m128 x1 = *(__m128 *)&pos[0][j];

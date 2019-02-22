@@ -72,9 +72,6 @@ DEFINE_SOA(ComputeGravitation_SIMD)
         vf32x4_t ay = vec_zero;
         vf32x4_t az = vec_zero;
 
-        ASSUME(N >= 1024);
-        ASSUME(N % 1024 == 0);
-
         for ( size_t j = 0; j < N; j += 4 )
         {
             const vf32x4_t x1 = *(vf32x4_t *)&pos[0][j];

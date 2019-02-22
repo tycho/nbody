@@ -57,8 +57,6 @@ DEFINE_AOS(ComputeGravitation_AOS)
     ASSUME(N % 1024 == 0);
 
     #pragma omp parallel for schedule(guided, 16)
-    #pragma vector aligned
-    #pragma ivdep
     for ( size_t i = 0; i < N; i++ )
     {
         float acx, acy, acz;
@@ -68,12 +66,7 @@ DEFINE_AOS(ComputeGravitation_AOS)
 
         acx = acy = acz = 0;
 
-        ASSUME(N >= 1024);
-        ASSUME(N % 1024 == 0);
-
-        #pragma vector aligned
-        #pragma ivdep
-        #pragma clang loop vectorize(disable) interleave(enable) interleave_count(16)
+        #pragma omp simd reduction(+:acx,acy,acz)
         for ( size_t j = 0; j < N; j++ ) {
 
             float fx, fy, fz;

@@ -69,9 +69,6 @@ DEFINE_SOA(ComputeGravitation_SOA_tiled)
     {
         int tileEnd = tileStart + BODIES_PER_TILE;
 
-        ASSUME(N >= 1024);
-        ASSUME(N % 1024 == 0);
-
         #pragma omp for schedule(guided)
         for ( size_t i = 0; i < N; i++ )
         {
@@ -82,7 +79,7 @@ DEFINE_SOA(ComputeGravitation_SOA_tiled)
 
             acx = acy = acz = 0;
 
-            #pragma clang loop vectorize(enable) interleave(enable) interleave_count(2)
+            #pragma omp simd reduction(+:acx,acy,acz)
             for ( size_t j = tileStart; j < tileEnd; j++ ) {
 
                 const float bodyX = pos[0][j];
