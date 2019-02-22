@@ -29,7 +29,7 @@ static float g_camera_rot_lag[]   = {0.0f, 0.0f, 0.0f};
 
 static const float CAMERA_INERTIA = 0.05f;
 
-extern afloat *g_hostAOS_PosMass;
+extern float *g_hostAOS_PosMass;
 extern size_t g_N;
 
 static const GLchar *s_vertexShaderPoints =

@@ -53,7 +53,7 @@ extern "C" {
 #  ifdef DEBUG
 #    define ASSERT_ALIGNED(p,n) do { assert(((uintptr_t)(p) & (uintptr_t)(n-1)) == 0); } while (0)
 #  else
-#    define ASSERT_ALIGNED(p,n)
+#    define ASSERT_ALIGNED(p,n) do { p = __builtin_assume_aligned(p, n); } while(0)
 #  endif
 #  if defined(__clang__)
 #    if __has_builtin(__builtin_assume)
@@ -84,17 +84,17 @@ extern "C" {
 #define DECLARE_SOA(Name) \
 	float \
 	Name( \
-		afloat ** restrict force, \
-		afloat ** restrict pos, \
-		afloat *  restrict mass, \
+		float ** restrict force, \
+		float ** restrict pos, \
+		float *  restrict mass, \
 		float softeningSquared, \
 		size_t N )
 
 #define DECLARE_AOS(Name) \
 	float \
 	Name( \
-		afloat * restrict force, \
-		afloat * restrict posMass, \
+		float * restrict force, \
+		float * restrict posMass, \
 		float softeningSquared, \
 		size_t N )
 
@@ -127,12 +127,6 @@ void alignedFree(void *p);
 int kbhit(void);
 int getch(void);
 #endif
-
-// "unaligned" float, or more accurately a float with no alignment guarantees.
-typedef float ufloat;
-
-// aligned float
-typedef ufloat ALIGNED(NBODY_ALIGNMENT) afloat;
 
 #ifdef __cplusplus
 }

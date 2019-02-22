@@ -39,20 +39,20 @@
 #include "nbody_util.h"
 #include "nbody_CPU_SIMD.h"
 
-extern afloat *g_hostAOS_PosMass;
-extern afloat *g_hostAOS_VelInvMass;
-extern afloat *g_hostAOS_Force;
+extern float *g_hostAOS_PosMass;
+extern float *g_hostAOS_VelInvMass;
+extern float *g_hostAOS_Force;
 
-extern afloat *g_hostSOA_Pos[3];
-extern afloat *g_hostSOA_Force[3];
-extern afloat *g_hostSOA_Mass;
-extern afloat *g_hostSOA_InvMass;
+extern float *g_hostSOA_Pos[3];
+extern float *g_hostSOA_Force[3];
+extern float *g_hostSOA_Mass;
+extern float *g_hostSOA_InvMass;
 
 extern int g_numCPUCores;
 extern int g_numGPUs;
 
-extern float ComputeGravitation_GPU_Shared( afloat *force, afloat *posMass, float softeningSquared, size_t N );
-extern float ComputeGravitation_multiGPU  ( afloat *force, afloat *posMass, float softeningSquared, size_t N );
+extern float ComputeGravitation_GPU_Shared( float *force, float *posMass, float softeningSquared, size_t N );
+extern float ComputeGravitation_multiGPU  ( float *force, float *posMass, float softeningSquared, size_t N );
 
 typedef enum {
     ALGORITHM_NONE,
@@ -64,8 +64,8 @@ typedef enum {
 
 // There are two different function prototypes for ComputeGravitation,
 // depending on whether the algorithm uses the SOA or AOS structures.
-typedef float (*pfnComputeGravitation_AOS_t)( afloat * restrict force, afloat * restrict posMass, float softeningSquared, size_t N);
-typedef float (*pfnComputeGravitation_SOA_t)( afloat ** restrict force, afloat ** restrict pos, afloat * restrict mass, float softeningSquared, size_t N);
+typedef float (*pfnComputeGravitation_AOS_t)( float * restrict force, float * restrict posMass, float softeningSquared, size_t N);
+typedef float (*pfnComputeGravitation_SOA_t)( float ** restrict force, float ** restrict pos, float * restrict mass, float softeningSquared, size_t N);
 
 typedef struct _algorithm_def_t {
     const char *name;

@@ -50,6 +50,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
+#include <mm_malloc.h>
 #include <malloc.h>
 #include <math.h>
 #include <stdio.h>
@@ -218,20 +219,12 @@ void randomUnitBodies(float *pos, float *vel, size_t N, float gscale, float vels
 
 void *alignedAlloc(size_t alignment, size_t size)
 {
-#ifdef _WIN32
-    return VirtualAlloc(0, size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-#else
-    return memalign(alignment, size);
-#endif
+    return _mm_malloc(size, alignment);
 }
 
 void alignedFree(void *p)
 {
-#ifdef _WIN32
-    VirtualFree(p, 0, MEM_RELEASE);
-#else
-    free(p);
-#endif
+    _mm_free(p);
 }
 
 #ifndef _WIN32
