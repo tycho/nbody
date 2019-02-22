@@ -56,10 +56,12 @@ DEFINE_SOA(ComputeGravitation_SOA_tiled)
     start = libtime_cpu();
 
     ASSERT_ALIGNED(mass, NBODY_ALIGNMENT);
-    for ( size_t i = 0; i < 3; i++ ) {
-        ASSERT_ALIGNED(pos[i], NBODY_ALIGNMENT);
-        ASSERT_ALIGNED(force[i], NBODY_ALIGNMENT);
-    }
+    ASSERT_ALIGNED(pos[0], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(pos[1], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(pos[2], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(force[0], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(force[1], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(force[2], NBODY_ALIGNMENT);
 
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
