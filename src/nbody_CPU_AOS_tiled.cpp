@@ -51,6 +51,8 @@ using namespace std;
 
 DEFINE_AOS(ComputeGravitation_AOS_tiled)
 {
+    const size_t mapsize = N * 4;
+
     auto start = chrono::steady_clock::now();
 
     if ( N % BODIES_PER_TILE != 0 )
@@ -62,12 +64,14 @@ DEFINE_AOS(ComputeGravitation_AOS_tiled)
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
 
-    #pragma omp parallel
+    #pragma omp target teams map(to: posMass[0:mapsize]) map(from: force[0:mapsize]) num_teams(1024)
+    {
+
     for (size_t tileStart = 0; tileStart < N; tileStart += BODIES_PER_TILE )
     {
         size_t tileEnd = tileStart + BODIES_PER_TILE;
 
-        #pragma omp for schedule(guided)
+        #pragma omp distribute parallel for dist_schedule(static, 1024)
         for ( size_t i = 0; i < N; i++ )
         {
             float acx, acy, acz;
@@ -102,6 +106,8 @@ DEFINE_AOS(ComputeGravitation_AOS_tiled)
             force[4*i+1] += acy;
             force[4*i+2] += acz;
         }
+    }
+
     }
 
     auto end = chrono::steady_clock::now();

@@ -44,6 +44,14 @@ failed() {
 
 rm -f openmp.mk
 echo "    * detecting OpenMP compiler flags"
+
+try_flags "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda --cuda-path=/opt/cuda -Xopenmp-target=nvptx64-nvidia-cuda -march=sm_52"
+#try_flags "-fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda --cuda-path=/opt/cuda"
+#try_flags "-fopenmp -fopenmp-targets=x86_64-unknown-linux-gnu"
+
+#try_flags  "-fopenmp -fopenacc -foffload=nvptx-none -foffload=-O3 -fno-lto"
+try_flags  "-fopenmp -foffload=nvptx-none -foffload=-O3 -lm -fno-lto"
+
 try_flags -fopenmp=libomp -lomp
 try_flags -fopenmp=libiomp5 -liomp5
 try_flags -fopenmp=libgomp

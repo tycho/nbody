@@ -49,6 +49,8 @@ using namespace std;
 
 DEFINE_AOS(ComputeGravitation_AOS)
 {
+    const size_t mapsize = N * 4;
+
     auto start = chrono::steady_clock::now();
 
     ASSERT_ALIGNED(force, NBODY_ALIGNMENT);
@@ -57,7 +59,10 @@ DEFINE_AOS(ComputeGravitation_AOS)
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
 
-    #pragma omp parallel for schedule(guided)
+    #pragma omp target teams map(to: posMass[0:mapsize]) map(from: force[0:mapsize]) num_teams(1024)
+    {
+
+    #pragma omp distribute parallel for simd dist_schedule(static, 256)
     for ( size_t i = 0; i < N; i++ )
     {
         float acx, acy, acz;
@@ -67,7 +72,6 @@ DEFINE_AOS(ComputeGravitation_AOS)
 
         acx = acy = acz = 0;
 
-        #pragma omp simd reduction(+:acx,acy,acz)
         for ( size_t j = 0; j < N; j++ ) {
 
             float fx, fy, fz;
@@ -90,6 +94,8 @@ DEFINE_AOS(ComputeGravitation_AOS)
         force[4*i+0] = acx;
         force[4*i+1] = acy;
         force[4*i+2] = acz;
+    }
+
     }
 
     auto end = chrono::steady_clock::now();

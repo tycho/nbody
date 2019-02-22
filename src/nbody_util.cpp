@@ -47,6 +47,7 @@
 #ifdef HIGH_ENTROPY
 #include <immintrin.h>
 #endif
+#include <mm_malloc.h>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -57,6 +58,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/select.h>
+#include <sys/mman.h>
 #endif
 
 #include "nbody_util.h"

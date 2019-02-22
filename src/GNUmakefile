@@ -31,7 +31,7 @@ endif
 ifndef NO_OPENMP
 ifeq (,$(findstring info,$(MAKECMDGOALS)))
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
-openmp.mk: .cc
+openmp.mk: .cc openmp-detect.sh
 	$(QUIET)./openmp-detect.sh "$(CXX) $(CLANG_GCC_HEADER_FLAGS)"
 -include openmp.mk
 endif

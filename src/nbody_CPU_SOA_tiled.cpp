@@ -51,6 +51,13 @@ using namespace std;
 
 DEFINE_SOA(ComputeGravitation_SOA_tiled)
 {
+    float *pos0 = pos[0],
+          *pos1 = pos[1],
+          *pos2 = pos[2];
+    float *force0 = force[0],
+          *force1 = force[1],
+          *force2 = force[2];
+
     auto start = chrono::steady_clock::now();
 
     if ( N % BODIES_PER_TILE != 0 )
@@ -67,27 +74,29 @@ DEFINE_SOA(ComputeGravitation_SOA_tiled)
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
 
-    #pragma omp parallel
+    #pragma omp target teams map(to: pos0[0:N], pos1[0:N], pos2[0:N], mass[0:N]) map(tofrom: force0[0:N], force1[0:N], force2[0:N]) num_teams(1024)
+    {
+
     for (size_t tileStart = 0; tileStart < N; tileStart += BODIES_PER_TILE )
     {
         size_t tileEnd = tileStart + BODIES_PER_TILE;
 
-        #pragma omp for schedule(guided)
+        #pragma omp distribute parallel for dist_schedule(static, 1024)
         for ( size_t i = 0; i < N; i++ )
         {
             float acx, acy, acz;
-            const float myX = pos[0][i];
-            const float myY = pos[1][i];
-            const float myZ = pos[2][i];
+            const float myX = pos0[i];
+            const float myY = pos1[i];
+            const float myZ = pos2[i];
 
             acx = acy = acz = 0;
 
             #pragma omp simd reduction(+:acx,acy,acz)
             for ( size_t j = tileStart; j < tileEnd; j++ ) {
 
-                const float bodyX = pos[0][j];
-                const float bodyY = pos[1][j];
-                const float bodyZ = pos[2][j];
+                const float bodyX = pos0[j];
+                const float bodyY = pos1[j];
+                const float bodyZ = pos2[j];
                 const float bodyMass = mass[j];
 
                 float fx, fy, fz;
@@ -103,10 +112,12 @@ DEFINE_SOA(ComputeGravitation_SOA_tiled)
                 acz += fz;
             }
 
-            force[0][i] += acx;
-            force[1][i] += acy;
-            force[2][i] += acz;
+            force0[i] += acx;
+            force1[i] += acy;
+            force2[i] += acz;
         }
+    }
+
     }
 
     auto end = chrono::steady_clock::now();
