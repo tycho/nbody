@@ -4,7 +4,7 @@
 # similar in here. Add any package installation gunk into the appropriate
 # install script instead.
 #
-set -ex
+set -e
 
 #
 # "BROKEN" can mean multiple things, but in all cases the issues stem from an
@@ -12,7 +12,9 @@ set -ex
 # broken, or something similar.
 #
 if [[ ! -z "$BROKEN" ]] && [[ "$CC" == "clang" ]]; then
+	echo "====================================================================" >&2
 	echo "Clang is known to be broken in this build environment, aborting now." >&2
+	echo "====================================================================" >&2
 	exit 0
 fi
 
@@ -22,8 +24,12 @@ if [[ -z "$BROKEN" ]]; then
 		HAVE_MESON=1
 	fi
 else
+	echo "==============================================================================" >&2
 	echo "Meson is known to be broken in this build environment, will skip Meson builds." >&2
+	echo "==============================================================================" >&2
 fi
+
+set -x
 
 make distclean
 make CC=${CC} CXX=${CXX} V=1
