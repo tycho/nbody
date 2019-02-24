@@ -124,23 +124,11 @@ ifdef CUDA
     NVCCFLAGS += -Drestrict=
     NVCCFLAGS += -Xcompiler -fPIC
 
-    ifeq ($(TRAVIS),)
-      # There's a list of compute capabilities and the corresponding compatible GPUs
-      # here: https://en.wikipedia.org/wiki/CUDA#GPUs_supported
-      #
-      # I've chosen to enable three of them, with a relatively broad compatibility set
-      # for hardware made in the past few years.
-      #
-      NVCCFLAGS += \
-          -gencode=arch=compute_52,code=\"sm_52,compute_52\" \
-          -gencode=arch=compute_61,code=\"sm_61,compute_61\" \
-          -gencode=arch=compute_70,code=\"sm_70,compute_70\"
-    else
-      # Only use one target architecture for Travis builds. We just want to make sure
-      # it compiles, not runs.
-      NVCCFLAGS += \
-          -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+    NVCCTARGETS := $(shell ./nvcc-flags.sh $(NVCC))
+    ifeq ($(NVCCTARGETS),)
+        $(error nvcc not found or too old, aborting)
     endif
+    NVCCFLAGS += $(NVCCTARGETS)
   endif
 endif
 
