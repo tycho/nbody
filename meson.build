@@ -13,7 +13,7 @@ incdirs = include_directories('src')
 libc11_sp = subproject('c11')
 libc11 = libc11_sp.get_variable('c11_dep')
 libtime_sp = subproject('time')
-libtime = libtime_sp.get_variable('time_dep')
+libtime = libtime_sp.get_variable('libtime')
 
 enable_cuda = get_option('cuda')
 enable_openmp = get_option('openmp')
