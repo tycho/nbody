@@ -129,7 +129,7 @@ if enable_openmp
             omp_ok = omp_lib.found() and run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, '-lgomp']).returncode() == 0
             if not omp_ok
                 omp_lib = []
-                omp_ok = omp_lib.found() and run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, omp_arg]).returncode() == 0
+                omp_ok = run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, omp_arg]).returncode() == 0
             endif
         endif
     endif
