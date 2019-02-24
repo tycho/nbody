@@ -33,134 +33,84 @@
  *
  */
 
-#ifndef __CHTHREAD_LINUX_H__
-#define __CHTHREAD_LINUX_H__
+#pragma once
 
 #include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
-#ifdef USE_LIBC11
-#include "c11/threads.h"
-#else
-#include <threads.h>
-#endif
-
-typedef struct _sem_t {
-    mtx_t mtx;
-    cnd_t cnd;
-    uint32_t count;
-} sem_t;
-
-static int sem_init(sem_t *sem)
+class semaphore
 {
-    if (!sem)
-        return 1;
-    if (mtx_init(&sem->mtx, mtx_plain | mtx_recursive) != thrd_success)
-        return 1;
-    if (cnd_init(&sem->cnd) != thrd_success)
-        return 1;
-    sem->count = 0;
-    return 0;
-}
+private:
+	std::mutex mtx;
+	std::condition_variable cnd;
+	uint32_t count;
 
-static int sem_post(sem_t *sem)
-{
-    mtx_lock(&sem->mtx);
-    sem->count++;
-    cnd_signal(&sem->cnd);
-    mtx_unlock(&sem->mtx);
-    return 0;
-}
+public:
+	void post()
+	{
+		std::lock_guard<decltype(mtx)> lock(mtx);
+		++count;
+		cnd.notify_one();
+	}
 
-static int sem_wait(sem_t *sem)
-{
-    mtx_lock(&sem->mtx);
-    while (sem->count == 0)
-        cnd_wait(&sem->cnd, &sem->mtx);
-    sem->count--;
-    mtx_unlock(&sem->mtx);
-    return 0;
-}
+	void wait()
+	{
+		std::unique_lock<decltype(mtx)> lock(mtx);
+		while (!count)
+			cnd.wait(lock);
+		--count;
+	}
+};
 
-static void sem_destroy(sem_t *sem)
-{
-    mtx_destroy(&sem->mtx);
-    cnd_destroy(&sem->cnd);
-}
+typedef int (*thread_proc_t)(void *);
 
-typedef struct _worker_thread_t {
-    thrd_t thread;
-    sem_t semWait;
-    sem_t semDone;
-    thrd_start_t delegate;
-    void *param;
-} worker_thread_t;
+class worker_thread {
+private:
+	std::thread thread;
+	semaphore semWait;
+    semaphore semDone;
 
-static int worker_delegate(worker_thread_t *worker, thrd_start_t delegate, void *param, int sync);
+	thread_proc_t task;
+	void *param;
 
-static int worker_create(worker_thread_t *worker)
-{
-    if (!worker)
-        return 1;
-    memset(worker, 0, sizeof(worker_thread_t));
-    if (sem_init(&worker->semWait))
-        return 1;
-    if (sem_init(&worker->semDone))
-        return 1;
-    return 0;
-}
+	int _routine()
+	{
+		int loop = 1;
+		do {
+			semWait.wait();
+			if (!param)
+				loop = 0;
+			else
+				(*task)(param);
+			semDone.post();
+		} while (loop);
+		return 0;
+	}
 
-static void worker_destroy(worker_thread_t *worker)
-{
-    assert(worker);
-    worker_delegate(worker, NULL, NULL, 1);
-    thrd_join(worker->thread, NULL);
-    sem_destroy(&worker->semWait);
-    sem_destroy(&worker->semDone);
-}
+public:
+	worker_thread()
+		: task(nullptr),
+		  param(nullptr)
+	{
+		thread = std::thread(&worker_thread::_routine, this);
+	}
 
-static int _worker_routine(void *_p)
-{
-    worker_thread_t *w = (worker_thread_t *)_p;
-    int loop = 1;
-    do {
-        sem_wait(&w->semWait);
-        if (w->param == NULL)
-            loop = 0;
-        else
-            (*w->delegate)(w->param);
-        sem_post(&w->semDone);
-    } while (loop);
-    return 0;
-}
+	void stop()
+	{
+		delegate(nullptr, nullptr, true);
+		thread.join();
+	}
 
-static int worker_start(worker_thread_t *worker)
-{
-    assert(worker);
-    if (thrd_create(&worker->thread, _worker_routine, worker) != thrd_success)
-        return 1;
-    return 0;
-}
-
-static int worker_join(worker_thread_t *worker)
-{
-    assert(worker);
-    if (thrd_join(worker->thread, NULL))
-        return 1;
-    return 0;
-}
-
-static int worker_delegate(worker_thread_t *worker, thrd_start_t delegate, void *param, int sync)
-{
-    assert(worker);
-    worker->delegate = delegate;
-    worker->param = param;
-    if (sem_post(&worker->semWait))
-        return 1;
-    if (sync && sem_wait(&worker->semDone))
-        return 1;
-    return 0;
-}
-
-#endif
+	void delegate(thread_proc_t _proc, void *_param, bool _sync)
+	{
+		task = _proc;
+		param = _param;
+		semWait.post();
+		if (_sync)
+			semDone.wait();
+	}
+};

@@ -34,9 +34,7 @@
  *
  */
 
-
-#ifndef __CHCUDA_H__
-#define __CHCUDA_H__
+#pragma once
 
 #ifdef USE_CUDA
 
@@ -135,7 +133,5 @@ static inline float rsqrtf(float f)
 {
     return 1.0f / sqrtf(f);
 }
-
-#endif
 
 #endif

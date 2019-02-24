@@ -31,11 +31,10 @@
  *
  */
 
-#ifndef __included_nbody_util_h
-#define __included_nbody_util_h
+#pragma once
 
 #include <assert.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,17 +87,17 @@ extern "C" {
 #define DECLARE_SOA(Name) \
 	float \
 	Name( \
-		float ** restrict force, \
-		float ** restrict pos, \
-		float *  restrict mass, \
+		float ** __restrict force, \
+		float ** __restrict pos, \
+		float *  __restrict mass, \
 		float softeningSquared, \
 		size_t N )
 
 #define DECLARE_AOS(Name) \
 	float \
 	Name( \
-		float * restrict force, \
-		float * restrict posMass, \
+		float * __restrict force, \
+		float * __restrict posMass, \
 		float softeningSquared, \
 		size_t N )
 
@@ -134,6 +133,4 @@ int getch(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

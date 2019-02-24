@@ -36,20 +36,16 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
 #include <getopt.h>
 
 #ifdef _WIN32
 #include <conio.h>
-#pragma comment (lib, "libtime.lib")
-#pragma comment (lib, "libc11.lib")
 #endif
 
-#include <math.h>
-
-#include "libtime.h"
+#include <cmath>
 
 #include "chThread.h"
 #include "chError.h"
@@ -75,23 +71,7 @@
 //#include "nbody_GPU_Atomic.h"
 #endif
 
-#ifdef HAVE_SIMD
-#if defined(__CUDACC__)
-// The platform-specific ISA macros aren't defined properly under CUDA, so we
-// wouldn't get the right name. Let the algorithm itself declare its name.
-extern const char *SIMD_ALGORITHM_NAME;
-#elif defined(__ALTIVEC__)
-#define SIMD_ALGORITHM_NAME "AltiVec"
-#elif defined(__ARM_NEON__)
-#define SIMD_ALGORITHM_NAME "NEON"
-#elif defined(__AVX__)
-#define SIMD_ALGORITHM_NAME "AVX"
-#elif defined(__SSE__)
-#define SIMD_ALGORITHM_NAME "SSE"
-#else
-#error "Define a name for this platform's SIMD."
-#endif
-#endif
+using namespace std;
 
 #define DEFAULT_KPARTICLES 16
 #define DEFAULT_SEED 7
@@ -171,7 +151,7 @@ static float g_scale = 0.9f;
 static float g_velocityScale = 8.0f;
 
 static void
-integrateGravitation_AOS( float * restrict ppos, float * restrict pvel, float * restrict pforce, float dt, float damping, size_t N )
+integrateGravitation_AOS( float * __restrict ppos, float * __restrict pvel, float * __restrict pforce, float dt, float damping, size_t N )
 {
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
@@ -354,8 +334,8 @@ Error:
 #endif
 }
 
-static worker_thread_t *g_GPUThreadPool;
-static worker_thread_t g_renderThread;
+static worker_thread *g_GPUThreadPool;
+static worker_thread g_renderThread;
 static int g_bRunning = 1;
 int g_maxGPUs;
 int g_numGPUs;
@@ -578,29 +558,26 @@ static void print_usage(const char *argv0)
     fprintf(stderr, "        Prints this help text.\n");
 }
 
-static cnd_t g_cndRenderInitDone = 0;
+static semaphore g_semRenderInitDone;
 
 static int render_loop(void *_unused)
 {
-    const uint64_t cpu_time_2sec = libtime_wall_to_cpu(2 * 1e9);
+    auto start = chrono::steady_clock::now();
     uint32_t frames = 0;
-    uint64_t now, deadline;
     gl_init_window();
-    cnd_signal(&g_cndRenderInitDone);
-    now = libtime_cpu();
-    deadline = now + cpu_time_2sec;
+    g_semRenderInitDone.post();
     while(g_bRunning) {
         if (gl_display() != 0)
             break;
         frames++;
-        now = libtime_cpu();
-        if (now >= deadline)
+        auto now = chrono::steady_clock::now();
+        if (chrono::duration_cast<chrono::seconds>(now - start).count() > 2)
         {
 #ifdef _DEBUG
             fprintf(stderr, "%0.1f FPS\n", frames / 2.0);
 #endif
             frames = 0;
-            deadline = libtime_cpu() + cpu_time_2sec;
+            start = now;
         }
     }
     gl_quit();
@@ -609,19 +586,8 @@ static int render_loop(void *_unused)
 
 static void render_init(void)
 {
-    mtx_t mtx;
-
-    mtx_init(&mtx, mtx_plain);
-    mtx_lock(&mtx);
-    cnd_init(&g_cndRenderInitDone);
-
-    worker_delegate(&g_renderThread, render_loop, (void*)1, 0);
-
-    // Wait for gl_init_window() to finish
-    cnd_wait(&g_cndRenderInitDone, &mtx);
-
-    cnd_destroy(&g_cndRenderInitDone);
-    mtx_destroy(&mtx);
+    g_renderThread.delegate(render_loop, (void*)1, false);
+    g_semRenderInitDone.wait();
 }
 
 int main(int argc, char **argv)
@@ -807,8 +773,6 @@ int main(int argc, char **argv)
         }
     }
 
-    libtime_init();
-
     // for reproducible results for a given N
     seedRandom(nSeed);
 
@@ -821,7 +785,7 @@ int main(int argc, char **argv)
     if ( g_bNoCPU ) {
         if ( !g_bCUDAPresent ) {
             fprintf(stderr, "ERROR: --no-cpu specified, but CUDA disabled or not available\n" );
-            exit(1);
+            goto cleanup;
         }
     }
 
@@ -839,20 +803,10 @@ int main(int argc, char **argv)
     }
 
     if ( g_numGPUs ) {
-        g_GPUThreadPool = (worker_thread_t *)malloc(sizeof(worker_thread_t) * g_numGPUs);
-        for (int i = 0; i < g_numGPUs; i++) {
-            if (worker_create(&g_GPUThreadPool[i])) {
-                fprintf(stderr, "Error initializing thread pool\n");
-                return 1;
-            }
-            if (worker_start(&g_GPUThreadPool[i])) {
-                fprintf(stderr, "Error starting thread pool\n");
-                return 1;
-            }
-        }
+        g_GPUThreadPool = new worker_thread[g_numGPUs];
         for ( int i = 0; i < g_numGPUs; i++ ) {
             struct gpuInit_struct initGPU = {i};
-            worker_delegate(&g_GPUThreadPool[i], initializeGPU, &initGPU, 1);
+            g_GPUThreadPool[i].delegate(initializeGPU, &initGPU, true);
             if ( cudaSuccess != initGPU.status ) {
                 fprintf(stderr, "Initializing GPU %d failed "
                     " with %d (%s)\n",
@@ -867,9 +821,6 @@ int main(int argc, char **argv)
     if ( g_bNoCPU ) {
         g_bCrossCheck = 0;
     }
-
-    worker_create(&g_renderThread);
-    worker_start(&g_renderThread);
 
     g_N = kParticles * 1024;
 
@@ -910,26 +861,24 @@ int main(int argc, char **argv)
         int algorithm_idx = idxFirstAlgorithm;
         int steps = 0, iterations = 0;
         int bStop = 0;
-        int64_t print_deadline = INT64_MIN, now;
+        auto start = chrono::steady_clock::now();
         if ( bUseGraphics )
             render_init();
         while ( !bStop ) {
             char ch;
             float ms, err;
             const algorithm_def_t *algorithm = &s_algorithms[algorithm_idx];
-
-            now = libtime_wall();
+            auto now = chrono::steady_clock::now();
 
             if (ComputeGravitation(&ms, &err, algorithm, g_bCrossCheck))
                 goto next_algorithm;
 
-            if (bVerbose || now >= print_deadline)
+            if (bVerbose || chrono::duration_cast<chrono::milliseconds>(now - start).count() >= 100)
             {
                 double interactionsPerSecond = (double) g_N*g_N*1000.0f / ms,
                        flops = interactionsPerSecond * (3 + 6 + 4 + 1 + 6) * 1e-3;
 
-                /* Throttle prints to every 100ms */
-                print_deadline = now + 100000000;
+                start = now;
 
                 if ( interactionsPerSecond > 1e9 )
                 {
@@ -991,16 +940,15 @@ next_algorithm:
         }
     }
 
+cleanup:
     g_bRunning = 0;
-    worker_delegate(&g_renderThread, NULL, NULL, 0);
-    worker_join(&g_renderThread);
-    worker_destroy(&g_renderThread);
+    g_renderThread.stop();
 
     freeArrays();
 
     for ( int i = 0; i < g_numGPUs; i++ ) {
         struct gpuInit_struct initGPU = {i};
-        worker_delegate(&g_GPUThreadPool[i], teardownGPU, &initGPU, 1);
+        g_GPUThreadPool[i].delegate(teardownGPU, &initGPU, true);
         if ( cudaSuccess != initGPU.status ) {
             fprintf(stderr, "GPU %d teardown failed "
                 " with %d (%s)\n",
@@ -1012,10 +960,10 @@ next_algorithm:
     }
 
     for (int i = 0; i < g_numGPUs; i++) {
-        worker_delegate(&g_GPUThreadPool[i], NULL, NULL, 0);
-        worker_join(&g_GPUThreadPool[i]);
-        worker_destroy(&g_GPUThreadPool[i]);
+        g_GPUThreadPool[i].stop();
     }
+
+    delete [] g_GPUThreadPool;
 
     return 0;
 Error:

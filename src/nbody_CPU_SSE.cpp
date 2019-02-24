@@ -1,10 +1,10 @@
 /*
  *
- * nbody_CPU_AltiVec.cpp
+ * nbody_CPU_SSE.cpp
  *
- * Multithreaded AltiVec CPU implementation of the O(N^2) N-body calculation.
+ * Multithreaded SSE CPU implementation of the O(N^2) N-body calculation.
  * Uses SOA (structure of arrays) representation because it is a much
- * better fit for AltiVec.
+ * better fit for SSE.
  *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
  * All rights reserved.
@@ -35,21 +35,24 @@
  *
  */
 
-#ifdef __ALTIVEC__
-#include "libtime.h"
+#include <chrono>
+
+#include "nbody.h"
+
+#if defined(HAVE_SSE)
 
 #include "nbody_util.h"
 
-#include "bodybodyInteraction_AltiVec.h"
-#include "nbody_CPU_SSE.h"
+#include "bodybodyInteraction_SSE.h"
+#include "nbody_CPU_SIMD.h"
 
-const char *SIMD_ALGORITHM_NAME = "AltiVec";
+using namespace std;
+
+const char *SIMD_ALGORITHM_NAME = "SSE";
 
 DEFINE_SOA(ComputeGravitation_SIMD)
 {
-    uint64_t start, end;
-
-    start = libtime_cpu();
+    auto start = chrono::steady_clock::now();
 
     ASSERT_ALIGNED(mass, NBODY_ALIGNMENT);
     ASSERT_ALIGNED(pos[0], NBODY_ALIGNMENT);
@@ -65,41 +68,40 @@ DEFINE_SOA(ComputeGravitation_SIMD)
     #pragma omp parallel for schedule(guided)
     for ( size_t i = 0; i < N; i++ )
     {
-        const v4sf x0 = _vec_set_ps1( pos[0][i] );
-        const v4sf y0 = _vec_set_ps1( pos[1][i] );
-        const v4sf z0 = _vec_set_ps1( pos[2][i] );
+        const __m128 x0 = _mm_set_ps1( pos[0][i] );
+        const __m128 y0 = _mm_set_ps1( pos[1][i] );
+        const __m128 z0 = _mm_set_ps1( pos[2][i] );
 
-        v4sf ax = vec_zero;
-        v4sf ay = vec_zero;
-        v4sf az = vec_zero;
+        __m128 ax = _mm_setzero_ps();
+        __m128 ay = _mm_setzero_ps();
+        __m128 az = _mm_setzero_ps();
 
-        ASSUME(N >= 1024);
-        ASSUME(N % 1024 == 0);
-
-        for ( size_t j = 0; j < N; j += 4)
+        for ( size_t j = 0; j < N; j += 4 )
         {
-            const v4sf x1 = *(v4sf *)&pos[0][j];
-            const v4sf y1 = *(v4sf *)&pos[1][j];
-            const v4sf z1 = *(v4sf *)&pos[2][j];
-            const v4sf mass1 = *(v4sf *)&mass[j];
+            const __m128 x1 = *(__m128 *)&pos[0][j];
+            const __m128 y1 = *(__m128 *)&pos[1][j];
+            const __m128 z1 = *(__m128 *)&pos[2][j];
+            const __m128 mass1 = *(__m128 *)&mass[j];
 
             bodyBodyInteraction(
                 &ax, &ay, &az,
                 x0, y0, z0,
                 x1, y1, z1, mass1,
-                _vec_set_ps1( softeningSquared ) );
+                _mm_set_ps1( softeningSquared ) );
 
         }
+        // Accumulate sum of four floats in the SSE register
+        ax = horizontal_sum_ps( ax );
+        ay = horizontal_sum_ps( ay );
+        az = horizontal_sum_ps( az );
 
-        // Accumulate sum of four floats in the AltiVec register
-        force[0][i] = _vec_sum( ax );
-        force[1][i] = _vec_sum( ay );
-        force[2][i] = _vec_sum( az );
+        _mm_store_ss( (float *) &force[0][i], ax );
+        _mm_store_ss( (float *) &force[1][i], ay );
+        _mm_store_ss( (float *) &force[2][i], az );
     }
 
-    end = libtime_cpu();
-
-    return libtime_cpu_to_wall(end - start) * 1e-6f;
+    auto end = chrono::steady_clock::now();
+    return chrono::duration<float, std::milli>(end - start).count();
 }
 #endif
 

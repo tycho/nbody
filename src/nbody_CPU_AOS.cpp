@@ -1,10 +1,8 @@
 /*
  *
- * nbody_CPU_SOA.h
+ * nbody_CPU_AOS.h
  *
  * Scalar CPU implementation of the O(N^2) N-body calculation.
- * This SOA (structure of arrays) formulation blazes the trail
- * for an SSE implementation.
  *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
  * All rights reserved.
@@ -35,7 +33,8 @@
  *
  */
 
-#include "libtime.h"
+#include <chrono>
+
 #ifdef USE_CUDA
 #undef USE_CUDA
 #endif
@@ -44,20 +43,16 @@
 #include "nbody_util.h"
 
 #include "bodybodyInteraction.cuh"
-#include "nbody_CPU_SOA.h"
+#include "nbody_CPU_AOS.h"
 
-DEFINE_SOA(ComputeGravitation_SOA)
+using namespace std;
+
+DEFINE_AOS(ComputeGravitation_AOS)
 {
-    uint64_t start, end;
-    start = libtime_cpu();
+    auto start = chrono::steady_clock::now();
 
-    ASSERT_ALIGNED(mass, NBODY_ALIGNMENT);
-    ASSERT_ALIGNED(pos[0], NBODY_ALIGNMENT);
-    ASSERT_ALIGNED(pos[1], NBODY_ALIGNMENT);
-    ASSERT_ALIGNED(pos[2], NBODY_ALIGNMENT);
-    ASSERT_ALIGNED(force[0], NBODY_ALIGNMENT);
-    ASSERT_ALIGNED(force[1], NBODY_ALIGNMENT);
-    ASSERT_ALIGNED(force[2], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(force, NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(posMass, NBODY_ALIGNMENT);
 
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
@@ -66,21 +61,21 @@ DEFINE_SOA(ComputeGravitation_SOA)
     for ( size_t i = 0; i < N; i++ )
     {
         float acx, acy, acz;
-        const float myX = pos[0][i];
-        const float myY = pos[1][i];
-        const float myZ = pos[2][i];
+        const float myX = posMass[i*4+0];
+        const float myY = posMass[i*4+1];
+        const float myZ = posMass[i*4+2];
 
         acx = acy = acz = 0;
 
         #pragma omp simd reduction(+:acx,acy,acz)
         for ( size_t j = 0; j < N; j++ ) {
 
-            const float bodyX = pos[0][j];
-            const float bodyY = pos[1][j];
-            const float bodyZ = pos[2][j];
-            const float bodyMass = mass[j];
-
             float fx, fy, fz;
+            const float bodyX = posMass[j*4+0];
+            const float bodyY = posMass[j*4+1];
+            const float bodyZ = posMass[j*4+2];
+            const float bodyMass = posMass[j*4+3];
+
             bodyBodyInteraction(
                 &fx, &fy, &fz,
                 myX, myY, myZ,
@@ -92,13 +87,13 @@ DEFINE_SOA(ComputeGravitation_SOA)
             acz += fz;
         }
 
-        force[0][i] = acx;
-        force[1][i] = acy;
-        force[2][i] = acz;
+        force[4*i+0] = acx;
+        force[4*i+1] = acy;
+        force[4*i+2] = acz;
     }
 
-    end = libtime_cpu();
-    return libtime_cpu_to_wall(end - start) * 1e-6f;
+    auto end = chrono::steady_clock::now();
+    return chrono::duration<float, std::milli>(end - start).count();
 }
 
 /* vim: set ts=4 sts=4 sw=4 et: */

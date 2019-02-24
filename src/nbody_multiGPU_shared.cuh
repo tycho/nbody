@@ -34,8 +34,7 @@
  *
  */
 
-#ifndef __CUDAHANDBOOK_SHARED_CUH__
-#define __CUDAHANDBOOK_SHARED_CUH__
+#pragma once
 
 #include "bodybodyInteraction.cuh"
 
@@ -83,7 +82,5 @@ ComputeNBodyGravitation_Shared_multiGPU(
         force[4*m+2] = acc[2];
     }
 }
-
-#endif
 
 /* vim: set ts=4 sts=4 sw=4 et: */
