@@ -1,8 +1,10 @@
 /*
  *
- * nbody_CPU_SOA_tiled.c
+ * nbody_CPU_AltiVec.cpp
  *
- * Tiled SOA implementation of the n-body algorithm.
+ * Multithreaded AltiVec CPU implementation of the O(N^2) N-body calculation.
+ * Uses SOA (structure of arrays) representation because it is a much
+ * better fit for AltiVec.
  *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
  * All rights reserved.
@@ -33,27 +35,21 @@
  *
  */
 
-#include "libtime.h"
-#ifdef USE_CUDA
-#undef USE_CUDA
-#endif
-#include "chCUDA.h"
+#ifdef __ALTIVEC__
+#include <chrono>
 
 #include "nbody_util.h"
 
-#include "bodybodyInteraction.cuh"
-#include "nbody_CPU_SOA_tiled.h"
+#include "bodybodyInteraction_AltiVec.h"
+#include "nbody_CPU_SIMD.h"
 
-#define BODIES_PER_TILE 4096
+using namespace std;
 
-DEFINE_SOA(ComputeGravitation_SOA_tiled)
+const char *SIMD_ALGORITHM_NAME = "AltiVec";
+
+DEFINE_SOA(ComputeGravitation_SIMD)
 {
-    uint64_t start, end;
-
-    if ( N % BODIES_PER_TILE != 0 )
-        return 0.0f;
-
-    start = libtime_cpu();
+    auto start = chrono::steady_clock::now();
 
     ASSERT_ALIGNED(mass, NBODY_ALIGNMENT);
     ASSERT_ALIGNED(pos[0], NBODY_ALIGNMENT);
@@ -66,50 +62,44 @@ DEFINE_SOA(ComputeGravitation_SOA_tiled)
     ASSUME(N % 1024 == 0);
     ASSUME(N >= 1024);
 
-    #pragma omp parallel
-    for (size_t tileStart = 0; tileStart < N; tileStart += BODIES_PER_TILE )
+    #pragma omp parallel for schedule(guided)
+    for ( size_t i = 0; i < N; i++ )
     {
-        int tileEnd = tileStart + BODIES_PER_TILE;
+        const v4sf x0 = _vec_set_ps1( pos[0][i] );
+        const v4sf y0 = _vec_set_ps1( pos[1][i] );
+        const v4sf z0 = _vec_set_ps1( pos[2][i] );
 
-        #pragma omp for schedule(guided)
-        for ( size_t i = 0; i < N; i++ )
+        v4sf ax = vec_zero;
+        v4sf ay = vec_zero;
+        v4sf az = vec_zero;
+
+        ASSUME(N % 1024 == 0);
+        ASSUME(N >= 1024);
+
+        for ( size_t j = 0; j < N; j += 4)
         {
-            float acx, acy, acz;
-            const float myX = pos[0][i];
-            const float myY = pos[1][i];
-            const float myZ = pos[2][i];
+            const v4sf x1 = *(v4sf *)&pos[0][j];
+            const v4sf y1 = *(v4sf *)&pos[1][j];
+            const v4sf z1 = *(v4sf *)&pos[2][j];
+            const v4sf mass1 = *(v4sf *)&mass[j];
 
-            acx = acy = acz = 0;
+            bodyBodyInteraction(
+                &ax, &ay, &az,
+                x0, y0, z0,
+                x1, y1, z1, mass1,
+                _vec_set_ps1( softeningSquared ) );
 
-            #pragma omp simd reduction(+:acx,acy,acz)
-            for ( size_t j = tileStart; j < tileEnd; j++ ) {
-
-                const float bodyX = pos[0][j];
-                const float bodyY = pos[1][j];
-                const float bodyZ = pos[2][j];
-                const float bodyMass = mass[j];
-
-                float fx, fy, fz;
-
-                bodyBodyInteraction(
-                    &fx, &fy, &fz,
-                    myX, myY, myZ,
-                    bodyX, bodyY, bodyZ, bodyMass,
-                    softeningSquared );
-
-                acx += fx;
-                acy += fy;
-                acz += fz;
-            }
-
-            force[0][i] += acx;
-            force[1][i] += acy;
-            force[2][i] += acz;
         }
+
+        // Accumulate sum of four floats in the AltiVec register
+        force[0][i] = _vec_sum( ax );
+        force[1][i] = _vec_sum( ay );
+        force[2][i] = _vec_sum( az );
     }
 
-    end = libtime_cpu();
-    return libtime_cpu_to_wall(end - start) * 1e-6f;
+    auto end = chrono::steady_clock::now();
+    return chrono::duration<float, std::milli>(end - start).count();
 }
+#endif
 
 /* vim: set ts=4 sts=4 sw=4 et: */

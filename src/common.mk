@@ -41,55 +41,34 @@ endif
 #
 # Usage: cflags-y += $(call cc-option,$(CC),-march=winchip-c6,-march=i586)
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
-cc-option = $(shell if test -z "`echo 'void*p=1;' | \
-              $(1) $(2) -S -o /dev/null -xc - 2>&1 | grep -- $(2) -`"; \
+cxx-option = $(shell if test -z "`echo 'char *p=(char *)1;' | \
+              $(1) $(2) -S -o /dev/null -xc++ - 2>&1 | grep -- $(2) -`"; \
               then echo "$(2)"; else echo "$(3)"; fi ;)
 else
-cc-option =
+cxx-option =
 endif
 
-# cc-option-add: Add an option to compilation flags, but only if supported.
-# Usage: $(call cc-option-add,CFLAGS,CC,-march=winchip-c6)
-cc-option-add = $(eval $(call cc-option-add-closure,$(1),$(2),$(3)))
-define cc-option-add-closure
-    ifneq ($$(call cc-option,$$($(2)),$(3),n),n)
-        $(1) += $(3)
-    endif
-endef
-
-ifneq ($(shell type -P gcc5),)
-# For FreeBSD
-CC         := gcc5
-else
-CC         := gcc
-endif
-
-LINK       := $(CC)
+CXX        := g++
+LINK       := $(CXX)
 AR         := ar
 RM         := rm -f
 CP         := cp
 
-ifneq ($(findstring icc,$(CC)),)
+ifneq ($(findstring icpc,$(CXX)),)
 AR         := xiar
 endif
 
 export AR
 
-ifneq ($(findstring icc,$(CC)),)
+ifneq ($(findstring icpc,$(CXX)),)
 CFOPTIMIZE ?= -Ofast -xHOST -no-prec-sqrt
 else
 CFWARN     := -Wall \
-              -Wdeclaration-after-statement \
-              $(call cc-option,$(CC),-Werror=implicit,) \
-              $(call cc-option,$(CC),-Werror=undef,) \
+              $(call cxx-option,$(CXX),-Werror=implicit,) \
               -Wmissing-declarations \
-              -Wmissing-prototypes \
-              -Wno-declaration-after-statement \
               -Wno-long-long \
-              $(call cc-option,$(CC),-Wno-overlength-strings,) \
-              -Wno-unknown-pragmas \
-              -Wold-style-definition \
-              -Wstrict-prototypes
+              $(call cxx-option,$(CXX),-Wno-overlength-strings,) \
+              -Wno-unknown-pragmas
 
 ifndef DEBUG
 
@@ -112,22 +91,25 @@ export CFOPTIMIZE
 
 CPPFLAGS   += -D_GNU_SOURCE
 
-CSTD       := $(call cc-option,$(CC),-std=gnu11,-std=gnu99)
+CSTD       := $(call cxx-option,$(CXX),-std=c++11,-std=c++0x)
 
-CFEXTRA    := -fno-strict-aliasing
+CFEXTRA    := -fno-strict-aliasing \
+              -fvisibility=hidden -fvisibility-inlines-hidden \
+              -fno-exceptions \
+              -fno-rtti
 
-CFLAGS     += $(CFOPTIMIZE) $(CSTD) $(CFEXTRA) $(CPPFLAGS) $(CFWARN)
+CXXFLAGS   += $(CFOPTIMIZE) $(CSTD) $(CFEXTRA) $(CPPFLAGS) $(CFWARN)
 
 ifeq ($(uname_S),Darwin)
-ifneq ($(findstring gcc,$(shell $(CC) -v 2>&1)),)
-CFLAGS     += -Wa,-q
+ifneq ($(findstring gcc,$(shell $(CXX) -v 2>&1)),)
+CXXFLAGS     += -Wa,-q
 endif
 endif
 
 ifeq ($(uname_O),Cygwin)
-CFLAGS += -fno-asynchronous-unwind-tables
+CXXFLAGS += -fno-asynchronous-unwind-tables
 LDFLAGS += -fno-asynchronous-unwind-tables
 else
-CFLAGS += -pthread
+CXXFLAGS += -pthread
 LDFLAGS += -pthread
 endif

@@ -1,10 +1,8 @@
 /*
  *
- * nbody_CPU_NEON.cpp
+ * nbody_CPU_SOA_tiled.c
  *
- * Multithreaded NEON CPU implementation of the O(N^2) N-body calculation.
- * Uses SOA (structure of arrays) representation because it is a much
- * better fit for NEON.
+ * Tiled SOA implementation of the n-body algorithm.
  *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
  * All rights reserved.
@@ -35,22 +33,28 @@
  *
  */
 
-#ifdef __ARM_NEON__
+#include <chrono>
 
-#include "libtime.h"
+#ifdef USE_CUDA
+#undef USE_CUDA
+#endif
+#include "chCUDA.h"
 
 #include "nbody_util.h"
 
-#include "bodybodyInteraction_NEON.h"
-#include "nbody_CPU_SIMD.h"
+#include "bodybodyInteraction.cuh"
+#include "nbody_CPU_SOA_tiled.h"
 
-const char *SIMD_ALGORITHM_NAME = "NEON";
+using namespace std;
 
-DEFINE_SOA(ComputeGravitation_SIMD)
+#define BODIES_PER_TILE 4096
+
+DEFINE_SOA(ComputeGravitation_SOA_tiled)
 {
-    uint64_t start, end;
+    auto start = chrono::steady_clock::now();
 
-    start = libtime_cpu();
+    if ( N % BODIES_PER_TILE != 0 )
+        return 0.0f;
 
     ASSERT_ALIGNED(mass, NBODY_ALIGNMENT);
     ASSERT_ALIGNED(pos[0], NBODY_ALIGNMENT);
@@ -63,42 +67,50 @@ DEFINE_SOA(ComputeGravitation_SIMD)
     ASSUME(N % 1024 == 0);
     ASSUME(N >= 1024);
 
-    #pragma omp parallel for schedule(guided)
-    for (size_t i = 0; i < N; i++)
+    #pragma omp parallel
+    for (size_t tileStart = 0; tileStart < N; tileStart += BODIES_PER_TILE )
     {
-        const vf32x4_t x0 = _vec_set_ps1( pos[0][i] );
-        const vf32x4_t y0 = _vec_set_ps1( pos[1][i] );
-        const vf32x4_t z0 = _vec_set_ps1( pos[2][i] );
+        size_t tileEnd = tileStart + BODIES_PER_TILE;
 
-        vf32x4_t ax = vec_zero;
-        vf32x4_t ay = vec_zero;
-        vf32x4_t az = vec_zero;
-
-        for ( size_t j = 0; j < N; j += 4 )
+        #pragma omp for schedule(guided)
+        for ( size_t i = 0; i < N; i++ )
         {
-            const vf32x4_t x1 = *(vf32x4_t *)&pos[0][j];
-            const vf32x4_t y1 = *(vf32x4_t *)&pos[1][j];
-            const vf32x4_t z1 = *(vf32x4_t *)&pos[2][j];
-            const vf32x4_t mass1 = *(vf32x4_t *)&mass[j];
+            float acx, acy, acz;
+            const float myX = pos[0][i];
+            const float myY = pos[1][i];
+            const float myZ = pos[2][i];
 
-            bodyBodyInteraction(
-                &ax, &ay, &az,
-                x0, y0, z0,
-                x1, y1, z1, mass1,
-                _vec_set_ps1( softeningSquared ) );
+            acx = acy = acz = 0;
 
+            #pragma omp simd reduction(+:acx,acy,acz)
+            for ( size_t j = tileStart; j < tileEnd; j++ ) {
+
+                const float bodyX = pos[0][j];
+                const float bodyY = pos[1][j];
+                const float bodyZ = pos[2][j];
+                const float bodyMass = mass[j];
+
+                float fx, fy, fz;
+
+                bodyBodyInteraction(
+                    &fx, &fy, &fz,
+                    myX, myY, myZ,
+                    bodyX, bodyY, bodyZ, bodyMass,
+                    softeningSquared );
+
+                acx += fx;
+                acy += fy;
+                acz += fz;
+            }
+
+            force[0][i] += acx;
+            force[1][i] += acy;
+            force[2][i] += acz;
         }
-
-        // Accumulate sum of four floats in the NEON register
-        force[0][i] = _vec_sum( ax );
-        force[1][i] = _vec_sum( ay );
-        force[2][i] = _vec_sum( az );
     }
 
-    end = libtime_cpu();
-
-    return libtime_cpu_to_wall(end - start) * 1e-6f;
+    auto end = chrono::steady_clock::now();
+    return chrono::duration<float, std::milli>(end - start).count();
 }
-#endif
 
 /* vim: set ts=4 sts=4 sw=4 et: */

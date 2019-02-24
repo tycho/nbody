@@ -33,8 +33,7 @@
  *
  */
 
-#ifndef __NBODY_H__
-#define __NBODY_H__
+#pragma once
 
 #include "nbody_util.h"
 #include "nbody_CPU_SIMD.h"
@@ -47,6 +46,8 @@ extern float *g_hostSOA_Pos[3];
 extern float *g_hostSOA_Force[3];
 extern float *g_hostSOA_Mass;
 extern float *g_hostSOA_InvMass;
+
+extern const char *SIMD_ALGORITHM_NAME;
 
 extern int g_numCPUCores;
 extern int g_numGPUs;
@@ -63,8 +64,8 @@ typedef enum {
 
 // There are two different function prototypes for ComputeGravitation,
 // depending on whether the algorithm uses the SOA or AOS structures.
-typedef float (*pfnComputeGravitation_AOS_t)( float * restrict force, float * restrict posMass, float softeningSquared, size_t N);
-typedef float (*pfnComputeGravitation_SOA_t)( float ** restrict force, float ** restrict pos, float * restrict mass, float softeningSquared, size_t N);
+typedef float (*pfnComputeGravitation_AOS_t)( float * __restrict force, float * __restrict posMass, float softeningSquared, size_t N);
+typedef float (*pfnComputeGravitation_SOA_t)( float ** __restrict force, float ** __restrict pos, float * __restrict mass, float softeningSquared, size_t N);
 
 typedef struct _algorithm_def_t {
     const char *name;
@@ -93,9 +94,6 @@ typedef struct _algorithm_def_t {
 #      define HAVE_AVX
 #    endif
 #  endif
-#endif
-
-
 #endif
 
 /* vim: set ts=4 sts=4 sw=4 et: */

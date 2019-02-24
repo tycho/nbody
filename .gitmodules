@@ -1,6 +1,0 @@
-[submodule "libtime"]
-	path = subprojects/time
-	url = https://github.com/tycho/libtime.git
-[submodule "libc11"]
-	path = subprojects/c11
-	url = https://github.com/tycho/libc11.git

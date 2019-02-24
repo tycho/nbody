@@ -34,8 +34,7 @@
  *
  */
 
-#ifndef __CUDAHANDBOOK_BODYBODYINTERACTION_CUH__
-#define __CUDAHANDBOOK_BODYBODYINTERACTION_CUH__
+#pragma once
 
 static __host__ __device__ void bodyBodyInteraction(
     float *fx, float *fy, float *fz,
@@ -63,7 +62,5 @@ static __host__ __device__ void bodyBodyInteraction(
     *fy = dy * s;
     *fz = dz * s;
 }
-
-#endif
 
 /* vim: set ts=4 sts=4 sw=4 et: */

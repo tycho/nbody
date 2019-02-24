@@ -36,9 +36,7 @@
  *
  */
 
-
-#ifndef __CHERROR_H__
-#define __CHERROR_H__
+#pragma once
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -126,7 +124,5 @@ static inline const char* cudaGetErrorString( cudaError_t error )
             goto Error; \
         } \
     } while (0);
-
-#endif
 
 #endif

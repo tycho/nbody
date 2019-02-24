@@ -1,19 +1,15 @@
-project('nbody', 'c',
+project('nbody', 'cpp',
     default_options: [
         'buildtype=release',
-        'c_std=gnu11'
+        'cpp_std=c++11'
     ]
 )
 
-compiler = meson.get_compiler('c')
+compiler = meson.get_compiler('cpp')
 threads = dependency('threads')
 libm = compiler.find_library('m')
 
 incdirs = include_directories('src')
-libc11_sp = subproject('c11')
-libc11 = libc11_sp.get_variable('c11_dep')
-libtime_sp = subproject('time')
-libtime = libtime_sp.get_variable('libtime')
 
 enable_cuda = get_option('use_cuda')
 enable_openmp = get_option('openmp')
@@ -21,19 +17,19 @@ enable_opengl = get_option('opengl')
 enable_simd = get_option('intrinsics')
 nvcc_name = get_option('nvcc')
 
-c_sources = [
-    'src/nbody_CPU_AOS.c',
-    'src/nbody_CPU_AOS_tiled.c',
-    'src/nbody_CPU_AVX.c',
-    'src/nbody_CPU_AltiVec.c',
-    'src/nbody_CPU_NEON.c',
-    'src/nbody_CPU_SOA.c',
-    'src/nbody_CPU_SOA_tiled.c',
-    'src/nbody_CPU_SSE.c',
-    'src/nbody_render_gl.c',
-    'src/nbody_util.c',
+cxx_sources = [
+    'src/nbody_CPU_AOS.cpp',
+    'src/nbody_CPU_AOS_tiled.cpp',
+    'src/nbody_CPU_AVX.cpp',
+    'src/nbody_CPU_AltiVec.cpp',
+    'src/nbody_CPU_NEON.cpp',
+    'src/nbody_CPU_SOA.cpp',
+    'src/nbody_CPU_SOA_tiled.cpp',
+    'src/nbody_CPU_SSE.cpp',
+    'src/nbody_render_gl.cpp',
+    'src/nbody_util.cpp',
 ]
-c_args = [
+cxx_args = [
     '-ffast-math',
     compiler.first_supported_argument([
         '-march=native',
@@ -44,8 +40,6 @@ c_args = [
     '-fno-asynchronous-unwind-tables',
 ])
 cpp_args = [
-    '-DUSE_LIBC11',
-    '-DLIBTIME_STATIC',
     #'-DHIGH_ENTROPY',
 ]
 nvcc_flags = [
@@ -60,7 +54,6 @@ nvcc_flags = [
 
 if nvcc_name == 'clang++'
     nvcc_flags += [
-        '-Drestrict=__restrict',
         '-fcuda-flush-denormals-to-zero',
         '--cuda-gpu-arch=sm_52',
         '--cuda-gpu-arch=sm_61',
@@ -68,7 +61,6 @@ if nvcc_name == 'clang++'
     ]
 elif nvcc_name == 'nvcc'
     nvcc_flags += [
-        '-Drestrict=',
         '--ftz', 'true',
         '-gencode=arch=compute_52,code="sm_52,compute_52"',
         '-gencode=arch=compute_61,code="sm_61,compute_61"',
@@ -117,9 +109,9 @@ else
         'src/nbody.cu'
     ]
     copy_bin = find_program('cp', 'copy')
-    c_sources += custom_target('cuda-to-c',
+    cxx_sources += custom_target('cuda-to-cpp',
         input: ['src/nbody.cu'],
-        output: ['nbody.c'],
+        output: ['nbody.cpp'],
         command: [copy_bin, '@INPUT@', '@OUTPUT@'])
     cuda_obj = []
 endif
@@ -161,10 +153,10 @@ if target_machine.system() == 'windows'
 endif
 
 executable('nbody',
-    c_sources,
+    cxx_sources,
     cuda_obj,
-    c_args: c_args + cpp_args,
+    cpp_args: cxx_args + cpp_args,
     include_directories : incdirs,
-    dependencies: [threads, libm, libc11, libtime] + extra_deps)
+    dependencies: [threads, libm] + extra_deps)
 
 # vim: set ts=4 sts=4 sw=4 et:

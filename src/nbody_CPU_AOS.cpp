@@ -33,7 +33,8 @@
  *
  */
 
-#include "libtime.h"
+#include <chrono>
+
 #ifdef USE_CUDA
 #undef USE_CUDA
 #endif
@@ -44,11 +45,11 @@
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_AOS.h"
 
+using namespace std;
+
 DEFINE_AOS(ComputeGravitation_AOS)
 {
-    uint64_t start, end;
-
-    start = libtime_cpu();
+    auto start = chrono::steady_clock::now();
 
     ASSERT_ALIGNED(force, NBODY_ALIGNMENT);
     ASSERT_ALIGNED(posMass, NBODY_ALIGNMENT);
@@ -91,8 +92,8 @@ DEFINE_AOS(ComputeGravitation_AOS)
         force[4*i+2] = acz;
     }
 
-    end = libtime_cpu();
-    return libtime_cpu_to_wall(end - start) * 1e-6f;
+    auto end = chrono::steady_clock::now();
+    return chrono::duration<float, std::milli>(end - start).count();
 }
 
 /* vim: set ts=4 sts=4 sw=4 et: */

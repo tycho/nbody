@@ -33,7 +33,8 @@
  *
  */
 
-#include "libtime.h"
+#include <chrono>
+
 #ifdef USE_CUDA
 #undef USE_CUDA
 #endif
@@ -44,16 +45,16 @@
 #include "bodybodyInteraction.cuh"
 #include "nbody_CPU_AOS_tiled.h"
 
+using namespace std;
+
 #define BODIES_PER_TILE 4096
 
 DEFINE_AOS(ComputeGravitation_AOS_tiled)
 {
-    uint64_t start, end;
+    auto start = chrono::steady_clock::now();
 
     if ( N % BODIES_PER_TILE != 0 )
         return 0.0f;
-
-    start = libtime_cpu();
 
     ASSERT_ALIGNED(force, NBODY_ALIGNMENT);
     ASSERT_ALIGNED(posMass, NBODY_ALIGNMENT);
@@ -64,7 +65,7 @@ DEFINE_AOS(ComputeGravitation_AOS_tiled)
     #pragma omp parallel
     for (size_t tileStart = 0; tileStart < N; tileStart += BODIES_PER_TILE )
     {
-        int tileEnd = tileStart + BODIES_PER_TILE;
+        size_t tileEnd = tileStart + BODIES_PER_TILE;
 
         #pragma omp for schedule(guided)
         for ( size_t i = 0; i < N; i++ )
@@ -103,8 +104,8 @@ DEFINE_AOS(ComputeGravitation_AOS_tiled)
         }
     }
 
-    end = libtime_cpu();
-    return libtime_cpu_to_wall(end - start) * 1e-6f;
+    auto end = chrono::steady_clock::now();
+    return chrono::duration<float, std::milli>(end - start).count();
 }
 
 /* vim: set ts=4 sts=4 sw=4 et: */

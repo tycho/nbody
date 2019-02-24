@@ -14,17 +14,17 @@ ifdef DEBUG
 CPPFLAGS  += -DDEBUG
 endif
 
-CFLAGS    += -fPIC
+CXXFLAGS  += -fPIC
 LDFLAGS   += -fPIC
 
-ifneq ($(findstring clang,$(CC)),)
+ifneq ($(findstring clang,$(CXX)),)
   GCC := gcc
   GCC_MACHINE := $(shell $(GCC) -dumpmachine)
   GCC_VERSION := $(shell $(GCC) -dumpversion)
   GCC_HEADER_PATH := /usr/lib/gcc/$(GCC_MACHINE)/$(GCC_VERSION)/include
   ifneq ($(GCC_HEADER_PATH),)
     CLANG_GCC_HEADER_FLAGS := -idirafter "$(GCC_HEADER_PATH)"
-    CFLAGS += -idirafter "$(GCC_HEADER_PATH)"
+    CXXFLAGS += -idirafter "$(GCC_HEADER_PATH)"
   endif
 endif
 
@@ -32,7 +32,7 @@ ifndef NO_OPENMP
 ifeq (,$(findstring info,$(MAKECMDGOALS)))
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
 openmp.mk: .cc
-	$(QUIET)./openmp-detect.sh "$(CC) $(CLANG_GCC_HEADER_FLAGS)"
+	$(QUIET)./openmp-detect.sh "$(CXX) $(CLANG_GCC_HEADER_FLAGS)"
 -include openmp.mk
 endif
 endif
@@ -40,7 +40,7 @@ endif
 ifneq ($(OPENMP_SUPPORTED),)
   ifeq ($(OPENMP_SUPPORTED),Yes)
     CPPFLAGS += -DUSE_OPENMP
-    CFLAGS   += $(OPENMP_CFLAGS)
+    CXXFLAGS += $(OPENMP_CFLAGS)
     LDFLAGS  += $(OPENMP_LIBS)
   else
     ifeq (,$(findstring clean,$(MAKECMDGOALS)))
@@ -53,11 +53,11 @@ endif
 ifeq ($(NO_SIMD),)
   ifeq ($(uname_M),ppc)
     CPPFLAGS += -DHAVE_SIMD
-    CFLAGS += -maltivec
+    CXXFLAGS += -maltivec
   endif
   ifeq ($(uname_M),armv7l)
     CPPFLAGS += -DHAVE_SIMD
-    CFLAGS += -marm -mfpu=neon
+    CXXFLAGS += -marm -mfpu=neon
   endif
   ifeq ($(uname_M),x86_64)
     CPPFLAGS += -DHAVE_SIMD
@@ -67,7 +67,7 @@ ifeq ($(NO_SIMD),)
   endif
 endif
 
-ifeq ($(CC),icc)
+ifeq ($(CXX),icpc)
   # Statically link Intel libraries so the executables are more portable
   LDFLAGS += -static-intel
 endif
@@ -85,18 +85,12 @@ SDL_CFLAGS    := $(shell pkg-config --cflags sdl2)
 GLEW_CFLAGS   := $(shell pkg-config --cflags glew)
 SDL_LDFLAGS   := $(shell pkg-config --libs sdl2)
 GLEW_LDFLAGS  := $(shell pkg-config --libs glew)
-CFLAGS        += $(SDL_CFLAGS) $(GLEW_CFLAGS)
+CXXFLAGS      += $(SDL_CFLAGS) $(GLEW_CFLAGS)
 LDFLAGS       += $(SDL_LDFLAGS) $(GLEW_LDFLAGS)
 ifneq (,$(findstring MINGW,$(uname_S)))
 LDFLAGS       += -lglu32 -lopengl32 -lmingw32
 endif
 endif
-
-ifndef NATIVE_C11
-  CPPFLAGS += -DUSE_LIBC11
-  LDFLAGS += ../subprojects/c11/libc11.a
-endif
-LDFLAGS += ../subprojects/time/libtime.a
 
 LDFLAGS += -lm
 ifeq ($(uname_S),Linux)
@@ -107,7 +101,7 @@ ifneq (,$(findstring CYGWIN,$(uname_S)))
   LDFLAGS += -lwinmm
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-  CFLAGS += -fno-asynchronous-unwind-tables
+  CXXFLAGS += -fno-asynchronous-unwind-tables
   LDFLAGS += -mconsole -lwinmm
 endif
 
@@ -120,15 +114,15 @@ ifdef CUDA
   else
     NVCCFLAGS := -O0 -g
   endif
+  NVCCFLAGS += $(CSTD)
   ifneq (,$(findstring clang,$(NVCC)))
-    NVCCFLAGS += -Drestrict=__restrict
+    NVCCFLAGS += $(CXXFLAGS)
     NVCCFLAGS += -fcuda-flush-denormals-to-zero
     NVCCFLAGS += --cuda-gpu-arch=sm_52 \
                  --cuda-gpu-arch=sm_61 \
                  --cuda-gpu-arch=sm_70 \
                  --cuda-gpu-arch=sm_75
   else
-    NVCCFLAGS += -Drestrict=
     NVCCFLAGS += --ftz true
     NVCCFLAGS += -Xcompiler -fPIC
 
@@ -148,23 +142,18 @@ endif
   endif
 endif
 
-ifndef NATIVE_C11
-  CPPFLAGS += -I../subprojects/c11/include
-endif
-CPPFLAGS += -I../subprojects/time/include
-
 SOURCES := \
 	nbody.cu \
-	nbody_CPU_AOS.c \
-	nbody_CPU_AOS_tiled.c \
-	nbody_CPU_SOA.c \
-	nbody_CPU_SOA_tiled.c \
-	nbody_CPU_AltiVec.c \
-	nbody_CPU_NEON.c \
-	nbody_CPU_SSE.c \
-	nbody_CPU_AVX.c \
-	nbody_util.c \
-	nbody_render_gl.c
+	nbody_CPU_AOS.cpp \
+	nbody_CPU_AOS_tiled.cpp \
+	nbody_CPU_SOA.cpp \
+	nbody_CPU_SOA_tiled.cpp \
+	nbody_CPU_AltiVec.cpp \
+	nbody_CPU_NEON.cpp \
+	nbody_CPU_SSE.cpp \
+	nbody_CPU_AVX.cpp \
+	nbody_util.cpp \
+	nbody_render_gl.cpp
 
 ifdef CUDA
 SOURCES += \
@@ -180,7 +169,7 @@ SOURCES += \
 endif
 
 OBJECTS := $(SOURCES:%.cu=%.o)
-OBJECTS := $(OBJECTS:%.c=%.o)
+OBJECTS := $(OBJECTS:%.cpp=%.o)
 
 # Dependency generation
 #
@@ -200,19 +189,20 @@ info: info-flags info-compiler info-os info-cpu info-gpu
 
 info-flags:
 	$(QUIET)echo "CC        = $(CC)"
+	$(QUIET)echo "CXX       = $(CXX)"
 	$(QUIET)echo "NVCC      = $(NVCC)"
 	$(QUIET)echo "CUDA      = $(CUDA)"
 	$(QUIET)echo "LINK      = $(LINK)"
-	$(QUIET)echo "CFLAGS    = $(CFLAGS)" | fmt -t -w 76
+	$(QUIET)echo "CXXFLAGS  = $(CXXFLAGS)" | fmt -t -w 76
 	$(QUIET)echo "NVCCFLAGS = $(NVCCFLAGS)" | fmt -t -w 76
 	$(QUIET)echo "LDFLAGS   = $(LDFLAGS)" | fmt -t -w 76
 	$(QUIET)echo
 
 info-compiler:
-	$(QUIET)echo "Compiler version: $(shell $(CC) --version 2>&1 | head -n 1)"
+	$(QUIET)echo "Compiler version: $(shell $(CXX) --version 2>&1 | head -n 1)"
 ifneq ($(VERBOSE),)
 	$(QUIET)echo "Compiler invocation details:"
-	$(QUIET)gcc -### -o /dev/null -xc /dev/null 2>&1 | fmt -t -w 72
+	$(QUIET)$(CXX) -### -o /dev/null -xc++ /dev/null 2>&1 | fmt -t -w 72
 endif
 	$(QUIET)echo
 
@@ -242,20 +232,20 @@ ifdef CUDA
 	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) -c -o $@ $<
 else
 %.o: %.cu $(REBUILD_SENTINELS)
-	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) -xc -c -o $@ $<
+	$(QUIET_CXX)$(CXX) $(CXXFLAGS) $(INLINE_DEPGEN_CFLAGS) -xc++ -c -o $@ $<
 endif
 
-%.o: %.c $(REBUILD_SENTINELS)
-	$(QUIET_CC)$(CC) $(CFLAGS) $(INLINE_DEPGEN_CFLAGS) -c -o $@ $<
+%.o: %.cpp $(REBUILD_SENTINELS)
+	$(QUIET_CXX)$(CXX) $(CXXFLAGS) $(INLINE_DEPGEN_CFLAGS) -c -o $@ $<
 
 $(BIN): $(OBJECTS) $(REBUILD_SENTINELS)
-	$(QUIET_LINK)$(LINK) -o $@ $(OBJECTS) $(LDFLAGS) $(CFLAGS)
+	$(QUIET_LINK)$(LINK) -o $@ $(OBJECTS) $(LDFLAGS) $(CXXFLAGS)
 
 ifeq (,$(findstring info,$(MAKECMDGOALS)))
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
 
 TRACK_CCONLY = $(subst ','\'',$(CC) $(CXX) $(NVCC) $(LINK))
-TRACK_CFLAGS = $(subst ','\'',$(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(NVCCFLAGS) $(LDFLAGS))
+TRACK_CFLAGS = $(subst ','\'',$(CXXFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(NVCCFLAGS) $(LDFLAGS))
 
 .cc: .force-cflags
 	@FLAGS='$(TRACK_CCONLY)'; \

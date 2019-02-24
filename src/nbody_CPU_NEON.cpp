@@ -1,10 +1,10 @@
 /*
  *
- * nbody_CPU_AVX.cpp
+ * nbody_CPU_NEON.cpp
  *
- * Multithreaded AVX CPU implementation of the O(N^2) N-body calculation.
+ * Multithreaded NEON CPU implementation of the O(N^2) N-body calculation.
  * Uses SOA (structure of arrays) representation because it is a much
- * better fit for AVX.
+ * better fit for NEON.
  *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
  * All rights reserved.
@@ -35,23 +35,22 @@
  *
  */
 
-#include "nbody.h"
+#ifdef __ARM_NEON__
 
-#if defined(HAVE_AVX)
-#include "libtime.h"
+#include <chrono>
 
 #include "nbody_util.h"
 
-#include "bodybodyInteraction_AVX.h"
+#include "bodybodyInteraction_NEON.h"
 #include "nbody_CPU_SIMD.h"
 
-const char *SIMD_ALGORITHM_NAME = "AVX";
+using namespace std;
+
+const char *SIMD_ALGORITHM_NAME = "NEON";
 
 DEFINE_SOA(ComputeGravitation_SIMD)
 {
-    uint64_t start, end;
-
-    start = libtime_cpu();
+    auto start = chrono::steady_clock::now();
 
     ASSERT_ALIGNED(mass, NBODY_ALIGNMENT);
     ASSERT_ALIGNED(pos[0], NBODY_ALIGNMENT);
@@ -65,39 +64,39 @@ DEFINE_SOA(ComputeGravitation_SIMD)
     ASSUME(N >= 1024);
 
     #pragma omp parallel for schedule(guided)
-    for ( size_t i = 0; i < N; i++ )
+    for (size_t i = 0; i < N; i++)
     {
-        const __m256 x0 = _mm256_set1_ps( pos[0][i] );
-        const __m256 y0 = _mm256_set1_ps( pos[1][i] );
-        const __m256 z0 = _mm256_set1_ps( pos[2][i] );
+        const vf32x4_t x0 = _vec_set_ps1( pos[0][i] );
+        const vf32x4_t y0 = _vec_set_ps1( pos[1][i] );
+        const vf32x4_t z0 = _vec_set_ps1( pos[2][i] );
 
-        __m256 ax = _mm256_setzero_ps();
-        __m256 ay = _mm256_setzero_ps();
-        __m256 az = _mm256_setzero_ps();
+        vf32x4_t ax = vec_zero;
+        vf32x4_t ay = vec_zero;
+        vf32x4_t az = vec_zero;
 
-        for ( size_t j = 0; j < N; j += 8 )
+        for ( size_t j = 0; j < N; j += 4 )
         {
-            const __m256 x1 = *(__m256 *) &pos[0][j];
-            const __m256 y1 = *(__m256 *) &pos[1][j];
-            const __m256 z1 = *(__m256 *) &pos[2][j];
-            const __m256 mass1 = *(__m256 *) &mass[j];
+            const vf32x4_t x1 = *(vf32x4_t *)&pos[0][j];
+            const vf32x4_t y1 = *(vf32x4_t *)&pos[1][j];
+            const vf32x4_t z1 = *(vf32x4_t *)&pos[2][j];
+            const vf32x4_t mass1 = *(vf32x4_t *)&mass[j];
 
             bodyBodyInteraction(
                 &ax, &ay, &az,
                 x0, y0, z0,
                 x1, y1, z1, mass1,
-                _mm256_set1_ps( softeningSquared ) );
+                _vec_set_ps1( softeningSquared ) );
 
         }
 
-        force[0][i] = horizontal_sum( ax );
-        force[1][i] = horizontal_sum( ay );
-        force[2][i] = horizontal_sum( az );
+        // Accumulate sum of four floats in the NEON register
+        force[0][i] = _vec_sum( ax );
+        force[1][i] = _vec_sum( ay );
+        force[2][i] = _vec_sum( az );
     }
 
-    end = libtime_cpu();
-
-    return libtime_cpu_to_wall(end - start) * 1e-6f;
+    auto end = chrono::steady_clock::now();
+    return chrono::duration<float, std::milli>(end - start).count();
 }
 #endif
 

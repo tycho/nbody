@@ -1,5 +1,4 @@
-#ifndef __included_nbody_render_gl_h
-#define __included_nbody_render_gl_h
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,6 +11,4 @@ int gl_quit(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
