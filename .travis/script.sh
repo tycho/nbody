@@ -7,7 +7,7 @@
 set -ex
 
 HAVE_MESON=0
-if [[ "$NOMESON" -ne 1 ]]; then
+if [[ -z "$NOMESON" ]]; then
 	if type -P meson &>/dev/null; then
 		HAVE_MESON=1
 	fi

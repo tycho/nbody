@@ -17,4 +17,6 @@ apt-get install -y libomp-dev || true
 
 # Optional: try to install meson. Doesn't exist on older Ubuntu, so this could
 # be made mandatory in the future.
-apt-get install -y meson || true
+if [[ -z "$NOMESON" ]]; then
+	apt-get install -y meson || true
+fi
