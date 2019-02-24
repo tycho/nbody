@@ -3,6 +3,14 @@
 # This is an install script for Ubuntu-specific packages.
 #
 set -ex
+
+if [[ ! -z "$BROKEN" ]] && [[ "$CC" == "clang" ]]; then
+	echo "====================================================================" >&2
+	echo "Clang is known to be broken in this build environment, aborting now." >&2
+	echo "====================================================================" >&2
+	exit 0
+fi
+
 apt-get update
 apt-get install -y locales
 locale-gen en_US.UTF-8
@@ -17,6 +25,6 @@ apt-get install -y libomp-dev || true
 
 # Optional: try to install meson. Doesn't exist on older Ubuntu, so this could
 # be made mandatory in the future.
-if [[ -z "$NOMESON" ]]; then
+if [[ -z "$BROKEN" ]]; then
 	apt-get install -y meson || true
 fi
