@@ -1,123 +1,34 @@
 language: c
-dist: trusty
-sudo: true
+sudo: required
 
-matrix:
-  include:
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.9
-      env:
-         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+services:
+  - docker
 
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
-      env:
-         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
-
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-6
-      env:
-        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
-
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-7
-      env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-3.8
-          packages:
-            - libiomp-dev
-            - clang-3.8
-      env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
-
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-3.9
-          packages:
-            - libiomp-dev
-            - clang-3.9
-      env:
-        - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
-
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-4.0
-          packages:
-            - libiomp-dev
-            - clang-4.0
-      env:
-        - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
-
-#    - os: linux
-#      addons:
-#        apt:
-#          sources:
-#            - llvm-toolchain-trusty-5.0
-#          packages:
-#            - libiomp-dev
-#            - clang-5.0
-#      env:
-#        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+compiler:
+  - gcc
+  - clang
 
 env:
-  - CUDA= NO_OPENMP=1
-  - CUDA=
-  - CUDA=7.0-28
-  - CUDA=7.5-18
-  - CUDA=8.0.61-1
+  - IMAGE=ubuntu IMAGE_TAG=bionic
+  - IMAGE=ubuntu IMAGE_TAG=cosmic
+  - IMAGE=ubuntu IMAGE_TAG=disco
+  - IMAGE=fedora IMAGE_TAG=latest
+  - IMAGE=fedora IMAGE_TAG=rawhide
+  - IMAGE=nvidia/cuda IMAGE_TAG=7.5-devel
+  - IMAGE=nvidia/cuda IMAGE_TAG=8.0-devel
+  - IMAGE=nvidia/cuda IMAGE_TAG=9.2-devel
+  - IMAGE=nvidia/cuda IMAGE_TAG=10.0-devel
 
 before_install:
-  - eval "${MATRIX_EVAL}"
-  - if [[ -n ${CUDA} ]]; then travis_retry wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_${CUDA}_amd64.deb; fi
-  - if [[ -n ${CUDA} ]]; then travis_retry sudo dpkg -i cuda-repo-ubuntu1404_${CUDA}_amd64.deb; fi
-  - if [[ -n ${CUDA} ]]; then travis_retry sudo apt-get update -qq; fi
-  - if [[ -n ${CUDA} ]]; then export CUDA_APT=${CUDA:0:3}; fi
-  - if [[ -n ${CUDA} ]]; then export CUDA_APT=${CUDA_APT/./-}; fi
-  - if [[ -n ${CUDA} ]]; then travis_retry sudo apt-get install -y cuda-core-${CUDA_APT} cuda-cudart-dev-${CUDA_APT}; fi
-  - if [[ -n ${CUDA} ]]; then travis_retry sudo apt-get clean; fi
-  - if [[ -n ${CUDA} ]]; then export CUDA_HOME=/usr/local/cuda-${CUDA:0:3}; fi
-  - if [[ -n ${CUDA} ]]; then export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}; fi
-  - if [[ -n ${CUDA} ]]; then export PATH=${CUDA_HOME}/bin:${PATH}; fi
+  - export CONTAINER=${IMAGE//\//-}-${IMAGE_TAG}
+  - docker run -d --name $CONTAINER -e LC_ALL="en_US.UTF-8" -e LANG="en_US.UTF-8" -v $(pwd):/travis -w /travis $IMAGE:$IMAGE_TAG tail -f /dev/null
+  - docker ps
+
+install:
+  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/install-${IMAGE//\//-}.sh
+  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/install-post.sh
 
 script:
-  - eval "${MATRIX_EVAL}"
-  - export
-  - ${CC} -v
-  - make CC=${CC} NO_OPENMP=${NO_OPENMP} CUDA=${CUDA}
-  - ./nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
+  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/script.sh
 
-notifications:
-  pushover:
-    api_key:
-      secure: gsUWHn4C8WfV30HUnfUQFYSs9/prNNWI4WnuaHK7g33AnY+XqPM4h0sKfU9Wwlt0Uu13f9LNfIgk9nPnT9UxQoLzkG3uuVNWEQ3r62B76LzeBF9xprxMj/Ju9NP9SPqGnMAotKlAoNgQgrEf2B1hQV5RrLgsu8zdaatdDwLCoiU=
-    users:
-      secure: P09YDEei2k8LG9eRM/yW075iv9xNhxLpRLVzy8YP8kYhfDmhIFbc4eiYMCCKVxvUm654uWgmBfuQzGYTme+/YIs5D6itEwAu/It2d5TzwPkF743g90anz88bCUWZvfoj29Yd2OmtjJCpad6j6oq00nPqR5Oe/nXI7GfGS0V4p6U=
+# vim: set ts=2 sts=2 sw=2 et:
