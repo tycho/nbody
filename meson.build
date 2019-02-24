@@ -142,7 +142,8 @@ if enable_openmp
       '-fopenmp=libgomp',
       '-fopenmp'
     ]
-    omp_header = compiler.has_header('omp.h')
+    omp_header = compiler.check_header('omp.h')
+    assert(omp_header, 'omp.h header is missing')
     omp_lib = compiler.find_library('omp', required: false)
     if omp_lib.found() == false
         omp_lib = compiler.find_library('iomp5', required: false)
@@ -152,6 +153,8 @@ if enable_openmp
     endif
     omp_arg = compiler.first_supported_argument(openmp_cflag_try)
     result = compiler.run(omp_test_code, args: omp_arg, name: 'OpenMP test program', dependencies: omp_lib)
+    assert(result.compiled(), 'OpenMP test program failed to compile')
+    assert(result.returncode() == 0, 'OpenMP test program failed to run')
     cpp_args += [omp_arg]
     extra_deps += [omp_lib]
 endif
