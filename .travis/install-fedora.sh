@@ -10,6 +10,7 @@ PACKAGES=(
 	clang
 	meson
 	make
+	libomp-devel
 	pkgconf-pkg-config
 )
 
