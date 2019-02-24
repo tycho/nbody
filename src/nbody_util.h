@@ -44,9 +44,9 @@ extern "C" {
 #define NBODY_ALIGNMENT 64
 
 /* Disabled until GCC 9, when some of the target_clones bugs are hopefully fixed. */
-#if !defined(__GNUC__) || __GNUC__ < 9
+//#if !defined(__GNUC__) || __GNUC__ < 9
 #define TARGET_DECL
-#endif
+//#endif
 
 #if defined(__GNUC__)
 #  define ALIGNED(n) __attribute__((aligned(n)))
