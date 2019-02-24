@@ -1,4 +1,5 @@
 #include <omp.h>
+#include <math.h>
 #include <stdio.h>
 
 #ifndef _OPENMP
@@ -21,6 +22,15 @@ static void USED saxpy_guided(int n, float a, float * __restrict x, float * __re
 		y[i] = a * x[i] + y[i];
 	}
 }
+
+/* Test to ensure math.h functions don't cause compile errors with -fopenmp
+ * (old Clang + -fopenmp + newer GCC = breakage)
+ */
+static float USED rsqrt(float x)
+{
+	return 1.0f / sqrtf(x);
+}
+
 
 static inline int
 threadCount(void)
