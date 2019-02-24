@@ -6,11 +6,23 @@
 #
 set -ex
 
+#
+# "BROKEN" can mean multiple things, but in all cases the issues stem from an
+# outdated build environment. Either meson is too old, or "clang -fopenmp" is
+# broken, or something similar.
+#
+if [[ ! -z "$BROKEN" ]] && [[ "$CC" == "clang" ]]; then
+	echo "Clang is known to be broken in this build environment, aborting now." >&2
+	exit 0
+fi
+
 HAVE_MESON=0
-if [[ -z "$NOMESON" ]]; then
+if [[ -z "$BROKEN" ]]; then
 	if type -P meson &>/dev/null; then
 		HAVE_MESON=1
 	fi
+else
+	echo "Meson is known to be broken in this build environment, will skip Meson builds." >&2
 fi
 
 make distclean
