@@ -2,20 +2,33 @@
 
 set -e
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd $SCRIPT_DIR
+
 CC=$1
 
 try_flags() {
 	OMP_FLAG="$1"
 	LIB_FLAG="$2"
-	if ${CC} ${OMP_FLAG} -o openmp-test openmp-test.c ${LIB_FLAG} &>/dev/null; then
-		if env KMP_AFFINITY=verbose OMP_NUM_THREADS=2 ./openmp-test &>/dev/null; then
-			cat > openmp.mk.tmp <<-EOF
-			OPENMP_SUPPORTED := Yes
-			OPENMP_CFLAGS    := ${OMP_FLAG}
-			OPENMP_LIBS      := ${LIB_FLAG}
-			EOF
-			cmp --quiet openmp.mk openmp.mk.tmp || mv openmp.mk.tmp openmp.mk
-			exit 0
+
+	if [[ -z "$LIB_FLAG" ]]; then
+		# Not specified, so let the compiler choose the appropriate defaults
+		LIB_FLAG="$OMP_FLAG"
+	fi
+
+	# Compile and link with separate steps, ensuring that -fopenmp doesn't get
+	# passed to the linker if we have a $LIB_FLAG specified.
+	if ${CC} ${OMP_FLAG} -c -o openmp-test.o openmp-test.c &>/dev/null; then
+		if ${CC} -o openmp-test openmp-test.o ${LIB_FLAG} &>/dev/null; then
+			if env KMP_AFFINITY=verbose OMP_NUM_THREADS=2 ./openmp-test &>/dev/null; then
+				cat > openmp.mk.tmp <<-EOF
+				OPENMP_SUPPORTED := Yes
+				OPENMP_CFLAGS    := ${OMP_FLAG}
+				OPENMP_LIBS      := ${LIB_FLAG}
+				EOF
+				cmp --quiet openmp.mk openmp.mk.tmp || mv openmp.mk.tmp openmp.mk
+				exit 0
+			fi
 		fi
 	fi
 }

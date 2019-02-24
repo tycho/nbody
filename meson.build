@@ -110,51 +110,30 @@ endif
 
 if enable_openmp
     cpp_args += ['-DUSE_OPENMP']
-    omp_test_code = '''#include <omp.h>
-    #include <stdio.h>
-
-    #ifndef _OPENMP
-    #error "compiler didn't define _OPENMP"
-    #endif
-
-    static inline int threadCount(void)
-    {
-        int k;
-    #  pragma omp parallel
-        {
-    #  pragma omp master
-            {
-                k = omp_get_num_threads();
-            }
-        }
-        return k;
-    }
-
-    int main(int argc, char **argv)
-    {
-            printf("thread count: %d\n", threadCount());
-            return 0;
-    }
-    '''
     openmp_cflag_try = [
       '-fopenmp=libomp',
       '-fopenmp=libiomp5',
       '-fopenmp=libgomp',
       '-fopenmp'
     ]
+    omp_arg = compiler.first_supported_argument(openmp_cflag_try)
     omp_header = compiler.has_header('omp.h')
     assert(omp_header, 'omp.h header is missing')
     omp_lib = compiler.find_library('omp', required: false)
-    if omp_lib.found() == false
+    omp_ok = omp_lib.found() and run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, '-lomp']).returncode() == 0
+    if not omp_ok
         omp_lib = compiler.find_library('iomp5', required: false)
-        if omp_lib.found() == false
+        omp_ok = omp_lib.found() and run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, '-liomp5']).returncode() == 0
+        if not omp_ok
             omp_lib = compiler.find_library('gomp', required: true)
+            omp_ok = omp_lib.found() and run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, '-lgomp']).returncode() == 0
+            if not omp_ok
+                omp_lib = []
+                omp_ok = omp_lib.found() and run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, omp_arg]).returncode() == 0
+            endif
         endif
     endif
-    omp_arg = compiler.first_supported_argument(openmp_cflag_try)
-    result = compiler.run(omp_test_code, args: omp_arg, name: 'OpenMP test program', dependencies: omp_lib)
-    assert(result.compiled(), 'OpenMP test program failed to compile')
-    assert(result.returncode() == 0, 'OpenMP test program failed to run')
+    assert(omp_ok, 'Could not find working OpenMP functionality in your compiler')
     cpp_args += [omp_arg]
     extra_deps += [omp_lib]
 endif

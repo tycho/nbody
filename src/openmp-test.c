@@ -5,6 +5,23 @@
 #error "compile with -fopenmp please!"
 #endif
 
+#ifdef __GNUC__
+#define USED __attribute__((used))
+#else
+#define USED
+#endif
+
+/* Test to ensure that schedule(guided) doesn't result in undefined symbols
+ * (libgomp currently defines some symbols that libomp does not)
+ */
+static void USED saxpy_guided(int n, float a, float * __restrict x, float * __restrict y)
+{
+	#pragma omp parallel for schedule(guided)
+	for (int i = 0; i < n; ++i) {
+		y[i] = a * x[i] + y[i];
+	}
+}
+
 static inline int
 threadCount(void)
 {
