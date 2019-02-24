@@ -19,7 +19,7 @@ try_flags() {
 	# Compile and link with separate steps, ensuring that -fopenmp doesn't get
 	# passed to the linker if we have a $LIB_FLAG specified.
 	if ${CC} ${OMP_FLAG} -c -o openmp-test.o openmp-test.c &>/dev/null; then
-		if ${CC} -o openmp-test openmp-test.o ${LIB_FLAG} &>/dev/null; then
+		if ${CC} -o openmp-test openmp-test.o ${LIB_FLAG} -lm &>/dev/null; then
 			if env KMP_AFFINITY=verbose OMP_NUM_THREADS=2 ./openmp-test &>/dev/null; then
 				cat > openmp.mk.tmp <<-EOF
 				OPENMP_SUPPORTED := Yes

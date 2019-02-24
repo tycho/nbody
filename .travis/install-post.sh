@@ -6,3 +6,4 @@ set -x
 meson --version
 g++ --version
 clang++ --version
+exit 0
