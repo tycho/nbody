@@ -33,10 +33,6 @@
  *
  */
 
-#include <stdio.h>
-
-#include "libtime.h"
-
 #include "chError.h"
 
 #include "nbody.h"
@@ -75,14 +71,12 @@ ComputeGravitation_multiGPU(
 {
     cudaError_t status;
 
-    float ret = 0.0f;
+    cudaEvent_t evStart = 0, evStop = 0;
+    float ms = 0.0;
 
     float *dptrPosMass[g_maxGPUs];
     float *dptrForce[g_maxGPUs];
     int oldDevice;
-
-    uint64_t start, end;
-    start = libtime_cpu();
 
     memset( dptrPosMass, 0, sizeof(dptrPosMass) );
     memset( dptrForce, 0, sizeof(dptrForce) );
@@ -91,6 +85,11 @@ ComputeGravitation_multiGPU(
         return 0.0f;
     }
     CUDART_CHECK( cudaGetDevice( &oldDevice ) );
+
+    CUDART_CHECK( cudaSetDevice( 0 ) );
+    CUDART_CHECK( cudaEventCreate( &evStart ) );
+    CUDART_CHECK( cudaEventCreate( &evStop ) );
+    CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
 
     // kick off the asynchronous memcpy's - overlap GPUs pulling
     // host memory with the CPU time needed to do the memory
@@ -120,21 +119,24 @@ ComputeGravitation_multiGPU(
             4*bodiesPerGPU*sizeof(float),
             cudaMemcpyDeviceToHost ) );
     }
+
+    CUDART_CHECK( cudaSetDevice( 0 ) );
+    CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
+
     // Synchronize with each GPU in turn.
     for ( size_t i = 0; i < g_numGPUs; i++ ) {
         CUDART_CHECK( cudaSetDevice( i ) );
         CUDART_CHECK( cudaDeviceSynchronize() );
     }
 
-    end = libtime_cpu();
-    ret = libtime_cpu_to_wall(end - start) * 1e-6;
+    CUDART_CHECK( cudaEventElapsedTime( &ms, evStart, evStop ) );
 Error:
     for ( size_t i = 0; i < g_numGPUs; i++ ) {
         cudaFree( dptrPosMass[i] );
         cudaFree( dptrForce[i] );
     }
     cudaSetDevice( oldDevice );
-    return ret;
+    return ms;
 }
 
 /* vim: set ts=4 sts=4 sw=4 et: */
