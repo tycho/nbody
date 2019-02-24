@@ -142,7 +142,7 @@ if enable_openmp
       '-fopenmp=libgomp',
       '-fopenmp'
     ]
-    omp_header = compiler.check_header('omp.h')
+    omp_header = compiler.has_header('omp.h')
     assert(omp_header, 'omp.h header is missing')
     omp_lib = compiler.find_library('omp', required: false)
     if omp_lib.found() == false
