@@ -119,7 +119,8 @@ ifdef CUDA
     NVCCFLAGS += -Drestrict=__restrict
     NVCCFLAGS += --cuda-gpu-arch=sm_52 \
                  --cuda-gpu-arch=sm_61 \
-                 --cuda-gpu-arch=sm_70
+                 --cuda-gpu-arch=sm_70 \
+                 --cuda-gpu-arch=sm_75
   else
     NVCCFLAGS += -Drestrict=
     NVCCFLAGS += -Xcompiler -fPIC
