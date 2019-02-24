@@ -22,12 +22,14 @@ fi
 
 if type -P meson &>/dev/null; then
 	rm -rf build
+	mkdir build
 	meson . build
 	ninja -C build
 	build/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
 
 	if type -P nvcc &>/dev/null; then
 		rm -rf build
+		mkdir build
 		meson . build -Dcuda=true
 		ninja -C build
 		build/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
