@@ -48,12 +48,16 @@ extern "C" {
 #define TARGET_DECL
 //#endif
 
+#ifndef __has_builtin         // Optional of course.
+#  define __has_builtin(x) 0  // Compatibility with non-clang compilers.
+#endif
+
 #if defined(__GNUC__)
 #  define ALIGNED(n) __attribute__((aligned(n)))
 #  ifdef DEBUG
 #    define ASSERT_ALIGNED(p,n) do { assert(((uintptr_t)(p) & (uintptr_t)(n-1)) == 0); } while (0)
-#  else
-#    define ASSERT_ALIGNED(p,n) do { p = __builtin_assume_aligned(p, n); } while(0)
+#  elif !defined(__clang__) || __has_builtin(__builtin_assume_aligned)
+#    define ASSERT_ALIGNED(p,n) do { p = (float *)__builtin_assume_aligned(p, n); } while(0)
 #  endif
 #  if defined(__clang__)
 #    if __has_builtin(__builtin_assume)
