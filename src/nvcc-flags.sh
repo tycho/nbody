@@ -25,20 +25,20 @@ if [ -z "$NVCC_VER" ] || verlt ${NVCC_VER} 6.0; then
 fi
 
 NVCC_FLAGS+=(
-	-gencode=arch=compute_50,code=\\\"sm_50,compute_50\\\"
-	-gencode=arch=compute_52,code=\\\"sm_52,compute_52\\\"
+	-gencode=arch=compute_50,code=sm_50
+	-gencode=arch=compute_52,code=sm_52
 )
 
 if vergte ${NVCC_VER} 8.0; then
-	NVCC_FLAGS+=( -gencode=arch=compute_61,code=\\\"sm_61,compute_61\\\" )
+	NVCC_FLAGS+=( -gencode=arch=compute_61,code=sm_61 )
 fi
 
 if vergte ${NVCC_VER} 9.0; then
-	NVCC_FLAGS+=( -gencode=arch=compute_70,code=\\\"sm_70,compute_70\\\" )
+	NVCC_FLAGS+=( -gencode=arch=compute_70,code=sm_70 )
 fi
 
 if vergte ${NVCC_VER} 10.0; then
-	NVCC_FLAGS+=( -gencode=arch=compute_75,code=\\\"sm_75,compute_75\\\" )
+	NVCC_FLAGS+=( -gencode=arch=compute_75,code=sm_75 )
 fi
 
 cat > nvcc-flags.mk << EOF

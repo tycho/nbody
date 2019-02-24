@@ -208,7 +208,7 @@ ComputeGravitation(
     int bCrossCheck )
 {
 #ifdef USE_CUDA
-    cudaError_t status;
+    hipError_t status;
 #endif
     int bSOA = 0;
 
@@ -268,25 +268,26 @@ ComputeGravitation(
             break;
 #ifdef USE_CUDA
         case ALGORITHM_AOS_GPU:
-            CUDART_CHECK( cudaMemcpyAsync(
+            HIP_CHECK( hipMemcpyAsync(
                 g_dptrAOS_PosMass,
                 g_hostAOS_PosMass,
                 4*g_N*sizeof(float),
-                cudaMemcpyHostToDevice ) );
-            CUDART_CHECK( cudaMemset(
+                hipMemcpyHostToDevice ) );
+            HIP_CHECK( hipMemcpyAsync(
                 g_dptrAOS_Force,
-                0,
-                4*g_N*sizeof(float) ) );
+                g_hostAOS_Force,
+                4*g_N*sizeof(float),
+                hipMemcpyHostToDevice ) );
             *ms = algorithm->aos(
                 g_dptrAOS_Force,
                 g_dptrAOS_PosMass,
                 g_softening*g_softening,
                 g_N );
-            CUDART_CHECK( cudaMemcpy(
+            HIP_CHECK( hipMemcpy(
                 g_hostAOS_Force,
                 g_dptrAOS_Force,
                 4*g_N*sizeof(float),
-                cudaMemcpyDeviceToHost ) );
+                hipMemcpyDeviceToHost ) );
             break;
 #endif
         default:
@@ -344,16 +345,16 @@ struct gpuInit_struct
 {
     int iGPU;
 
-    cudaError_t status;
+    hipError_t status;
 };
 
 static int initializeGPU( void *_p )
 {
-    cudaError_t status;
+    hipError_t status;
 
     struct gpuInit_struct *p = (struct gpuInit_struct *) _p;
-    CUDART_CHECK( cudaSetDevice( p->iGPU ) );
-    CUDART_CHECK( cudaFree(0) );
+    HIP_CHECK( hipSetDevice( p->iGPU ) );
+    HIP_CHECK( hipFree(0) );
 Error:
     p->status = status;
     return 0;
@@ -361,11 +362,11 @@ Error:
 
 static int teardownGPU( void *_p )
 {
-    cudaError_t status;
+    hipError_t status;
 
     struct gpuInit_struct *p = (struct gpuInit_struct *) _p;
-    CUDART_CHECK( cudaSetDevice( p->iGPU ) );
-    CUDART_CHECK( cudaDeviceReset() );
+    HIP_CHECK( hipSetDevice( p->iGPU ) );
+    HIP_CHECK( hipDeviceReset() );
 Error:
     p->status = status;
     return 0;
@@ -374,23 +375,23 @@ Error:
 static int freeArrays(void)
 {
 #ifdef USE_CUDA
-    cudaError_t status;
+    hipError_t status;
 
     if ( g_bCUDAPresent ) {
-        CUDART_CHECK( cudaDeviceSynchronize() );
-        CUDART_CHECK( cudaFreeHost( g_hostAOS_PosMass ) );
+        HIP_CHECK( hipDeviceSynchronize() );
+        HIP_CHECK( hipHostFree( g_hostAOS_PosMass ) );
         for ( size_t i = 0; i < 3; i++ ) {
-            CUDART_CHECK( cudaFreeHost( g_hostSOA_Pos[i] ) );
-            CUDART_CHECK( cudaFreeHost( g_hostSOA_Force[i] ) );
+            HIP_CHECK( hipHostFree( g_hostSOA_Pos[i] ) );
+            HIP_CHECK( hipHostFree( g_hostSOA_Force[i] ) );
         }
-        CUDART_CHECK( cudaFreeHost( g_hostAOS_Force ) );
-        CUDART_CHECK( cudaFreeHost( g_hostAOS_Force_Golden ) );
-        CUDART_CHECK( cudaFreeHost( g_hostAOS_VelInvMass ) );
-        CUDART_CHECK( cudaFreeHost( g_hostSOA_Mass ) );
-        CUDART_CHECK( cudaFreeHost( g_hostSOA_InvMass ) );
+        HIP_CHECK( hipHostFree( g_hostAOS_Force ) );
+        HIP_CHECK( hipHostFree( g_hostAOS_Force_Golden ) );
+        HIP_CHECK( hipHostFree( g_hostAOS_VelInvMass ) );
+        HIP_CHECK( hipHostFree( g_hostSOA_Mass ) );
+        HIP_CHECK( hipHostFree( g_hostSOA_InvMass ) );
 
-        CUDART_CHECK( cudaFree( g_dptrAOS_PosMass ) );
-        CUDART_CHECK( cudaFree( g_dptrAOS_Force ) );
+        HIP_CHECK( hipFree( g_dptrAOS_PosMass ) );
+        HIP_CHECK( hipFree( g_dptrAOS_Force ) );
     } else
 #endif
     {
@@ -416,22 +417,22 @@ Error:
 static int allocArrays(void)
 {
 #ifdef USE_CUDA
-    cudaError_t status;
+    hipError_t status;
 
     if ( g_bCUDAPresent ) {
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_PosMass, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
+        HIP_CHECK( hipHostMalloc( (void **) &g_hostAOS_PosMass, 4*g_N*sizeof(float), hipHostMallocPortable|hipHostMallocMapped ) );
         for ( size_t i = 0; i < 3; i++ ) {
-            CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Pos[i], g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
-            CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Force[i], g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
+            HIP_CHECK( hipHostMalloc( (void **) &g_hostSOA_Pos[i], g_N*sizeof(float), hipHostMallocPortable|hipHostMallocMapped ) );
+            HIP_CHECK( hipHostMalloc( (void **) &g_hostSOA_Force[i], g_N*sizeof(float), hipHostMallocPortable|hipHostMallocMapped ) );
         }
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_Force, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_Force_Golden, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_VelInvMass, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Mass, g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
-        CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_InvMass, g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
+        HIP_CHECK( hipHostMalloc( (void **) &g_hostAOS_Force, 4*g_N*sizeof(float), hipHostMallocPortable|hipHostMallocMapped ) );
+        HIP_CHECK( hipHostMalloc( (void **) &g_hostAOS_Force_Golden, 4*g_N*sizeof(float), hipHostMallocPortable|hipHostMallocMapped ) );
+        HIP_CHECK( hipHostMalloc( (void **) &g_hostAOS_VelInvMass, 4*g_N*sizeof(float), hipHostMallocPortable|hipHostMallocMapped ) );
+        HIP_CHECK( hipHostMalloc( (void **) &g_hostSOA_Mass, g_N*sizeof(float), hipHostMallocPortable|hipHostMallocMapped ) );
+        HIP_CHECK( hipHostMalloc( (void **) &g_hostSOA_InvMass, g_N*sizeof(float), hipHostMallocPortable|hipHostMallocMapped ) );
 
-        CUDART_CHECK( cudaMalloc( &g_dptrAOS_PosMass, 4*g_N*sizeof(float) ) );
-        CUDART_CHECK( cudaMalloc( (void **) &g_dptrAOS_Force, 4*g_N*sizeof(float) ) );
+        HIP_CHECK( hipMalloc( &g_dptrAOS_PosMass, 4*g_N*sizeof(float) ) );
+        HIP_CHECK( hipMalloc( (void **) &g_dptrAOS_Force, 4*g_N*sizeof(float) ) );
     } else
 #endif
     {
@@ -592,7 +593,7 @@ static void render_init(void)
 
 int main(int argc, char **argv)
 {
-    cudaError_t status;
+    hipError_t status;
 
     // kiloparticles
     int kParticles = DEFAULT_KPARTICLES, maxIterations = 0, cycleAfter = 0;
@@ -620,8 +621,8 @@ int main(int argc, char **argv)
         { NULL, 0, NULL, 0 }
     };
 
-    status = cudaGetDeviceCount( &g_maxGPUs );
-    if (status != cudaSuccess)
+    status = hipGetDeviceCount( &g_maxGPUs );
+    if (status != hipSuccess)
         g_numGPUs = 0;
     else
         g_numGPUs = g_maxGPUs;
@@ -778,8 +779,8 @@ int main(int argc, char **argv)
 
     g_bCUDAPresent = g_numGPUs > 0;
     if ( g_bCUDAPresent ) {
-        struct cudaDeviceProp prop;
-        CUDART_CHECK( cudaGetDeviceProperties( &prop, 0 ) );
+        struct hipDeviceProp_t prop;
+        HIP_CHECK( hipGetDeviceProperties( &prop, 0 ) );
     }
 
     if ( g_bNoCPU ) {
@@ -807,12 +808,12 @@ int main(int argc, char **argv)
         for ( int i = 0; i < g_numGPUs; i++ ) {
             struct gpuInit_struct initGPU = {i};
             g_GPUThreadPool[i].delegate(initializeGPU, &initGPU, true);
-            if ( cudaSuccess != initGPU.status ) {
+            if ( hipSuccess != initGPU.status ) {
                 fprintf(stderr, "Initializing GPU %d failed "
                     " with %d (%s)\n",
                     i,
                     initGPU.status,
-                    cudaGetErrorString( initGPU.status ));
+                    hipGetErrorString( initGPU.status ));
                 return 1;
             }
         }
@@ -949,12 +950,12 @@ cleanup:
     for ( int i = 0; i < g_numGPUs; i++ ) {
         struct gpuInit_struct initGPU = {i};
         g_GPUThreadPool[i].delegate(teardownGPU, &initGPU, true);
-        if ( cudaSuccess != initGPU.status ) {
+        if ( hipSuccess != initGPU.status ) {
             fprintf(stderr, "GPU %d teardown failed "
                 " with %d (%s)\n",
                 i,
                 initGPU.status,
-                cudaGetErrorString( initGPU.status ) );
+                hipGetErrorString( initGPU.status ) );
             return 1;
         }
     }
@@ -967,8 +968,8 @@ cleanup:
 
     return 0;
 Error:
-    if ( cudaSuccess != status ) {
-        fprintf(stderr, "CUDA Error: %s\n", cudaGetErrorString( status ) );
+    if ( hipSuccess != status ) {
+        fprintf(stderr, "CUDA Error: %s\n", hipGetErrorString( status ) );
     }
     return 1;
 }

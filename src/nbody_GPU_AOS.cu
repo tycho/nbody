@@ -38,23 +38,22 @@
 #include "nbody_GPU_AOS.h"
 #include "bodybodyInteraction.cuh"
 
-template<typename T>
 __global__ void
 ComputeNBodyGravitation_GPU_AOS(
-    T *force,
-    T *posMass,
+    float *force,
+    float *posMass,
     size_t N,
-    T softeningSquared )
+    float softeningSquared )
 {
     for ( size_t i = blockIdx.x*blockDim.x + threadIdx.x;
                  i < N;
                  i += blockDim.x*gridDim.x )
     {
-        T acc[3] = {0};
+        float acc[3] = {0};
         float4 me = ((float4 *) posMass)[i];
-        T myX = me.x;
-        T myY = me.y;
-        T myZ = me.z;
+        float myX = me.x;
+        float myY = me.y;
+        float myZ = me.z;
         for ( size_t j = 0; j < N; j++ ) {
             float4 body = ((float4 *) posMass)[j];
             float fx, fy, fz;
@@ -75,20 +74,20 @@ ComputeNBodyGravitation_GPU_AOS(
 
 DEFINE_AOS(ComputeGravitation_GPU_AOS)
 {
-    cudaError_t status;
-    cudaEvent_t evStart = 0, evStop = 0;
+    hipError_t status;
+    hipEvent_t evStart = 0, evStop = 0;
     float ms = 0.0;
-    CUDART_CHECK( cudaEventCreate( &evStart ) );
-    CUDART_CHECK( cudaEventCreate( &evStop ) );
-    CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
-    ComputeNBodyGravitation_GPU_AOS<float> <<<300,256>>>(
+    HIP_CHECK( hipEventCreate( &evStart ) );
+    HIP_CHECK( hipEventCreate( &evStop ) );
+    HIP_CHECK( hipEventRecord( evStart, NULL ) );
+    hipLaunchKernelGGL((ComputeNBodyGravitation_GPU_AOS), dim3(300), dim3(256), 0, 0, 
         force, posMass, N, softeningSquared );
-    CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
-    CUDART_CHECK( cudaDeviceSynchronize() );
-    CUDART_CHECK( cudaEventElapsedTime( &ms, evStart, evStop ) );
+    HIP_CHECK( hipEventRecord( evStop, NULL ) );
+    HIP_CHECK( hipDeviceSynchronize() );
+    HIP_CHECK( hipEventElapsedTime( &ms, evStart, evStop ) );
 Error:
-    cudaEventDestroy( evStop );
-    cudaEventDestroy( evStart );
+    hipEventDestroy( evStop );
+    hipEventDestroy( evStart );
     return ms;
 }
 

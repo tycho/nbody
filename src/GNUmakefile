@@ -50,6 +50,23 @@ ifneq ($(OPENMP_SUPPORTED),)
 endif
 endif
 
+ifdef CUDA
+  ifneq (,$(findstring hipcc,$(NVCC)))
+    HIP_BACKEND := $(shell hipconfig --platform)
+  else
+  ifneq (,$(findstring clang,$(NVCC)))
+    HIP_BACKEND := clang
+  else
+    HIP_BACKEND := nvcc
+  endif
+  endif
+
+  ifeq ($(HIP_BACKEND),hcc)
+    NO_SIMD := 1
+    CXX := $(NVCC)
+  endif
+endif
+
 ifeq ($(NO_SIMD),)
   ifeq ($(uname_M),ppc)
     CPPFLAGS += -DHAVE_SIMD
@@ -76,7 +93,6 @@ ifdef CUDA
   CPPFLAGS  += -DUSE_CUDA
   NVCC      := nvcc
   CUDA_ROOT := $(dir $(shell which nvcc 2>/dev/null))..
-  LDFLAGS   += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
 endif
 
 ifdef OPENGL
@@ -107,17 +123,26 @@ endif
 
 ifdef CUDA
   NVCCFLAGS += $(CSTD)
-  ifneq (,$(findstring clang,$(NVCC)))
+  ifeq ($(HIP_BACKEND),clang)
     NVCCFLAGS += $(CXXFLAGS)
     NVCCFLAGS += -fcuda-flush-denormals-to-zero
     NVCCFLAGS += --cuda-gpu-arch=sm_52 \
                  --cuda-gpu-arch=sm_61 \
                  --cuda-gpu-arch=sm_70 \
                  --cuda-gpu-arch=sm_75
+    LDFLAGS   += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
   else
-    NVCCFLAGS += -O3
-    NVCCFLAGS += --ftz true
-    NVCCFLAGS += -Xcompiler -fPIC
+    ifneq ($(HIP_BACKEND),nvcc)
+      CXX := $(NVCC)
+
+      NVCCFLAGS += -fPIC $(CPPFLAGS)
+      NVCCFLAGS += --amdgpu-target=gfx900
+      LDFLAGS += -L$(shell hipconfig -p)/lib -lhip_hcc
+    else
+      NVCCFLAGS += -O3
+      NVCCFLAGS += --ftz true
+      NVCCFLAGS += $(CPPFLAGS)
+      NVCCFLAGS += -Xcompiler -fPIC
 
 ifeq (,$(findstring info,$(MAKECMDGOALS)))
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
@@ -126,13 +151,16 @@ nvcc-flags.mk: .cc
 -include nvcc-flags.mk
 endif
 endif
-    ifdef NVCC_TARGET_FLAGS_DONE
-    ifeq ($(NVCC_TARGET_FLAGS),)
-        $(error nvcc not found or too old, aborting)
+      ifdef NVCC_TARGET_FLAGS_DONE
+      ifeq ($(NVCC_TARGET_FLAGS),)
+          $(error nvcc not found or too old, aborting)
+      endif
+      endif
+      NVCCFLAGS += $(NVCC_TARGET_FLAGS)
+      LDFLAGS   += -L$(CUDA_ROOT)/lib -L$(CUDA_ROOT)/lib64 -lcudart
     endif
-    endif
-    NVCCFLAGS += $(NVCC_TARGET_FLAGS)
   endif
+  NVCCFLAGS += $(shell hipconfig --cpp_config)
 endif
 
 SOURCES := \
@@ -222,7 +250,7 @@ clean:
 
 ifdef CUDA
 %.o: %.cu $(REBUILD_SENTINELS)
-	$(QUIET_NVCC)$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) -c -o $@ $<
+	$(QUIET_NVCC)$(NVCC) $(NVCCFLAGS) -c -o $@ $<
 else
 %.o: %.cu $(REBUILD_SENTINELS)
 	$(QUIET_CXX)$(CXX) $(CXXFLAGS) $(INLINE_DEPGEN_CFLAGS) -xc++ -c -o $@ $<

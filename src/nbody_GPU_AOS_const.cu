@@ -82,40 +82,40 @@ ComputeGravitation_GPU_AOS_const(
 
 DEFINE_AOS(ComputeGravitation_GPU_AOS_const)
 {
-    cudaError_t status;
-    cudaEvent_t evStart = 0, evStop = 0;
+    hipError_t status;
+    hipEvent_t evStart = 0, evStop = 0;
     float ms = 0.0;
     size_t bodiesLeft = N;
 
     void *p;
-    CUDART_CHECK( cudaGetSymbolAddress( &p, g_constantBodies ) );
+    HIP_CHECK( hipGetSymbolAddress( &p, g_constantBodies ) );
 
-    CUDART_CHECK( cudaEventCreate( &evStart ) );
-    CUDART_CHECK( cudaEventCreate( &evStop ) );
-    CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
+    HIP_CHECK( hipEventCreate( &evStart ) );
+    HIP_CHECK( hipEventCreate( &evStop ) );
+    HIP_CHECK( hipEventRecord( evStart, NULL ) );
     for ( size_t i = 0; i < N; i += g_bodiesPerPass ) {
         // bodiesThisPass = max(bodiesLeft, g_bodiesPerPass);
         size_t bodiesThisPass = bodiesLeft;
         if ( bodiesThisPass > g_bodiesPerPass ) {
             bodiesThisPass = g_bodiesPerPass;
         }
-        CUDART_CHECK( cudaMemcpyToSymbolAsync(
+        HIP_CHECK( hipMemcpyToSymbolAsync(
             g_constantBodies,
             ((float4 *) posMass)+i,
             bodiesThisPass*sizeof(float4),
             0,
-            cudaMemcpyDeviceToDevice,
+            hipMemcpyDeviceToDevice,
             NULL ) );
-        ComputeGravitation_GPU_AOS_const<float> <<<300,256>>>(
+        hipLaunchKernelGGL((ComputeGravitation_GPU_AOS_const<float>), dim3(300), dim3(256), 0, 0, 
             force, posMass, softeningSquared, bodiesThisPass, N );
         bodiesLeft -= bodiesThisPass;
     }
-    CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
-    CUDART_CHECK( cudaDeviceSynchronize() );
-    CUDART_CHECK( cudaEventElapsedTime( &ms, evStart, evStop ) );
+    HIP_CHECK( hipEventRecord( evStop, NULL ) );
+    HIP_CHECK( hipDeviceSynchronize() );
+    HIP_CHECK( hipEventElapsedTime( &ms, evStart, evStop ) );
 Error:
-    cudaEventDestroy( evStop );
-    cudaEventDestroy( evStart );
+    hipEventDestroy( evStop );
+    hipEventDestroy( evStart );
     return ms;
 }
 

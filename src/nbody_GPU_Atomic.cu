@@ -83,20 +83,20 @@ ComputeNBodyGravitation_Atomic( T *force, T *posMass, size_t N, T softeningSquar
 
 DEFINE_AOS(ComputeGravitation_GPU_Atomic)
 {
-    cudaError_t status;
-    cudaEvent_t evStart = 0, evStop = 0;
+    hipError_t status;
+    hipEvent_t evStart = 0, evStop = 0;
     float ms = 0.0;
-    CUDART_CHECK( cudaEventCreate( &evStart ) );
-    CUDART_CHECK( cudaEventCreate( &evStop ) );
-    CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
-    CUDART_CHECK( cudaMemset( force, 0, 4*N*sizeof(float) ) );
-    ComputeNBodyGravitation_Atomic<float> <<<300,256>>>( force, posMass, N, softeningSquared );
-    CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
-    CUDART_CHECK( cudaDeviceSynchronize() );
-    CUDART_CHECK( cudaEventElapsedTime( &ms, evStart, evStop ) );
+    HIP_CHECK( hipEventCreate( &evStart ) );
+    HIP_CHECK( hipEventCreate( &evStop ) );
+    HIP_CHECK( hipEventRecord( evStart, NULL ) );
+    HIP_CHECK( hipMemset( force, 0, 4*N*sizeof(float) ) );
+    hipLaunchKernelGGL((ComputeNBodyGravitation_Atomic<float>), dim3(300), dim3(256), 0, 0,  force, posMass, N, softeningSquared );
+    HIP_CHECK( hipEventRecord( evStop, NULL ) );
+    HIP_CHECK( hipDeviceSynchronize() );
+    HIP_CHECK( hipEventElapsedTime( &ms, evStart, evStop ) );
 Error:
-    CUDART_CHECK( cudaEventDestroy( evStop ) );
-    CUDART_CHECK( cudaEventDestroy( evStart ) );
+    HIP_CHECK( hipEventDestroy( evStop ) );
+    HIP_CHECK( hipEventDestroy( evStart ) );
     return ms;
 }
 

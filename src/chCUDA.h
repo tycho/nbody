@@ -38,10 +38,7 @@
 
 #ifdef USE_CUDA
 
-#ifndef __cuda_drvapi_dynlink_h__
-#include <cuda.h>
-#endif
-#include <cuda_runtime_api.h>
+#include "hip/hip_runtime.h"
 
 #if CUDART_VERSION < 9000
 #  define __shfl_sync(x,y,z) __shfl(y,z)
@@ -58,10 +55,10 @@
 #define __host__
 #define __device__
 
-typedef int cudaError_t;
-static const cudaError_t cudaSuccess = 0;
+typedef int hipError_t;
+static const hipError_t hipSuccess = 0;
 
-static inline cudaError_t cudaGetDeviceCount( int *p )
+static inline hipError_t hipGetDeviceCount( int *p )
 {
     if (!p)
         return 1;
@@ -69,62 +66,62 @@ static inline cudaError_t cudaGetDeviceCount( int *p )
     return 0;
 }
 
-static inline cudaError_t cudaMalloc ( void **devPtr, size_t size )
+static inline hipError_t hipMalloc ( void **devPtr, size_t size )
 {
     return 1;
 }
 
-static inline cudaError_t cudaDeviceReset ( void )
+static inline hipError_t hipDeviceReset ( void )
 {
     return 1;
 }
 
-static inline cudaError_t cudaHostAlloc ( void ** pHost, size_t size, unsigned int flags )
+static inline hipError_t hipHostMalloc ( void ** pHost, size_t size, unsigned int flags )
 {
     return 1;
 }
 
-#define cudaHostAllocMapped 0
-#define cudaHostAllocPortable 0
+#define hipHostMallocMapped 0
+#define hipHostMallocPortable 0
 
-static inline cudaError_t cudaFree ( void * devPtr )
+static inline hipError_t hipFree ( void * devPtr )
 {
     return 1;
 }
 
-static inline cudaError_t cudaMemcpyAsync ( void * dst, const void * src, size_t count, int kind, int stream )
+static inline hipError_t hipMemcpyAsync ( void * dst, const void * src, size_t count, int kind, int stream )
 {
     return 1;
 }
 
-#define cudaMemcpyHostToHost 0
-#define cudaMemcpyHostToDevice 0
-#define cudaMemcpyDeviceToHost 0
-#define cudaMemcpyDeviceToDevice 0
-#define cudaMemcpyDefault 0
+#define hipMemcpyHostToHost 0
+#define hipMemcpyHostToDevice 0
+#define hipMemcpyDeviceToHost 0
+#define hipMemcpyDeviceToDevice 0
+#define hipMemcpyDefault 0
 
-struct cudaDeviceProp
+struct hipDeviceProp_t
 {
     int major;
     int minor;
 };
 
-static inline cudaError_t cudaGetDeviceProperties ( struct cudaDeviceProp *  prop, int device )
+static inline hipError_t hipGetDeviceProperties ( struct hipDeviceProp_t *  prop, int device )
 {
     if (!prop)
         return 1;
-    memset(prop, 0, sizeof(struct cudaDeviceProp));
+    memset(prop, 0, sizeof(struct hipDeviceProp_t));
     return 0;
 }
 
-static inline cudaError_t cudaSetDeviceFlags ( unsigned int flags )
+static inline hipError_t cudaSetDeviceFlags ( unsigned int flags )
 {
     return 1;
 }
 
 #define cudaDeviceMapHost 0
 
-static inline cudaError_t cudaSetDevice ( int device )
+static inline hipError_t hipSetDevice ( int device )
 {
     return 1;
 }

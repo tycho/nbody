@@ -33,6 +33,8 @@
  *
  */
 
+#include "hip/hip_runtime.h"
+
 #include "chError.h"
 
 #include "nbody.h"
@@ -69,9 +71,9 @@ ComputeGravitation_multiGPU(
     size_t N
 )
 {
-    cudaError_t status;
+    hipError_t status;
 
-    cudaEvent_t evStart = 0, evStop = 0;
+    hipEvent_t evStart = 0, evStop = 0;
     float ms = 0.0;
 
     float *dptrPosMass[g_maxGPUs];
@@ -84,58 +86,58 @@ ComputeGravitation_multiGPU(
     if ( (0 != N % g_numGPUs) || (g_numGPUs > g_maxGPUs) ) {
         return 0.0f;
     }
-    CUDART_CHECK( cudaGetDevice( &oldDevice ) );
+    HIP_CHECK( hipGetDevice( &oldDevice ) );
 
-    CUDART_CHECK( cudaSetDevice( 0 ) );
-    CUDART_CHECK( cudaEventCreate( &evStart ) );
-    CUDART_CHECK( cudaEventCreate( &evStop ) );
-    CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
+    HIP_CHECK( hipSetDevice( 0 ) );
+    HIP_CHECK( hipEventCreate( &evStart ) );
+    HIP_CHECK( hipEventCreate( &evStop ) );
+    HIP_CHECK( hipEventRecord( evStart, NULL ) );
 
     // kick off the asynchronous memcpy's - overlap GPUs pulling
     // host memory with the CPU time needed to do the memory
     // allocations.
     for ( size_t i = 0; i < g_numGPUs; i++ ) {
-        CUDART_CHECK( cudaSetDevice( i ) );
-        CUDART_CHECK( cudaMalloc( &dptrPosMass[i], 4*N*sizeof(float) ) );
-        CUDART_CHECK( cudaMalloc( &dptrForce[i], 4*bodiesPerGPU*sizeof(float) ) );
-        CUDART_CHECK( cudaMemcpyAsync(
+        HIP_CHECK( hipSetDevice( i ) );
+        HIP_CHECK( hipMalloc( &dptrPosMass[i], 4*N*sizeof(float) ) );
+        HIP_CHECK( hipMalloc( &dptrForce[i], 4*bodiesPerGPU*sizeof(float) ) );
+        HIP_CHECK( hipMemcpyAsync(
             dptrPosMass[i],
             g_hostAOS_PosMass,
             4*N*sizeof(float),
-            cudaMemcpyHostToDevice ) );
+            hipMemcpyHostToDevice ) );
     }
     for ( size_t i = 0; i < g_numGPUs; i++ ) {
-        CUDART_CHECK( cudaSetDevice( i ) );
-        ComputeNBodyGravitation_multiGPU<<<300,256,256*sizeof(float4)>>>(
+        HIP_CHECK( hipSetDevice( i ) );
+        hipLaunchKernelGGL((ComputeNBodyGravitation_multiGPU), dim3(300), dim3(256), 256*sizeof(float4), 0, 
             dptrForce[i],
             dptrPosMass[i],
             softeningSquared,
             i*bodiesPerGPU,
             bodiesPerGPU,
             N );
-        CUDART_CHECK( cudaMemcpyAsync(
+        HIP_CHECK( hipMemcpyAsync(
             g_hostAOS_Force+4*bodiesPerGPU*i,
             dptrForce[i],
             4*bodiesPerGPU*sizeof(float),
-            cudaMemcpyDeviceToHost ) );
+            hipMemcpyDeviceToHost ) );
     }
 
-    CUDART_CHECK( cudaSetDevice( 0 ) );
-    CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
+    HIP_CHECK( hipSetDevice( 0 ) );
+    HIP_CHECK( hipEventRecord( evStop, NULL ) );
 
     // Synchronize with each GPU in turn.
     for ( size_t i = 0; i < g_numGPUs; i++ ) {
-        CUDART_CHECK( cudaSetDevice( i ) );
-        CUDART_CHECK( cudaDeviceSynchronize() );
+        HIP_CHECK( hipSetDevice( i ) );
+        HIP_CHECK( hipDeviceSynchronize() );
     }
 
-    CUDART_CHECK( cudaEventElapsedTime( &ms, evStart, evStop ) );
+    HIP_CHECK( hipEventElapsedTime( &ms, evStart, evStop ) );
 Error:
     for ( size_t i = 0; i < g_numGPUs; i++ ) {
-        cudaFree( dptrPosMass[i] );
-        cudaFree( dptrForce[i] );
+        hipFree( dptrPosMass[i] );
+        hipFree( dptrForce[i] );
     }
-    cudaSetDevice( oldDevice );
+    hipSetDevice( oldDevice );
     return ms;
 }
 

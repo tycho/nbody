@@ -33,6 +33,7 @@
  *
  */
 
+#include "hip/hip_runtime.h"
 #include "chError.h"
 #include "nbody_util.h"
 #include "nbody_GPU_Shared.h"
@@ -45,7 +46,7 @@ ComputeNBodyGravitation_Shared(
     float softeningSquared,
     size_t N )
 {
-    extern __shared__ float4 shPosMass[];
+    HIP_DYNAMIC_SHARED( float4, shPosMass)
     for ( size_t i = blockIdx.x*blockDim.x + threadIdx.x;
                  i < N;
                  i += blockDim.x*gridDim.x )
@@ -82,23 +83,23 @@ ComputeNBodyGravitation_Shared(
 
 DEFINE_AOS(ComputeGravitation_GPU_Shared)
 {
-    cudaError_t status;
-    cudaEvent_t evStart = 0, evStop = 0;
+    hipError_t status;
+    hipEvent_t evStart = 0, evStop = 0;
     float ms = 0.0;
-    CUDART_CHECK( cudaEventCreate( &evStart ) );
-    CUDART_CHECK( cudaEventCreate( &evStop ) );
-    CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
-    ComputeNBodyGravitation_Shared<<<300,256, 256*sizeof(float4)>>>(
+    HIP_CHECK( hipEventCreate( &evStart ) );
+    HIP_CHECK( hipEventCreate( &evStop ) );
+    HIP_CHECK( hipEventRecord( evStart, NULL ) );
+    hipLaunchKernelGGL((ComputeNBodyGravitation_Shared), dim3(300), dim3(256), 256*sizeof(float4), 0,
         force,
         posMass,
         softeningSquared,
         N );
-    CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
-    CUDART_CHECK( cudaDeviceSynchronize() );
-    CUDART_CHECK( cudaEventElapsedTime( &ms, evStart, evStop ) );
+    HIP_CHECK( hipEventRecord( evStop, NULL ) );
+    HIP_CHECK( hipDeviceSynchronize() );
+    HIP_CHECK( hipEventElapsedTime( &ms, evStart, evStop ) );
 Error:
-    CUDART_CHECK( cudaEventDestroy( evStop ) );
-    CUDART_CHECK( cudaEventDestroy( evStart ) );
+    HIP_CHECK( hipEventDestroy( evStop ) );
+    HIP_CHECK( hipEventDestroy( evStart ) );
     return ms;
 }
 

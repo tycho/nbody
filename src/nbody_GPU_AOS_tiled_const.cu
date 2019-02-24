@@ -206,7 +206,7 @@ ComputeNBodyGravitation_GPU_tiled_const(
 }
 
 template<int nTile>
-cudaError_t
+hipError_t
 ComputeGravitation_GPU_AOS_tiled_const(
     float *force,
     float *posMass,
@@ -214,36 +214,36 @@ ComputeGravitation_GPU_AOS_tiled_const(
     size_t N
 )
 {
-    cudaError_t status;
+    hipError_t status;
     dim3 blocks( N/nTile, N/32, 1 );
 
-    CUDART_CHECK( cudaMemset( force, 0, 4*N*sizeof(float) ) );
-    ComputeNBodyGravitation_GPU_tiled_const<nTile><<<blocks,nTile>>>( force, posMass, N, softeningSquared );
-    CUDART_CHECK( cudaDeviceSynchronize() );
+    HIP_CHECK( hipMemset( force, 0, 4*N*sizeof(float) ) );
+    hipLaunchKernelGGL((ComputeNBodyGravitation_GPU_tiled_const<nTile>), dim3(blocks), dim3(nTile), 0, 0,  force, posMass, N, softeningSquared );
+    HIP_CHECK( hipDeviceSynchronize() );
 Error:
     return status;
 }
 
 DEFINE_AOS(ComputeGravitation_GPU_AOS_tiled_const)
 {
-    cudaError_t status;
-    cudaEvent_t evStart = 0, evStop = 0;
+    hipError_t status;
+    hipEvent_t evStart = 0, evStop = 0;
     float ms = 0.0;
-    CUDART_CHECK( cudaDeviceSetCacheConfig( cudaFuncCachePreferShared ) );
-    CUDART_CHECK( cudaEventCreate( &evStart ) );
-    CUDART_CHECK( cudaEventCreate( &evStop ) );
-    CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
-    CUDART_CHECK( ComputeGravitation_GPU_AOS_tiled_const<32>(
+    HIP_CHECK( hipDeviceSetCacheConfig( hipFuncCachePreferShared ) );
+    HIP_CHECK( hipEventCreate( &evStart ) );
+    HIP_CHECK( hipEventCreate( &evStop ) );
+    HIP_CHECK( hipEventRecord( evStart, NULL ) );
+    HIP_CHECK( ComputeGravitation_GPU_AOS_tiled_const<32>(
         force,
         posMass,
         softeningSquared,
         N ) );
-    CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
-    CUDART_CHECK( cudaDeviceSynchronize() );
-    CUDART_CHECK( cudaEventElapsedTime( &ms, evStart, evStop ) );
+    HIP_CHECK( hipEventRecord( evStop, NULL ) );
+    HIP_CHECK( hipDeviceSynchronize() );
+    HIP_CHECK( hipEventElapsedTime( &ms, evStart, evStop ) );
 Error:
-    CUDART_CHECK( cudaEventDestroy( evStop ) );
-    CUDART_CHECK( cudaEventDestroy( evStart ) );
+    HIP_CHECK( hipEventDestroy( evStop ) );
+    HIP_CHECK( hipEventDestroy( evStart ) );
     return ms;
 }
 

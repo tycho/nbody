@@ -38,7 +38,7 @@
 #include "nbody_GPU_Shuffle.h"
 #include "bodybodyInteraction.cuh"
 
-#include <cuda_runtime_api.h>
+#include <hip/hip_runtime_api.h>
 
 __global__ void
 ComputeNBodyGravitation_Shuffle(
@@ -89,19 +89,19 @@ ComputeNBodyGravitation_Shuffle(
 
 DEFINE_AOS(ComputeGravitation_GPU_Shuffle)
 {
-    cudaError_t status;
-    cudaEvent_t evStart = 0, evStop = 0;
+    hipError_t status;
+    hipEvent_t evStart = 0, evStop = 0;
     float ms = 0.0f;
-    CUDART_CHECK( cudaEventCreate( &evStart ) );
-    CUDART_CHECK( cudaEventCreate( &evStop ) );
-    CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
-    ComputeNBodyGravitation_Shuffle <<<300,256>>>( force, posMass, softeningSquared, N );
-    CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
-    CUDART_CHECK( cudaDeviceSynchronize() );
-    CUDART_CHECK( cudaEventElapsedTime( &ms, evStart, evStop ) );
+    HIP_CHECK( hipEventCreate( &evStart ) );
+    HIP_CHECK( hipEventCreate( &evStop ) );
+    HIP_CHECK( hipEventRecord( evStart, NULL ) );
+    hipLaunchKernelGGL((ComputeNBodyGravitation_Shuffle), dim3(300), dim3(256), 0, 0,  force, posMass, softeningSquared, N );
+    HIP_CHECK( hipEventRecord( evStop, NULL ) );
+    HIP_CHECK( hipDeviceSynchronize() );
+    HIP_CHECK( hipEventElapsedTime( &ms, evStart, evStop ) );
 Error:
-    CUDART_CHECK( cudaEventDestroy( evStop ) );
-    CUDART_CHECK( cudaEventDestroy( evStart ) );
+    HIP_CHECK( hipEventDestroy( evStop ) );
+    HIP_CHECK( hipEventDestroy( evStart ) );
     return ms;
 }
 

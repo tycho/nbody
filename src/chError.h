@@ -2,9 +2,8 @@
  *
  * chError.h
  *
- * Error handling for CUDA:
- *     CUDA_CHECK() and CUDART_CHECK() macros implement
- *         goto-based error handling, and
+ * Error handling for HIP:
+ *     HIP_CHECK() macros implement goto-based error handling, and
  *     chGetErrorString() maps a driver API error to a string.
  *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
@@ -47,34 +46,25 @@
 #ifdef USE_CUDA
 
 static inline const char *
-chGetErrorString(cudaError_t status)
+chGetErrorString(hipError_t status)
 {
-    return cudaGetErrorString(status);
+    return hipGetErrorString(status);
 }
 
 //
-// To use these macros, a local cudaError_t or CUresult called 'status'
+// To use these macros, a local hipError_t or CUresult called 'status'
 // and a label Error: must be defined.  In the debug build, the code will
 // emit an error to stderr.  In both debug and retail builds, the code will
 // goto Error if there is an error.
 //
 
 #ifdef DEBUG
-#define CUDART_CHECK( fn ) do { \
-        (status) =  (fn); \
-        if ( cudaSuccess != (status) ) { \
-            fprintf( stderr, "CUDA Runtime Failure (line %d of file %s):\n\t" \
-                "%s returned 0x%x (%s)\n", \
-                __LINE__, __FILE__, #fn, status, chGetErrorString(status) ); \
-            goto Error; \
-        } \
-    } while (0);
 
-#define CUDA_CHECK( fn ) do { \
+#define HIP_CHECK( fn ) do { \
         (status) =  (fn); \
-        if ( CUDA_SUCCESS != (status) ) { \
-            fprintf( stderr, "CUDA Runtime Failure (line %d of file %s):\n\t%s "\
-                "returned 0x%x (%s)\n", \
+        if ( hipSuccess != (status) ) { \
+            fprintf( stderr, "HIP Runtime Failure (line %d of file %s):\n\t" \
+                "%s returned 0x%x (%s)\n", \
                 __LINE__, __FILE__, #fn, status, chGetErrorString(status) ); \
             goto Error; \
         } \
@@ -82,16 +72,9 @@ chGetErrorString(cudaError_t status)
 
 #else
 
-#define CUDART_CHECK( fn ) do { \
+#define HIP_CHECK( fn ) do { \
     status = (fn); \
-    if ( cudaSuccess != (status) ) { \
-            goto Error; \
-        } \
-    } while (0);
-
-#define CUDA_CHECK( fn ) do { \
-        (status) =  (fn); \
-        if ( CUDA_SUCCESS != (status) ) { \
+    if ( hipSuccess != (status) ) { \
             goto Error; \
         } \
     } while (0);
@@ -101,26 +84,19 @@ chGetErrorString(cudaError_t status)
 #else
 
 static inline const char *
-chGetErrorString( cudaError_t status )
+chGetErrorString( hipError_t status )
 {
-    return "CUDA support is not built in.";
+    return "HIP support is not built in.";
 }
 
-static inline const char* cudaGetErrorString( cudaError_t error )
+static inline const char* hipGetErrorString( hipError_t error )
 {
-    return "CUDA support is not built in.";
+    return "HIP support is not built in.";
 }
 
-#define CUDART_CHECK( fn ) do { \
+#define HIP_CHECK( fn ) do { \
     status = (fn); \
-    if ( cudaSuccess != (status) ) { \
-            goto Error; \
-        } \
-    } while (0);
-
-#define CUDA_CHECK( fn ) do { \
-        (status) =  (fn); \
-        if ( CUDA_SUCCESS != (status) ) { \
+    if ( hipSuccess != (status) ) { \
             goto Error; \
         } \
     } while (0);

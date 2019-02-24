@@ -171,7 +171,7 @@ ComputeNBodyGravitation_GPU_SOA_tiled(
 }
 
 template<size_t nTile>
-cudaError_t
+hipError_t
 ComputeGravitation_GPU_SOA_tiled(
     float *forces[3],
     float *posMass,
@@ -179,14 +179,14 @@ ComputeGravitation_GPU_SOA_tiled(
     size_t N
 )
 {
-    cudaError_t status;
+    hipError_t status;
     dim3 blocks( N/nTile, N/32, 1 );
 
-    CUDART_CHECK( cudaMemset( forces[0], 0, N*sizeof(float) ) );
-    CUDART_CHECK( cudaMemset( forces[1], 0, N*sizeof(float) ) );
-    CUDART_CHECK( cudaMemset( forces[2], 0, N*sizeof(float) ) );
-    ComputeNBodyGravitation_GPU_SOA_tiled<nTile><<<blocks,nTile>>>( forces[0], forces[1], forces[2], posMass, N, softeningSquared );
-    CUDART_CHECK( cudaDeviceSynchronize() );
+    HIP_CHECK( hipMemset( forces[0], 0, N*sizeof(float) ) );
+    HIP_CHECK( hipMemset( forces[1], 0, N*sizeof(float) ) );
+    HIP_CHECK( hipMemset( forces[2], 0, N*sizeof(float) ) );
+    hipLaunchKernelGGL((ComputeNBodyGravitation_GPU_SOA_tiled<nTile>), dim3(blocks), dim3(nTile), 0, 0,  forces[0], forces[1], forces[2], posMass, N, softeningSquared );
+    HIP_CHECK( hipDeviceSynchronize() );
 Error:
     return status;
 }
@@ -218,37 +218,36 @@ SOAtoAOS_GPU_3( float *out, const float *inX, const float *inY, const float *inZ
 
 DEFINE_AOS(ComputeGravitation_GPU_SOA_tiled)
 {
-    cudaError_t status;
-    cudaEvent_t evStart = 0, evStop = 0;
+    hipError_t status;
+    hipEvent_t evStart = 0, evStop = 0;
     float ms = 0.0;
 
     float *forces[3] = {0};
-    CUDART_CHECK( cudaMalloc( &forces[0], N*sizeof(float) ) );
-    CUDART_CHECK( cudaMalloc( &forces[1], N*sizeof(float) ) );
-    CUDART_CHECK( cudaMalloc( &forces[2], N*sizeof(float) ) );
+    HIP_CHECK( hipMalloc( &forces[0], N*sizeof(float) ) );
+    HIP_CHECK( hipMalloc( &forces[1], N*sizeof(float) ) );
+    HIP_CHECK( hipMalloc( &forces[2], N*sizeof(float) ) );
 
-    CUDART_CHECK( cudaEventCreate( &evStart ) );
-    CUDART_CHECK( cudaEventCreate( &evStop ) );
+    HIP_CHECK( hipEventCreate( &evStart ) );
+    HIP_CHECK( hipEventCreate( &evStop ) );
 
-    AOStoSOA_GPU_3<<<300,256>>>( forces[0], forces[1], forces[2], force, N );
+    hipLaunchKernelGGL((AOStoSOA_GPU_3), dim3(300), dim3(256), 0, 0,  forces[0], forces[1], forces[2], force, N );
 
-    CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
-    CUDART_CHECK( ComputeGravitation_GPU_SOA_tiled<128>(
+    HIP_CHECK( hipEventRecord( evStart, NULL ) );
+    HIP_CHECK( ComputeGravitation_GPU_SOA_tiled<128>(
         forces,
         posMass,
         softeningSquared,
         N ) );
-    CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
+    HIP_CHECK( hipEventRecord( evStop, NULL ) );
 
-    CUDART_CHECK( cudaDeviceSynchronize() );
-    SOAtoAOS_GPU_3<<<300,256>>>( force, forces[0], forces[1], forces[2], N );
+    HIP_CHECK( hipDeviceSynchronize() );
+    hipLaunchKernelGGL((SOAtoAOS_GPU_3), dim3(300), dim3(256), 0, 0,  force, forces[0], forces[1], forces[2], N );
 
-
-    CUDART_CHECK( cudaDeviceSynchronize() );
-    CUDART_CHECK( cudaEventElapsedTime( &ms, evStart, evStop ) );
+    HIP_CHECK( hipDeviceSynchronize() );
+    HIP_CHECK( hipEventElapsedTime( &ms, evStart, evStop ) );
 Error:
-    CUDART_CHECK( cudaEventDestroy( evStop ) );
-    CUDART_CHECK( cudaEventDestroy( evStart ) );
+    HIP_CHECK( hipEventDestroy( evStop ) );
+    HIP_CHECK( hipEventDestroy( evStart ) );
     return ms;
 }
 
