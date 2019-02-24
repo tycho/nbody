@@ -6,6 +6,13 @@
 #
 set -ex
 
+HAVE_MESON=0
+if [[ "$NOMESON" -ne 1 ]]; then
+	if type -P meson &>/dev/null; then
+		HAVE_MESON=1
+	fi
+fi
+
 make distclean
 make CC=${CC} CXX=${CXX} V=1
 ./nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
@@ -20,7 +27,7 @@ if type -P nvcc &>/dev/null; then
 	./nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
 fi
 
-if type -P meson &>/dev/null; then
+if [[ $HAVE_MESON -eq 1 ]]; then
 	rm -rf build
 	mkdir build
 	meson . build

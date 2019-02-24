@@ -14,9 +14,9 @@ env:
   - IMAGE=ubuntu IMAGE_TAG=disco
   - IMAGE=fedora IMAGE_TAG=latest
   - IMAGE=fedora IMAGE_TAG=rawhide
-  - IMAGE=nvidia/cuda IMAGE_TAG=7.5-devel
-  - IMAGE=nvidia/cuda IMAGE_TAG=8.0-devel
-  - IMAGE=nvidia/cuda IMAGE_TAG=9.2-devel
+  - IMAGE=nvidia/cuda IMAGE_TAG=7.5-devel NOMESON=1
+  - IMAGE=nvidia/cuda IMAGE_TAG=8.0-devel NOMESON=1
+  - IMAGE=nvidia/cuda IMAGE_TAG=9.2-devel NOMESON=1
   - IMAGE=nvidia/cuda IMAGE_TAG=10.0-devel
 
 before_install:
@@ -25,10 +25,10 @@ before_install:
   - docker ps
 
 install:
-  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/install-${IMAGE//\//-}.sh
-  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/install-post.sh
+  - docker exec -e NOMESON=$NOMESON -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/install-${IMAGE//\//-}.sh
+  - docker exec -e NOMESON=$NOMESON -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/install-post.sh
 
 script:
-  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/script.sh
+  - docker exec -e NOMESON=$NOMESON -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/script.sh
 
 # vim: set ts=2 sts=2 sw=2 et:
