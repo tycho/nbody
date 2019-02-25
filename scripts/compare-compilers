@@ -38,7 +38,7 @@ if [[ $BUILT_SOMETHING ]]; then
 fi
 echo
 
-make --no-print-directory info-cpu info-os
+make --no-print-directory info-cpu info-gpu info-os
 
 for COMPILER in ${COMPILERS[@]}; do
 	NBODY=nbody.${COMPILER##*/}
