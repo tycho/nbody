@@ -231,6 +231,7 @@ endif
 $(BIN): $(OBJECTS) $(REBUILD_SENTINELS)
 	$(QUIET_LINK)$(LINK) -o $@ $(OBJECTS) $(LDFLAGS) $(CFLAGS)
 
+ifeq (,$(findstring info,$(MAKECMDGOALS)))
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
 
 TRACK_CCONLY = $(subst ','\'',$(CC) $(CXX) $(NVCC) $(LINK))
@@ -252,4 +253,5 @@ TRACK_CFLAGS = $(subst ','\'',$(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(NVCCFLAGS) $(L
 
 .PHONY: .force-cflags
 
+endif
 endif
