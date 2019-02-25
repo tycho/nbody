@@ -78,19 +78,19 @@ export AR
 ifneq ($(findstring icc,$(CC)),)
 CFOPTIMIZE ?= -Ofast -xHOST -no-prec-sqrt
 else
-CFWARN     := \
-	-Wall \
-	-Wdeclaration-after-statement \
-	$(call cc-option,$(CC),-Werror=implicit,) \
-	$(call cc-option,$(CC),-Werror=undef,) \
-	-Wmissing-declarations \
-	-Wmissing-prototypes \
-	-Wno-declaration-after-statement \
-	-Wno-long-long \
-	$(call cc-option,$(CC),-Wno-overlength-strings,) \
-	-Wno-unknown-pragmas \
-	-Wold-style-definition \
-	-Wstrict-prototypes
+CFWARN     := -Wall \
+              -Wdeclaration-after-statement \
+              $(call cc-option,$(CC),-Werror=implicit,) \
+              $(call cc-option,$(CC),-Werror=undef,) \
+              -Wmissing-declarations \
+              -Wmissing-prototypes \
+              -Wno-declaration-after-statement \
+              -Wno-long-long \
+              $(call cc-option,$(CC),-Wno-overlength-strings,) \
+              -Wno-unknown-pragmas \
+              -Wold-style-definition \
+              -Wstrict-prototypes
+
 ifndef DEBUG
 
 # Good optimization flags for x86/x86_64
@@ -112,10 +112,11 @@ export CFOPTIMIZE
 
 CPPFLAGS   += -D_GNU_SOURCE
 
-CSTD       := $(call cc-option,$(CC),-std=gnu11,-std=gnu99) \
-              $(call cc-option,$(CC),-fno-strict-aliasing,)
+CSTD       := $(call cc-option,$(CC),-std=gnu11,-std=gnu99)
 
-CFLAGS     += $(CFOPTIMIZE) $(CSTD) $(CPPFLAGS) $(CFWARN)
+CFEXTRA    := -fno-strict-aliasing
+
+CFLAGS     += $(CFOPTIMIZE) $(CSTD) $(CFEXTRA) $(CPPFLAGS) $(CFWARN)
 
 ifeq ($(uname_S),Darwin)
 ifneq ($(findstring gcc,$(shell $(CC) -v 2>&1)),)
