@@ -21,12 +21,12 @@ and [Stack Overflow](https://stackoverflow.com/questions/40163722/is-my-understa
 
 There's a key tradeoff between the two: compilers have a much less difficult
 time auto-vectorizing the SOA implementations, but the AOS implementations are
-easier to read and write. It's not uncommon to see AOS algorithms applied in
-real-world applications (consider, for example, how most object-oriented
-programs are constructed).
+easier for programmers to read and write. It's not uncommon to see AOS
+algorithms applied in real-world applications (consider, for example, how most
+object-oriented programs are constructed).
 
-Most of the code is plain C, with some added pragmas to provide compilers with
-appropriate hints to vectorize/parallelize the code properly.
+Most of the code in this project is plain C, with some added pragmas to provide
+compilers with appropriate hints to vectorize/parallelize the code properly.
 
 
 Building
