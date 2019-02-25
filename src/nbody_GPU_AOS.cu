@@ -1,6 +1,6 @@
 /*
  *
- * nbody_GPU_AOS.h
+ * nbody_GPU_AOS.cu
  *
  * CUDA implementation of the O(N^2) N-body calculation.
  *
@@ -32,6 +32,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "chError.h"
+#include "nbody_util.h"
+#include "nbody_GPU_AOS.h"
+#include "bodybodyInteraction.cuh"
 
 template<typename T>
 __global__ void
@@ -68,13 +73,7 @@ ComputeNBodyGravitation_GPU_AOS(
     }
 }
 
-float
-ComputeGravitation_GPU_AOS(
-    float *force,
-    float *posMass,
-    float softeningSquared,
-    size_t N
-)
+DEFINE_AOS(ComputeGravitation_GPU_AOS)
 {
     cudaError_t status;
     cudaEvent_t evStart = 0, evStop = 0;
