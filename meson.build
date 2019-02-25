@@ -58,6 +58,7 @@ nvcc_flags = [
 if nvcc_name == 'clang++'
     nvcc_flags += [
         '-Drestrict=__restrict',
+        '-fcuda-flush-denormals-to-zero',
         '--cuda-gpu-arch=sm_52',
         '--cuda-gpu-arch=sm_61',
         '--cuda-gpu-arch=sm_70',
@@ -65,6 +66,7 @@ if nvcc_name == 'clang++'
 elif nvcc_name == 'nvcc'
     nvcc_flags += [
         '-Drestrict=',
+        '--ftz', 'true',
         '-gencode=arch=compute_52,code="sm_52,compute_52"',
         '-gencode=arch=compute_61,code="sm_61,compute_61"',
         '-gencode=arch=compute_70,code="sm_70,compute_70"'
