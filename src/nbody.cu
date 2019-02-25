@@ -67,9 +67,9 @@
 #ifdef USE_CUDA
 #include "nbody_GPU_AOS.h"
 #include "nbody_GPU_AOS_const.h"
-//#include "nbody_GPU_AOS_tiled.cuh"
-//#include "nbody_GPU_AOS_tiled_const.cuh"
-//#include "nbody_GPU_SOA_tiled.cuh"
+//#include "nbody_GPU_AOS_tiled.h"
+//#include "nbody_GPU_AOS_tiled_const.h"
+//#include "nbody_GPU_SOA_tiled.h"
 #include "nbody_GPU_Shared.h"
 #include "nbody_GPU_Shuffle.h"
 //#include "nbody_GPU_Atomic.cuh"
