@@ -5,3 +5,6 @@
 /nbody
 /nbody.exe
 /.cc
+
+# From clang -fsave-optimization-record
+/*.opt.yaml
