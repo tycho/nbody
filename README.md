@@ -15,8 +15,9 @@ About
 
 There are multiple different algorithms included, with varying levels of
 performance. They are divided into two basic designs: SOA (Structure-of-Arrays)
-and AOS (Array-of-Structures). An excellent explanation of the difference
-between the two can be found [here](http://divergentcoder.com/Coding/2011/02/22/aos-soa-explorations-part-1.html).
+and AOS (Array-of-Structures). You can read more about the differences between
+the two approaches [on Wikipedia](https://en.wikipedia.org/wiki/AOS_and_SOA)
+and [Stack Overflow](https://stackoverflow.com/questions/40163722/is-my-understanding-of-aos-vs-soa-advantages-disadvantages-correct).
 
 There's a key tradeoff between the two: compilers have a much less difficult
 time auto-vectorizing the SOA implementations, but the AOS implementations are
