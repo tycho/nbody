@@ -29,10 +29,12 @@ ifneq ($(findstring clang,$(CC)),)
 endif
 
 ifndef NO_OPENMP
+ifeq (,$(findstring info,$(MAKECMDGOALS)))
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
 openmp.mk: .cc
 	$(QUIET)./openmp-detect.sh "$(CC) $(CLANG_GCC_HEADER_FLAGS)"
 -include openmp.mk
+endif
 endif
 
 ifneq ($(OPENMP_SUPPORTED),)
