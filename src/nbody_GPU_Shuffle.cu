@@ -1,6 +1,6 @@
 /*
  *
- * nbody_GPU_Shuffle.h
+ * nbody_GPU_Shuffle.cu
  *
  * Warp shuffle-based implementation of the O(N^2) N-body calculation.
  *
@@ -32,6 +32,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "chError.h"
+#include "nbody_util.h"
+#include "nbody_GPU_Shuffle.h"
+#include "bodybodyInteraction.cuh"
 
 #include <cuda_runtime_api.h>
 
@@ -86,8 +91,7 @@ ComputeNBodyGravitation_Shuffle(
     }
 }
 
-float
-ComputeGravitation_GPU_Shuffle( float *force, float *posMass, float softeningSquared, size_t N )
+DEFINE_AOS(ComputeGravitation_GPU_Shuffle)
 {
     cudaError_t status;
     cudaEvent_t evStart = 0, evStop = 0;
