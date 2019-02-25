@@ -176,7 +176,7 @@ REBUILD_SENTINELS := .cflags .cc
 VALID_DEPS := $(shell ls $(DEPS) 2>/dev/null)
 -include $(VALID_DEPS)
 
-info: info-flags info-compiler info-os info-cpu
+info: info-flags info-compiler info-os info-cpu info-gpu
 
 info-flags:
 	$(QUIET)echo "CC        = $(CC)"
@@ -202,6 +202,11 @@ info-os:
 info-cpu:
 	$(QUIET)echo "CPU information:"
 	$(QUIET)lscpu | fmt -t -w 72 | sed 's/^/    /'
+	$(QUIET)echo
+
+info-gpu:
+	$(QUIET)echo "GPU information:"
+	$(QUIET)nvidia-smi
 	$(QUIET)echo
 
 clean:
