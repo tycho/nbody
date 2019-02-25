@@ -34,7 +34,8 @@
  */
 
 #include "chError.h"
-
+#include "nbody_util.h"
+#include "nbody_GPU_Shared.h"
 #include "bodybodyInteraction.cuh"
 
 __global__ void
@@ -79,12 +80,7 @@ ComputeNBodyGravitation_Shared(
     }
 }
 
-float
-ComputeGravitation_GPU_Shared(
-    float *force,
-    float *posMass,
-    float softeningSquared,
-    size_t N )
+DEFINE_AOS(ComputeGravitation_GPU_Shared)
 {
     cudaError_t status;
     cudaEvent_t evStart = 0, evStop = 0;

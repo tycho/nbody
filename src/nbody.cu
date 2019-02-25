@@ -70,6 +70,7 @@
 //#include "nbody_GPU_AOS_tiled.cuh"
 //#include "nbody_GPU_AOS_tiled_const.cuh"
 //#include "nbody_GPU_SOA_tiled.cuh"
+#include "nbody_GPU_Shared.h"
 #include "nbody_GPU_Shuffle.h"
 //#include "nbody_GPU_Atomic.cuh"
 #endif

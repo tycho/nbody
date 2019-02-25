@@ -161,7 +161,7 @@ SOURCES += \
 	nbody_GPU_AOS_const.cu \
 	nbody_GPU_AOS_tiled.cu \
 	nbody_GPU_AOS_tiled_const.cu \
-	nbody_GPU_shared.cu \
+	nbody_GPU_Shared.cu \
 	nbody_GPU_Shuffle.cu \
 	nbody_multiGPU.cu
 endif

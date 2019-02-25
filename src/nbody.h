@@ -51,7 +51,6 @@ extern float *g_hostSOA_InvMass;
 extern int g_numCPUCores;
 extern int g_numGPUs;
 
-extern float ComputeGravitation_GPU_Shared( float *force, float *posMass, float softeningSquared, size_t N );
 extern float ComputeGravitation_multiGPU  ( float *force, float *posMass, float softeningSquared, size_t N );
 
 typedef enum {
