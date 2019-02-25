@@ -179,10 +179,13 @@ VALID_DEPS := $(shell ls $(DEPS) 2>/dev/null)
 info: info-flags info-compiler info-os info-cpu
 
 info-flags:
-	$(QUIET)echo "CC      = $(CC)"
-	$(QUIET)echo "LINK    = $(LINK)"
-	$(QUIET)echo "CFLAGS  = $(CFLAGS)" | fmt -t -w 76
-	$(QUIET)echo "LDFLAGS = $(LDFLAGS)" | fmt -t -w 76
+	$(QUIET)echo "CC        = $(CC)"
+	$(QUIET)echo "NVCC      = $(NVCC)"
+	$(QUIET)echo "CUDA      = $(CUDA)"
+	$(QUIET)echo "LINK      = $(LINK)"
+	$(QUIET)echo "CFLAGS    = $(CFLAGS)" | fmt -t -w 76
+	$(QUIET)echo "NVCCFLAGS = $(NVCCFLAGS)" | fmt -t -w 76
+	$(QUIET)echo "LDFLAGS   = $(LDFLAGS)" | fmt -t -w 76
 	$(QUIET)echo
 
 info-compiler:
