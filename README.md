@@ -95,12 +95,13 @@ Here's an example run of the included `compare-compilers` script in the
 the same ones you can put on the `nbody` command-line.
 
 ```
-$ scripts/compare-compilers --bodies 64 --no-crosscheck --iterations 1 --cycle-after 3
+$ scripts/compare-compilers --bodies 128 --no-crosscheck --iterations 1 --cycle-after 3
 
 CPU information:
     Architecture:        x86_64
     CPU op-mode(s):      32-bit, 64-bit
     Byte Order:          Little Endian
+    Address sizes:       46 bits physical, 48 bits virtual
     CPU(s):              32
     On-line CPU(s) list: 0-31
     Thread(s) per core:  2
@@ -112,10 +113,10 @@ CPU information:
     Model:               63
     Model name:          Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz
     Stepping:            2
-    CPU MHz:             1418.351
+    CPU MHz:             1200.062
     CPU max MHz:         2401.0000
     CPU min MHz:         1200.0000
-    BogoMIPS:            4800.03
+    BogoMIPS:            4800.05
     Virtualization:      VT-x
     L1d cache:           32K
     L1i cache:           32K
@@ -130,116 +131,183 @@ CPU information:
        dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm
        pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes
        xsave avx f16c rdrand lahf_lm abm cpuid_fault epb invpcid_single
-       pti intel_ppin tpr_shadow vnmi flexpriority ept vpid fsgsbase
-       tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm xsaveopt cqm_llc
-       cqm_occup_llc dtherm ida arat pln pts
+       pti intel_ppin ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority
+       ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid
+       cqm xsaveopt cqm_llc cqm_occup_llc dtherm ida arat pln pts flush_l1d
 
-OS version: Linux 4.15.7-1-hsw x86_64
+OS version: Linux 4.20.10-2-hsw x86_64
 
 ============================================
 
-CC      = gcc
-LINK    = gcc
-CFLAGS  = -O3 -march=native -ffast-math -std=gnu11 -fno-strict-aliasing
-   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD -DUSE_LIBC11
-   -I../subprojects/c11/include -I../subprojects/time/include
+CC        = gcc
+NVCC      = nvcc
+CUDA      = 1
+LINK      = gcc
+CFLAGS    = -O3 -march=native -ffast-math -std=gnu11 -fno-strict-aliasing
+   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD -DUSE_CUDA
+   -DUSE_LIBC11 -I../subprojects/c11/include -I../subprojects/time/include
    -Wall -Wdeclaration-after-statement -Werror=implicit
    -Werror=undef -Wmissing-declarations -Wmissing-prototypes
    -Wno-declaration-after-statement -Wno-long-long -Wno-overlength-strings
    -Wno-unknown-pragmas -Wold-style-definition -Wstrict-prototypes -pthread
    -fPIC -fopenmp
-LDFLAGS = -pthread -fPIC -lomp ../subprojects/c11/libc11.a
+NVCCFLAGS = -O3 -Drestrict= --ftz true -Xcompiler -fPIC
+   -gencode=arch=compute_50,code="sm_50,compute_50"
+   -gencode=arch=compute_52,code="sm_52,compute_52"
+   -gencode=arch=compute_61,code="sm_61,compute_61"
+   -gencode=arch=compute_70,code="sm_70,compute_70"
+   -gencode=arch=compute_75,code="sm_75,compute_75"
+LDFLAGS   = -pthread -fPIC -lomp -L/opt/cuda/bin/../lib
+   -L/opt/cuda/bin/../lib64 -lcudart ../subprojects/c11/libc11.a
    ../subprojects/time/libtime.a -lm -lrt
 
-Compiler version: gcc (GCC) 7.3.1 20180307
+Compiler version: gcc (GCC) 8.3.1 20190223
 
-Binary size: 50568 bytes
+Binary size: 1809272 bytes
 
-Running simulation with 65536 particles, 32 CPU threads
-      CPU_SOA:   212.08 ms =   20.251x10^9 interactions/s (   405.03 GFLOPS)
-      CPU_SOA:   211.41 ms =   20.316x10^9 interactions/s (   406.32 GFLOPS)
-      CPU_SOA:   212.42 ms =   20.219x10^9 interactions/s (   404.38 GFLOPS)
-CPU_SOA_tiled:   214.81 ms =   19.994x10^9 interactions/s (   399.88 GFLOPS)
-CPU_SOA_tiled:   218.04 ms =   19.698x10^9 interactions/s (   393.96 GFLOPS)
-CPU_SOA_tiled:   223.74 ms =   19.196x10^9 interactions/s (   383.92 GFLOPS)
-          AVX:   204.43 ms =   21.009x10^9 interactions/s (   420.18 GFLOPS)
-          AVX:   204.25 ms =   21.028x10^9 interactions/s (   420.57 GFLOPS)
-          AVX:   204.19 ms =   21.034x10^9 interactions/s (   420.68 GFLOPS)
-      CPU_AOS:   619.51 ms =    6.933x10^9 interactions/s (   138.66 GFLOPS)
-      CPU_AOS:   619.09 ms =    6.938x10^9 interactions/s (   138.75 GFLOPS)
-      CPU_AOS:   617.79 ms =    6.952x10^9 interactions/s (   139.04 GFLOPS)
-CPU_AOS_tiled:   624.33 ms =    6.879x10^9 interactions/s (   137.59 GFLOPS)
-CPU_AOS_tiled:   616.61 ms =    6.966x10^9 interactions/s (   139.31 GFLOPS)
-CPU_AOS_tiled:   616.02 ms =    6.972x10^9 interactions/s (   139.44 GFLOPS)
+Running simulation with 131072 particles, 32 CPU threads, up to 1 GPUs
+      CPU_SOA:   861.46 ms =   19.943x10^9 interactions/s (   398.85 GFLOPS)
+      CPU_SOA:   862.15 ms =   19.927x10^9 interactions/s (   398.54 GFLOPS)
+      CPU_SOA:   860.67 ms =   19.961x10^9 interactions/s (   399.22 GFLOPS)
+CPU_SOA_tiled:   850.96 ms =   20.189x10^9 interactions/s (   403.78 GFLOPS)
+CPU_SOA_tiled:   851.41 ms =   20.178x10^9 interactions/s (   403.56 GFLOPS)
+CPU_SOA_tiled:   851.66 ms =   20.172x10^9 interactions/s (   403.44 GFLOPS)
+          AVX:   819.19 ms =   20.972x10^9 interactions/s (   419.43 GFLOPS)
+          AVX:   817.93 ms =   21.004x10^9 interactions/s (   420.08 GFLOPS)
+          AVX:   818.85 ms =   20.981x10^9 interactions/s (   419.61 GFLOPS)
+      CPU_AOS:  2471.56 ms =    6.951x10^9 interactions/s (   139.02 GFLOPS)
+      CPU_AOS:  2471.15 ms =    6.952x10^9 interactions/s (   139.04 GFLOPS)
+      CPU_AOS:  2472.85 ms =    6.947x10^9 interactions/s (   138.95 GFLOPS)
+CPU_AOS_tiled:  2492.77 ms =    6.892x10^9 interactions/s (   137.84 GFLOPS)
+CPU_AOS_tiled:  2493.42 ms =    6.890x10^9 interactions/s (   137.80 GFLOPS)
+CPU_AOS_tiled:  2493.97 ms =    6.889x10^9 interactions/s (   137.77 GFLOPS)
+      GPU_AOS:   266.27 ms =   64.521x10^9 interactions/s (  1290.43 GFLOPS)
+      GPU_AOS:   231.43 ms =   74.234x10^9 interactions/s (  1484.68 GFLOPS)
+      GPU_AOS:   220.75 ms =   77.825x10^9 interactions/s (  1556.50 GFLOPS)
+   GPU_Shared:   113.93 ms =  150.798x10^9 interactions/s (  3015.96 GFLOPS)
+   GPU_Shared:   113.92 ms =  150.809x10^9 interactions/s (  3016.18 GFLOPS)
+   GPU_Shared:   114.04 ms =  150.647x10^9 interactions/s (  3012.93 GFLOPS)
+    GPU_Const:   100.82 ms =  170.393x10^9 interactions/s (  3407.87 GFLOPS)
+    GPU_Const:   101.36 ms =  169.494x10^9 interactions/s (  3389.88 GFLOPS)
+    GPU_Const:   101.38 ms =  169.460x10^9 interactions/s (  3389.21 GFLOPS)
+     MultiGPU:   100.32 ms =  171.256x10^9 interactions/s (  3425.13 GFLOPS)
+     MultiGPU:   103.65 ms =  165.752x10^9 interactions/s (  3315.04 GFLOPS)
+     MultiGPU:   103.67 ms =  165.712x10^9 interactions/s (  3314.23 GFLOPS)
+  GPU_Shuffle:   107.87 ms =  159.259x10^9 interactions/s (  3185.18 GFLOPS)
+  GPU_Shuffle:   111.85 ms =  153.599x10^9 interactions/s (  3071.98 GFLOPS)
+  GPU_Shuffle:   114.10 ms =  150.566x10^9 interactions/s (  3011.32 GFLOPS)
 
 
 ============================================
 
-CC      = clang
-LINK    = clang
-CFLAGS  = -O3 -march=native -ffast-math -std=gnu11 -fno-strict-aliasing
-   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD -DUSE_LIBC11
-   -I../subprojects/c11/include -I../subprojects/time/include
+CC        = clang
+NVCC      = clang++
+CUDA      = 1
+LINK      = clang
+CFLAGS    = -O3 -march=native -ffast-math -std=gnu11 -fno-strict-aliasing
+   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD -DUSE_CUDA
+   -DUSE_LIBC11 -I../subprojects/c11/include -I../subprojects/time/include
    -Wall -Wdeclaration-after-statement -Werror=implicit
    -Werror=undef -Wmissing-declarations -Wmissing-prototypes
    -Wno-declaration-after-statement -Wno-long-long -Wno-overlength-strings
    -Wno-unknown-pragmas -Wold-style-definition -Wstrict-prototypes
-   -pthread -fPIC -idirafter /usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include
+   -pthread -fPIC -idirafter /usr/lib/gcc/x86_64-pc-linux-gnu/8.3.1/include
    -fopenmp=libomp
-LDFLAGS = -pthread -fPIC -lomp ../subprojects/c11/libc11.a
+NVCCFLAGS = -O3 -Drestrict=__restrict -fcuda-flush-denormals-to-zero
+   --cuda-gpu-arch=sm_52 --cuda-gpu-arch=sm_61 --cuda-gpu-arch=sm_70
+   --cuda-gpu-arch=sm_75
+LDFLAGS   = -pthread -fPIC -lomp -L/opt/cuda/bin/../lib
+   -L/opt/cuda/bin/../lib64 -lcudart ../subprojects/c11/libc11.a
    ../subprojects/time/libtime.a -lm -lrt
 
-Compiler version: clang version 6.0.0 (tags/RELEASE_600/final)
+Compiler version: clang version 8.0.0 (/startdir/clang 90903f44d639117b8c57d061291f4ea2b542bd83) (/startdir/llvm 795ca0111f5edb3135c35285ac3f684d570af73e)
 
-Binary size: 49712 bytes
+Binary size: 525136 bytes
 
-Running simulation with 65536 particles, 32 CPU threads
-      CPU_SOA:   222.51 ms =   19.302x10^9 interactions/s (   386.04 GFLOPS)
-      CPU_SOA:   223.28 ms =   19.236x10^9 interactions/s (   384.72 GFLOPS)
-      CPU_SOA:   223.66 ms =   19.203x10^9 interactions/s (   384.06 GFLOPS)
-CPU_SOA_tiled:   234.22 ms =   18.338x10^9 interactions/s (   366.75 GFLOPS)
-CPU_SOA_tiled:   230.62 ms =   18.624x10^9 interactions/s (   372.48 GFLOPS)
-CPU_SOA_tiled:   231.35 ms =   18.564x10^9 interactions/s (   371.29 GFLOPS)
-          AVX:   223.30 ms =   19.234x10^9 interactions/s (   384.68 GFLOPS)
-          AVX:   223.22 ms =   19.241x10^9 interactions/s (   384.82 GFLOPS)
-          AVX:   223.16 ms =   19.246x10^9 interactions/s (   384.93 GFLOPS)
-      CPU_AOS:   437.75 ms =    9.811x10^9 interactions/s (   196.23 GFLOPS)
-      CPU_AOS:   436.60 ms =    9.837x10^9 interactions/s (   196.74 GFLOPS)
-      CPU_AOS:   438.13 ms =    9.803x10^9 interactions/s (   196.06 GFLOPS)
-CPU_AOS_tiled:   436.50 ms =    9.840x10^9 interactions/s (   196.79 GFLOPS)
-CPU_AOS_tiled:   444.67 ms =    9.659x10^9 interactions/s (   193.18 GFLOPS)
-CPU_AOS_tiled:   436.54 ms =    9.839x10^9 interactions/s (   196.78 GFLOPS)
+Running simulation with 131072 particles, 32 CPU threads, up to 1 GPUs
+      CPU_SOA:   894.90 ms =   19.197x10^9 interactions/s (   383.95 GFLOPS)
+      CPU_SOA:   895.24 ms =   19.190x10^9 interactions/s (   383.81 GFLOPS)
+      CPU_SOA:   895.92 ms =   19.176x10^9 interactions/s (   383.51 GFLOPS)
+CPU_SOA_tiled:   909.04 ms =   18.899x10^9 interactions/s (   377.98 GFLOPS)
+CPU_SOA_tiled:   904.92 ms =   18.985x10^9 interactions/s (   379.70 GFLOPS)
+CPU_SOA_tiled:   906.51 ms =   18.952x10^9 interactions/s (   379.03 GFLOPS)
+          AVX:   901.69 ms =   19.053x10^9 interactions/s (   381.06 GFLOPS)
+          AVX:   900.02 ms =   19.088x10^9 interactions/s (   381.77 GFLOPS)
+          AVX:   901.47 ms =   19.058x10^9 interactions/s (   381.15 GFLOPS)
+      CPU_AOS:  1637.30 ms =   10.493x10^9 interactions/s (   209.86 GFLOPS)
+      CPU_AOS:  1638.01 ms =   10.488x10^9 interactions/s (   209.77 GFLOPS)
+      CPU_AOS:  1637.67 ms =   10.490x10^9 interactions/s (   209.81 GFLOPS)
+CPU_AOS_tiled:  1623.69 ms =   10.581x10^9 interactions/s (   211.61 GFLOPS)
+CPU_AOS_tiled:  1625.07 ms =   10.572x10^9 interactions/s (   211.44 GFLOPS)
+CPU_AOS_tiled:  1624.71 ms =   10.574x10^9 interactions/s (   211.48 GFLOPS)
+      GPU_AOS:   220.89 ms =   77.774x10^9 interactions/s (  1555.49 GFLOPS)
+      GPU_AOS:   220.94 ms =   77.758x10^9 interactions/s (  1555.16 GFLOPS)
+      GPU_AOS:   221.01 ms =   77.733x10^9 interactions/s (  1554.67 GFLOPS)
+   GPU_Shared:    97.26 ms =  176.640x10^9 interactions/s (  3532.79 GFLOPS)
+   GPU_Shared:    99.08 ms =  173.389x10^9 interactions/s (  3467.78 GFLOPS)
+    GPU_Const:   145.80 ms =  117.831x10^9 interactions/s (  2356.62 GFLOPS)
+    GPU_Const:   143.75 ms =  119.510x10^9 interactions/s (  2390.20 GFLOPS)
+    GPU_Const:   142.09 ms =  120.905x10^9 interactions/s (  2418.10 GFLOPS)
+     MultiGPU:   103.16 ms =  166.534x10^9 interactions/s (  3330.68 GFLOPS)
+     MultiGPU:    96.43 ms =  178.161x10^9 interactions/s (  3563.22 GFLOPS)
+  GPU_Shuffle:   110.94 ms =  154.854x10^9 interactions/s (  3097.07 GFLOPS)
+  GPU_Shuffle:   112.40 ms =  152.845x10^9 interactions/s (  3056.90 GFLOPS)
+  GPU_Shuffle:   112.28 ms =  153.015x10^9 interactions/s (  3060.29 GFLOPS)
 
 
 ============================================
 
-CC      = icc
-LINK    = icc
-CFLAGS  = -Ofast -xHOST -no-prec-sqrt -std=gnu11 -fno-strict-aliasing
-   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD -DUSE_LIBC11
-   -I../subprojects/c11/include -I../subprojects/time/include  -pthread
-   -fPIC -fopenmp
-LDFLAGS = -pthread -fPIC -lomp -static-intel ../subprojects/c11/libc11.a
+CC        = icc
+NVCC      = nvcc
+CUDA      = 1
+LINK      = icc
+CFLAGS    = -Ofast -xHOST -no-prec-sqrt -std=gnu11 -fno-strict-aliasing
+   -D_GNU_SOURCE -DLIBTIME_STATIC -DUSE_OPENMP -DHAVE_SIMD -DUSE_CUDA
+   -DUSE_LIBC11 -I../subprojects/c11/include -I../subprojects/time/include
+   -pthread -fPIC -fopenmp
+NVCCFLAGS = -O3 -Drestrict= --ftz true -Xcompiler -fPIC
+   -gencode=arch=compute_50,code="sm_50,compute_50"
+   -gencode=arch=compute_52,code="sm_52,compute_52"
+   -gencode=arch=compute_61,code="sm_61,compute_61"
+   -gencode=arch=compute_70,code="sm_70,compute_70"
+   -gencode=arch=compute_75,code="sm_75,compute_75"
+LDFLAGS   = -pthread -fPIC -lomp -static-intel -L/opt/cuda/bin/../lib
+   -L/opt/cuda/bin/../lib64 -lcudart ../subprojects/c11/libc11.a
    ../subprojects/time/libtime.a -lm -lrt
 
-Compiler version: icc (ICC) 18.0.1 20171018
+Compiler version: icc (ICC) 19.0.1.144 20181018
 
-Binary size: 91640 bytes
+Binary size: 1810256 bytes
 
-Running simulation with 65536 particles, 32 CPU threads
-      CPU_SOA:   202.46 ms =   21.214x10^9 interactions/s (   424.27 GFLOPS)
-      CPU_SOA:   202.30 ms =   21.231x10^9 interactions/s (   424.61 GFLOPS)
-      CPU_SOA:   202.35 ms =   21.226x10^9 interactions/s (   424.52 GFLOPS)
-CPU_SOA_tiled:   199.01 ms =   21.582x10^9 interactions/s (   431.64 GFLOPS)
-CPU_SOA_tiled:   200.82 ms =   21.387x10^9 interactions/s (   427.74 GFLOPS)
-CPU_SOA_tiled:   208.29 ms =   20.620x10^9 interactions/s (   412.40 GFLOPS)
-          AVX:   202.08 ms =   21.254x10^9 interactions/s (   425.07 GFLOPS)
-          AVX:   202.20 ms =   21.241x10^9 interactions/s (   424.83 GFLOPS)
-          AVX:   201.88 ms =   21.275x10^9 interactions/s (   425.51 GFLOPS)
-      CPU_AOS:   281.19 ms =   15.274x10^9 interactions/s (   305.48 GFLOPS)
-      CPU_AOS:   279.57 ms =   15.363x10^9 interactions/s (   307.25 GFLOPS)
-      CPU_AOS:   279.66 ms =   15.358x10^9 interactions/s (   307.16 GFLOPS)
-CPU_AOS_tiled:   202.61 ms =   21.198x10^9 interactions/s (   423.97 GFLOPS)
-CPU_AOS_tiled:   209.71 ms =   20.480x10^9 interactions/s (   409.60 GFLOPS)
-CPU_AOS_tiled:   211.19 ms =   20.337x10^9 interactions/s (   406.74 GFLOPS)
+Running simulation with 131072 particles, 32 CPU threads, up to 1 GPUs
+      CPU_SOA:   802.22 ms =   21.415x10^9 interactions/s (   428.31 GFLOPS)
+      CPU_SOA:   804.57 ms =   21.353x10^9 interactions/s (   427.06 GFLOPS)
+      CPU_SOA:   800.29 ms =   21.467x10^9 interactions/s (   429.34 GFLOPS)
+CPU_SOA_tiled:   806.50 ms =   21.302x10^9 interactions/s (   426.04 GFLOPS)
+CPU_SOA_tiled:   806.47 ms =   21.302x10^9 interactions/s (   426.05 GFLOPS)
+CPU_SOA_tiled:   809.66 ms =   21.219x10^9 interactions/s (   424.37 GFLOPS)
+          AVX:   799.74 ms =   21.482x10^9 interactions/s (   429.64 GFLOPS)
+          AVX:   797.20 ms =   21.550x10^9 interactions/s (   431.01 GFLOPS)
+          AVX:   798.18 ms =   21.524x10^9 interactions/s (   430.47 GFLOPS)
+      CPU_AOS:  1164.06 ms =   14.759x10^9 interactions/s (   295.17 GFLOPS)
+      CPU_AOS:  1161.97 ms =   14.785x10^9 interactions/s (   295.70 GFLOPS)
+      CPU_AOS:  1163.00 ms =   14.772x10^9 interactions/s (   295.44 GFLOPS)
+CPU_AOS_tiled:  1091.29 ms =   15.743x10^9 interactions/s (   314.85 GFLOPS)
+CPU_AOS_tiled:  1090.70 ms =   15.751x10^9 interactions/s (   315.03 GFLOPS)
+CPU_AOS_tiled:  1093.98 ms =   15.704x10^9 interactions/s (   314.08 GFLOPS)
+      GPU_AOS:   226.54 ms =   75.837x10^9 interactions/s (  1516.75 GFLOPS)
+      GPU_AOS:   221.23 ms =   77.657x10^9 interactions/s (  1553.14 GFLOPS)
+      GPU_AOS:   222.11 ms =   77.349x10^9 interactions/s (  1546.98 GFLOPS)
+   GPU_Shared:   111.88 ms =  153.551x10^9 interactions/s (  3071.01 GFLOPS)
+   GPU_Shared:   112.03 ms =  153.351x10^9 interactions/s (  3067.03 GFLOPS)
+   GPU_Shared:   112.09 ms =  153.266x10^9 interactions/s (  3065.32 GFLOPS)
+    GPU_Const:   104.63 ms =  164.193x10^9 interactions/s (  3283.85 GFLOPS)
+    GPU_Const:   104.12 ms =  165.004x10^9 interactions/s (  3300.08 GFLOPS)
+    GPU_Const:   103.79 ms =  165.531x10^9 interactions/s (  3310.61 GFLOPS)
+     MultiGPU:   106.23 ms =  161.716x10^9 interactions/s (  3234.32 GFLOPS)
+     MultiGPU:   105.89 ms =  162.241x10^9 interactions/s (  3244.83 GFLOPS)
+     MultiGPU:   106.58 ms =  161.185x10^9 interactions/s (  3223.70 GFLOPS)
+  GPU_Shuffle:   109.10 ms =  157.473x10^9 interactions/s (  3149.47 GFLOPS)
+  GPU_Shuffle:   111.75 ms =  153.742x10^9 interactions/s (  3074.83 GFLOPS)
+  GPU_Shuffle:   114.36 ms =  150.232x10^9 interactions/s (  3004.64 GFLOPS)
 ```

@@ -21,8 +21,13 @@ for COMPILER in ${COMPILERS[@]}; do
 	echo
 	echo "Building with ${COMPILER}..."
 
-	make --no-print-directory CC=${COMPILER}
-	make --no-print-directory CC=${COMPILER} info-flags info-compiler 2>&1 > ${NBODY}.buildinfo
+	EXTRA_MAKE_ARGS=()
+	if [[ $COMPILER == "clang" ]]; then
+		EXTRA_MAKE_ARGS+=( NVCC=clang++ )
+	fi
+
+	make --no-print-directory CC=${COMPILER} ${EXTRA_MAKE_ARGS[@]} CUDA=1
+	make --no-print-directory CC=${COMPILER} ${EXTRA_MAKE_ARGS[@]} CUDA=1 info-flags info-compiler 2>&1 > ${NBODY}.buildinfo
 	mv nbody ${NBODY}
 	BUILT_SOMETHING=1
 done
