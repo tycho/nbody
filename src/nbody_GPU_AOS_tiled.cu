@@ -1,6 +1,6 @@
 /*
  *
- * nbody_GPU_AOS_tiled.cuh
+ * nbody_GPU_AOS_tiled.cu
  *
  * CUDA implementation of the O(N^2) N-body calculation.
  * Tiled to take advantage of the symmetry of gravitational
@@ -34,6 +34,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "chError.h"
+#include "nbody_util.h"
+#include "nbody_GPU_AOS_tiled.h"
+#include "bodybodyInteraction.cuh"
 
 template<size_t nTile>
 __device__ void
@@ -191,13 +196,7 @@ Error:
     return status;
 }
 
-float
-ComputeGravitation_GPU_AOS_tiled(
-    float *force,
-    float *posMass,
-    float softeningSquared,
-    size_t N
-)
+DEFINE_AOS(ComputeGravitation_GPU_AOS_tiled)
 {
     cudaError_t status;
     cudaEvent_t evStart = 0, evStop = 0;

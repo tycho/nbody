@@ -159,6 +159,7 @@ ifdef CUDA
 SOURCES += \
 	nbody_GPU_AOS.cu \
 	nbody_GPU_AOS_const.cu \
+	nbody_GPU_AOS_tiled.cu \
 	nbody_GPU_shared.cu \
 	nbody_GPU_Shuffle.cu \
 	nbody_multiGPU.cu
