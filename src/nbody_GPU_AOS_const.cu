@@ -1,6 +1,6 @@
 /*
  *
- * nbody_GPU_AOS_const.h
+ * nbody_GPU_AOS_const.cu
  *
  * CUDA implementation of the O(N^2) N-body calculation.
  * Uses __constant__ memory to hold one set of input body
@@ -35,6 +35,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "chError.h"
+#include "nbody_util.h"
+#include "nbody_GPU_AOS_const.h"
+#include "bodybodyInteraction.cuh"
 
 const int g_bodiesPerPass = 4000;
 __constant__ __device__ float4 g_constantBodies[g_bodiesPerPass];
@@ -75,13 +80,7 @@ ComputeGravitation_GPU_AOS_const(
     }
 }
 
-float
-ComputeGravitation_GPU_AOS_const(
-    float *force,
-    float *posMass,
-    float softeningSquared,
-    size_t N
-)
+DEFINE_AOS(ComputeGravitation_GPU_AOS_const)
 {
     cudaError_t status;
     cudaEvent_t evStart = 0, evStop = 0;

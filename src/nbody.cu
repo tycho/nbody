@@ -67,7 +67,7 @@
 #ifdef USE_CUDA
 #include "bodybodyInteraction.cuh"
 #include "nbody_GPU_AOS.cuh"
-#include "nbody_GPU_AOS_const.cuh"
+#include "nbody_GPU_AOS_const.h"
 //#include "nbody_GPU_AOS_tiled.cuh"
 //#include "nbody_GPU_AOS_tiled_const.cuh"
 //#include "nbody_GPU_SOA_tiled.cuh"

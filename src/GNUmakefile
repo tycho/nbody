@@ -157,6 +157,7 @@ SOURCES := \
 
 ifdef CUDA
 SOURCES += \
+	nbody_GPU_AOS_const.cu \
 	nbody_GPU_shared.cu \
 	nbody_multiGPU.cu
 endif
