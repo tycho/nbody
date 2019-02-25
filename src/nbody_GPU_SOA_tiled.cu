@@ -1,6 +1,6 @@
 /*
  *
- * nbody_GPU_AOS_tiled.cuh
+ * nbody_GPU_SOA_tiled.h
  *
  * CUDA implementation of the O(N^2) N-body calculation.
  * Tiled to take advantage of the symmetry of gravitational
@@ -34,6 +34,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "chError.h"
+#include "nbody_util.h"
+#include "nbody_GPU_SOA_tiled.h"
+#include "bodybodyInteraction.cuh"
 
 template<size_t nTile>
 __device__ void
@@ -70,6 +75,18 @@ DoDiagonalTile_GPU_SOA(
     atomicAdd( &forceX[i], acc[0] );
     atomicAdd( &forceY[i], acc[1] );
     atomicAdd( &forceZ[i], acc[2] );
+}
+
+inline float
+__device__
+warpReduce( float x )
+{
+    x += __int_as_float( __shfl_xor( __float_as_int(x), 16 ) );
+    x += __int_as_float( __shfl_xor( __float_as_int(x),  8 ) );
+    x += __int_as_float( __shfl_xor( __float_as_int(x),  4 ) );
+    x += __int_as_float( __shfl_xor( __float_as_int(x),  2 ) );
+    x += __int_as_float( __shfl_xor( __float_as_int(x),  1 ) );
+    return x;
 }
 
 template<size_t nTile>
@@ -199,27 +216,21 @@ SOAtoAOS_GPU_3( float *out, const float *inX, const float *inY, const float *inZ
     }
 }
 
-float
-ComputeGravitation_GPU_SOA_tiled(
-    float *force,
-    float *posMass,
-    float softeningSquared,
-    size_t N
-)
+DEFINE_AOS(ComputeGravitation_GPU_SOA_tiled)
 {
     cudaError_t status;
     cudaEvent_t evStart = 0, evStop = 0;
     float ms = 0.0;
 
-float *forces[3] = {0};
-CUDART_CHECK( cudaMalloc( &forces[0], N*sizeof(float) ) );
-CUDART_CHECK( cudaMalloc( &forces[1], N*sizeof(float) ) );
-CUDART_CHECK( cudaMalloc( &forces[2], N*sizeof(float) ) );
+    float *forces[3] = {0};
+    CUDART_CHECK( cudaMalloc( &forces[0], N*sizeof(float) ) );
+    CUDART_CHECK( cudaMalloc( &forces[1], N*sizeof(float) ) );
+    CUDART_CHECK( cudaMalloc( &forces[2], N*sizeof(float) ) );
 
     CUDART_CHECK( cudaEventCreate( &evStart ) );
     CUDART_CHECK( cudaEventCreate( &evStop ) );
 
-AOStoSOA_GPU_3<<<300,256>>>( forces[0], forces[1], forces[2], force, N );
+    AOStoSOA_GPU_3<<<300,256>>>( forces[0], forces[1], forces[2], force, N );
 
     CUDART_CHECK( cudaEventRecord( evStart, NULL ) );
     CUDART_CHECK( ComputeGravitation_GPU_SOA_tiled<128>(
@@ -230,7 +241,7 @@ AOStoSOA_GPU_3<<<300,256>>>( forces[0], forces[1], forces[2], force, N );
     CUDART_CHECK( cudaEventRecord( evStop, NULL ) );
 
     CUDART_CHECK( cudaDeviceSynchronize() );
-SOAtoAOS_GPU_3<<<300,256>>>( force, forces[0], forces[1], forces[2], N );
+    SOAtoAOS_GPU_3<<<300,256>>>( force, forces[0], forces[1], forces[2], N );
 
 
     CUDART_CHECK( cudaDeviceSynchronize() );
