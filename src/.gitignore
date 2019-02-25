@@ -4,6 +4,7 @@
 /openmp.mk
 /nbody
 /nbody.exe
+/nvcc-flags.mk
 /.cc
 
 # From clang -fsave-optimization-record

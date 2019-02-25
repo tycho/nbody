@@ -129,11 +129,19 @@ ifdef CUDA
     NVCCFLAGS += --ftz true
     NVCCFLAGS += -Xcompiler -fPIC
 
-    NVCCTARGETS := $(shell ./nvcc-flags.sh $(NVCC))
-    ifeq ($(NVCCTARGETS),)
+ifeq (,$(findstring info,$(MAKECMDGOALS)))
+ifeq (,$(findstring clean,$(MAKECMDGOALS)))
+nvcc-flags.mk: .cc
+	$(QUIET)./nvcc-flags.sh $(NVCC)
+-include nvcc-flags.mk
+endif
+endif
+    ifdef NVCC_TARGET_FLAGS_DONE
+    ifeq ($(NVCC_TARGET_FLAGS),)
         $(error nvcc not found or too old, aborting)
     endif
-    NVCCFLAGS += $(NVCCTARGETS)
+    endif
+    NVCCFLAGS += $(NVCC_TARGET_FLAGS)
   endif
 endif
 

@@ -41,5 +41,8 @@ if vergte ${NVCC_VER} 10.0; then
 	NVCC_FLAGS+=( -gencode=arch=compute_75,code=\\\"sm_75,compute_75\\\" )
 fi
 
-echo ${NVCC_FLAGS[@]}
+cat > nvcc-flags.mk << EOF
+NVCC_TARGET_FLAGS_DONE := 1
+NVCC_TARGET_FLAGS := ${NVCC_FLAGS[@]}
+EOF
 exit 0
