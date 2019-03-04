@@ -45,8 +45,6 @@
 #include <conio.h>
 #pragma comment (lib, "libtime.lib")
 #pragma comment (lib, "libc11.lib")
-#else
-#include <malloc.h>
 #endif
 
 #include <math.h>

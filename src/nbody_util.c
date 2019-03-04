@@ -51,7 +51,6 @@
 #include <windows.h>
 #else
 #include <mm_malloc.h>
-#include <malloc.h>
 #include <math.h>
 #include <stdio.h>
 #include <termios.h>
