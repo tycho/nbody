@@ -58,7 +58,6 @@ typedef enum {
     ALGORITHM_SOA,
     ALGORITHM_AOS,
     ALGORITHM_AOS_GPU,
-    ALGORITHM_AOS_MGPU,
 } algorithm_t;
 
 // There are two different function prototypes for ComputeGravitation,

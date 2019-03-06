@@ -108,7 +108,7 @@ static const algorithm_def_t s_algorithms[] = {
     { "GPU_AOS",             ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS             } },
     { "GPU_Shared",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shared          } },
     { "GPU_Const",           ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_const       } },
-    { "MultiGPU",            ALGORITHM_AOS_MGPU, { .aos = ComputeGravitation_multiGPU            } },
+    { "MultiGPU",            ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_multiGPU            } },
     { "GPU_Shuffle",         ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shuffle         } },
 //    { "GPU_SOA_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_SOA_tiled       } },
 //    { "GPU_AOS_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_tiled       } },
@@ -120,8 +120,7 @@ static const algorithm_def_t s_algorithms[] = {
 
 static inline bool isGPUAlgorithm(const algorithm_def_t *algorithm)
 {
-    return (algorithm->type == ALGORITHM_AOS_GPU ||
-            algorithm->type == ALGORITHM_AOS_MGPU);
+    return (algorithm->type == ALGORITHM_AOS_GPU);
 }
 
 static int maxAlgorithmIdx(void)
@@ -280,7 +279,6 @@ ComputeGravitation(
                 g_N );
             bSOA = 1;
             break;
-        case ALGORITHM_AOS_MGPU:
         case ALGORITHM_AOS:
             *ms = algorithm->aos(
                 g_hostAOS_Force,
