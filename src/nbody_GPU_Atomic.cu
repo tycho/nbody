@@ -1,6 +1,6 @@
 /*
  *
- * nbody_GPU_Atomic.h
+ * nbody_GPU_Atomic.cu
  *
  * CUDA implementation of the O(N^2) N-body calculation.
  *
@@ -32,6 +32,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "chError.h"
+#include "nbody_util.h"
+#include "nbody_GPU_Atomic.h"
+#include "bodybodyInteraction.cuh"
 
 //
 // Atomics only make sense for SM 3.x and higher
@@ -76,14 +81,7 @@ ComputeNBodyGravitation_Atomic( T *force, T *posMass, size_t N, T softeningSquar
     }
 }
 
-
-float
-ComputeGravitation_GPU_Atomic(
-    float *force,
-    float *posMass,
-    float softeningSquared,
-    size_t N
-)
+DEFINE_AOS(ComputeGravitation_GPU_Atomic)
 {
     cudaError_t status;
     cudaEvent_t evStart = 0, evStop = 0;

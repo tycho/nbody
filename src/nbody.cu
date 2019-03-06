@@ -72,7 +72,7 @@
 //#include "nbody_GPU_SOA_tiled.h"
 #include "nbody_GPU_Shared.h"
 #include "nbody_GPU_Shuffle.h"
-//#include "nbody_GPU_Atomic.cuh"
+//#include "nbody_GPU_Atomic.h"
 #endif
 
 #ifdef HAVE_SIMD
