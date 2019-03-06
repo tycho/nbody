@@ -630,6 +630,7 @@ int main(int argc, char **argv)
 
     // kiloparticles
     int kParticles = DEFAULT_KPARTICLES, maxIterations = 0, cycleAfter = 0;
+    int name_width = 0;
     int idxFirstAlgorithm = 0;
     int bPrintListOnly = 0;
     int bUseGraphics = 0;
@@ -892,6 +893,13 @@ int main(int argc, char **argv)
     if (allocArrays() != 0)
         return 1;
 
+    for ( const algorithm_def_t *algorithm = s_algorithms; algorithm->name; algorithm++ )
+    {
+        int this_name_len = strlen(algorithm->name);
+        if (this_name_len > name_width)
+            name_width = this_name_len;
+    }
+
     randomUnitBodies( g_hostAOS_PosMass, g_hostAOS_VelInvMass, g_N, g_scale, g_velocityScale );
     for ( size_t i = 0; i < g_N; i++ ) {
         g_hostSOA_Mass[i] = g_hostAOS_PosMass[4*i+3];
@@ -925,7 +933,8 @@ int main(int argc, char **argv)
 
                 if ( interactionsPerSecond > 1e9 )
                 {
-                    fprintf(stdout, "\r%13s: %8.2f ms = %8.3fx10^9 interactions/s (%9.2lf GFLOPS)",
+                    fprintf(stdout, "\r%*s: %8.2f ms = %8.3fx10^9 interactions/s (%9.2lf GFLOPS)",
+                        name_width,
                         algorithm->name,
                         ms,
                         interactionsPerSecond/1e9,
@@ -933,7 +942,8 @@ int main(int argc, char **argv)
                 }
                 else
                 {
-                    fprintf(stdout, "\r%13s: %8.2f ms = %8.3fx10^6 interactions/s (%9.2lf GFLOPS)",
+                    fprintf(stdout, "\r%*s: %8.2f ms = %8.3fx10^6 interactions/s (%9.2lf GFLOPS)",
+                        name_width,
                         algorithm->name,
                         ms,
                         interactionsPerSecond/1e6,
