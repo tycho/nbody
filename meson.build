@@ -92,7 +92,7 @@ if enable_cuda
     cpp_args += ['-DUSE_CUDA']
     cuda_sources = [
         'src/nbody.cu',
-        'src/nbody_GPU_shared.cu',
+        'src/nbody_GPU_Shared.cu',
         'src/nbody_multiGPU.cu'
     ]
     nvcc_bin = find_program([nvcc_name])
