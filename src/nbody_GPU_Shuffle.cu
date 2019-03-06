@@ -40,10 +40,6 @@
 
 #include <cuda_runtime_api.h>
 
-#if CUDART_VERSION < 9000
-#  define __shfl_sync(x,y,z) __shfl(y,z)
-#endif
-
 __global__ void
 ComputeNBodyGravitation_Shuffle(
     float *force,

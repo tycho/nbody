@@ -81,11 +81,11 @@ inline float
 __device__
 warpReduce( float x )
 {
-    x += __int_as_float( __shfl_xor( __float_as_int(x), 16 ) );
-    x += __int_as_float( __shfl_xor( __float_as_int(x),  8 ) );
-    x += __int_as_float( __shfl_xor( __float_as_int(x),  4 ) );
-    x += __int_as_float( __shfl_xor( __float_as_int(x),  2 ) );
-    x += __int_as_float( __shfl_xor( __float_as_int(x),  1 ) );
+    x += __int_as_float( __shfl_xor_sync( 0xFFFFFFFF, __float_as_int(x), 16 ) );
+    x += __int_as_float( __shfl_xor_sync( 0xFFFFFFFF, __float_as_int(x),  8 ) );
+    x += __int_as_float( __shfl_xor_sync( 0xFFFFFFFF, __float_as_int(x),  4 ) );
+    x += __int_as_float( __shfl_xor_sync( 0xFFFFFFFF, __float_as_int(x),  2 ) );
+    x += __int_as_float( __shfl_xor_sync( 0xFFFFFFFF, __float_as_int(x),  1 ) );
     return x;
 }
 
@@ -115,10 +115,10 @@ DoNondiagonalTile_GPU_SOA(
         float fx, fy, fz;
         float4 bodyPosMass;
 
-        bodyPosMass.x = __shfl( shufSrcPosMass.x, _j );
-        bodyPosMass.y = __shfl( shufSrcPosMass.y, _j );
-        bodyPosMass.z = __shfl( shufSrcPosMass.z, _j );
-        bodyPosMass.w = __shfl( shufSrcPosMass.w, _j );
+        bodyPosMass.x = __shfl_sync( 0xFFFFFFFF, shufSrcPosMass.x, _j );
+        bodyPosMass.y = __shfl_sync( 0xFFFFFFFF, shufSrcPosMass.y, _j );
+        bodyPosMass.z = __shfl_sync( 0xFFFFFFFF, shufSrcPosMass.z, _j );
+        bodyPosMass.w = __shfl_sync( 0xFFFFFFFF, shufSrcPosMass.w, _j );
 
         bodyBodyInteraction(
             &fx, &fy, &fz,
