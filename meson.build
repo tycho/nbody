@@ -92,8 +92,15 @@ if enable_cuda
     cpp_args += ['-DUSE_CUDA']
     cuda_sources = [
         'src/nbody.cu',
+        'src/nbody_GPU_AOS.cu',
+        'src/nbody_GPU_AOS_const.cu',
+        'src/nbody_GPU_AOS_tiled.cu',
+        'src/nbody_GPU_AOS_tiled_const.cu',
+        'src/nbody_GPU_Atomic.cu',
         'src/nbody_GPU_Shared.cu',
-        'src/nbody_multiGPU.cu'
+        'src/nbody_GPU_Shuffle.cu',
+        'src/nbody_GPU_SOA_tiled.cu',
+        'src/nbody_multiGPU.cu',
     ]
     nvcc_bin = find_program([nvcc_name])
     cuda_gen = generator(nvcc_bin,
