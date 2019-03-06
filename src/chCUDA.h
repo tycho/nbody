@@ -43,6 +43,12 @@
 #ifndef __cuda_drvapi_dynlink_h__
 #include <cuda.h>
 #endif
+#include <cuda_runtime_api.h>
+
+#if CUDART_VERSION < 9000
+#  define __shfl_sync(x,y,z) __shfl(y,z)
+#  define __shfl_xor_sync(x,y,z) __shfl_xor(y,z)
+#endif
 
 #else
 
