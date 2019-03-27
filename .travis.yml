@@ -22,6 +22,7 @@ env:
   - IMAGE=nvidia/cuda IMAGE_TAG=8.0-devel BROKEN=1
   - IMAGE=nvidia/cuda IMAGE_TAG=9.2-devel BROKEN=1
   - IMAGE=nvidia/cuda IMAGE_TAG=10.0-devel
+  - IMAGE=nvidia/cuda IMAGE_TAG=10.1-devel
 
 before_install:
   - export CONTAINER=${IMAGE//\//-}-${IMAGE_TAG}
