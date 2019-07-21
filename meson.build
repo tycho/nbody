@@ -15,7 +15,7 @@ libc11 = libc11_sp.get_variable('c11_dep')
 libtime_sp = subproject('time')
 libtime = libtime_sp.get_variable('libtime')
 
-enable_cuda = get_option('cuda')
+enable_cuda = get_option('use_cuda')
 enable_openmp = get_option('openmp')
 enable_opengl = get_option('opengl')
 enable_simd = get_option('intrinsics')

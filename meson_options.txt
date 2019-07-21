@@ -1,4 +1,4 @@
-option('cuda', type: 'boolean', value: false, description: 'NVIDIA CUDA support')
+option('use_cuda', type: 'boolean', value: false, description: 'NVIDIA CUDA support')
 option('nvcc', type: 'string', value: 'nvcc', description: 'CUDA compiler name')
 option('openmp', type: 'boolean', description: 'OpenMP threading')
 option('opengl', type: 'boolean', value: false, description: 'OpenGL simulation rendering')
