@@ -1,13 +1,16 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $SCRIPT_DIR
 
 CC="$1"
-OMP_FLAG="$2"
-LIB_FLAG="$3"
+if [[ "${CC}" == "ccache" ]]; then
+	shift; CC+=" $1"
+fi
+shift; OMP_FLAG="$1"
+shift; LIB_FLAG="$@"
 
 if [[ -z "$LIB_FLAG" ]]; then
 	# Not specified, so let the compiler choose the appropriate defaults
