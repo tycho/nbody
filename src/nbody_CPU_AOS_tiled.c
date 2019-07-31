@@ -58,8 +58,8 @@ DEFINE_AOS(ComputeGravitation_AOS_tiled)
     ASSERT_ALIGNED(force, NBODY_ALIGNMENT);
     ASSERT_ALIGNED(posMass, NBODY_ALIGNMENT);
 
-    ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
+    ASSUME(N >= 1024);
 
     #pragma omp parallel
     for (size_t tileStart = 0; tileStart < N; tileStart += BODIES_PER_TILE )

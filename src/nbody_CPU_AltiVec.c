@@ -59,8 +59,8 @@ DEFINE_SOA(ComputeGravitation_SIMD)
     ASSERT_ALIGNED(force[1], NBODY_ALIGNMENT);
     ASSERT_ALIGNED(force[2], NBODY_ALIGNMENT);
 
-    ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
+    ASSUME(N >= 1024);
 
     #pragma omp parallel for schedule(guided)
     for ( size_t i = 0; i < N; i++ )
@@ -73,8 +73,8 @@ DEFINE_SOA(ComputeGravitation_SIMD)
         v4sf ay = vec_zero;
         v4sf az = vec_zero;
 
-        ASSUME(N >= 1024);
         ASSUME(N % 1024 == 0);
+        ASSUME(N >= 1024);
 
         for ( size_t j = 0; j < N; j += 4)
         {

@@ -53,8 +53,8 @@ DEFINE_AOS(ComputeGravitation_AOS)
     ASSERT_ALIGNED(force, NBODY_ALIGNMENT);
     ASSERT_ALIGNED(posMass, NBODY_ALIGNMENT);
 
-    ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
+    ASSUME(N >= 1024);
 
     #pragma omp parallel for schedule(guided)
     for ( size_t i = 0; i < N; i++ )

@@ -63,8 +63,8 @@ DEFINE_SOA(ComputeGravitation_SOA_tiled)
     ASSERT_ALIGNED(force[1], NBODY_ALIGNMENT);
     ASSERT_ALIGNED(force[2], NBODY_ALIGNMENT);
 
-    ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
+    ASSUME(N >= 1024);
 
     #pragma omp parallel
     for (size_t tileStart = 0; tileStart < N; tileStart += BODIES_PER_TILE )
