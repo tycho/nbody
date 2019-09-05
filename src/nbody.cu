@@ -953,6 +953,8 @@ int main(int argc, char **argv)
                     fprintf(stdout, " (Rel. error: %E)\n", err );
                 else
                     fprintf(stdout, "\n" );
+
+                fflush(stdout);
             }
 
             steps++;
