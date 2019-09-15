@@ -97,23 +97,23 @@ extern const char *SIMD_ALGORITHM_NAME;
 #define DEFAULT_SEED 7
 
 static const algorithm_def_t s_algorithms[] = {
-    { "CPU_SOA",             ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA                 } },
-    { "CPU_SOA_tiled",       ALGORITHM_SOA,      { .soa = ComputeGravitation_SOA_tiled           } },
+    { "CPU_SOA",             ALGORITHM_SOA,           { .soa = ComputeGravitation_SOA                 } },
+    { "CPU_SOA_tiled",       ALGORITHM_SOA,           { .soa = ComputeGravitation_SOA_tiled           } },
 #ifdef HAVE_SIMD
-    { SIMD_ALGORITHM_NAME,   ALGORITHM_SOA,      { .soa = ComputeGravitation_SIMD                } },
+    { SIMD_ALGORITHM_NAME,   ALGORITHM_SOA,           { .soa = ComputeGravitation_SIMD                } },
 #endif
-    { "CPU_AOS",             ALGORITHM_AOS,      { .aos = ComputeGravitation_AOS                 } },
-    { "CPU_AOS_tiled",       ALGORITHM_AOS,      { .aos = ComputeGravitation_AOS_tiled           } },
+    { "CPU_AOS",             ALGORITHM_AOS,           { .aos = ComputeGravitation_AOS                 } },
+    { "CPU_AOS_tiled",       ALGORITHM_AOS,           { .aos = ComputeGravitation_AOS_tiled           } },
 #ifdef USE_CUDA
-    { "GPU_AOS",             ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS             } },
-    { "GPU_Shared",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shared          } },
-    { "GPU_Const",           ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_const       } },
-    { "MultiGPU",            ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_multiGPU            } },
-    { "GPU_Shuffle",         ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Shuffle         } },
-//    { "GPU_SOA_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_SOA_tiled       } },
-//    { "GPU_AOS_tiled",       ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_tiled       } },
-//    { "GPU_AOS_tiled_const", ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_AOS_tiled_const } },
-//    { "GPU_Atomic",          ALGORITHM_AOS_GPU,  { .aos = ComputeGravitation_GPU_Atomic          } },
+    { "GPU_AOS",             ALGORITHM_AOS_GPU,       { .aos = ComputeGravitation_GPU_AOS             } },
+    { "GPU_Shared",          ALGORITHM_AOS_GPU,       { .aos = ComputeGravitation_GPU_Shared          } },
+    { "GPU_Const",           ALGORITHM_AOS_GPU,       { .aos = ComputeGravitation_GPU_AOS_const       } },
+    { "MultiGPU",            ALGORITHM_AOS_MULTIGPU,  { .aos = ComputeGravitation_multiGPU            } },
+    { "GPU_Shuffle",         ALGORITHM_AOS_GPU,       { .aos = ComputeGravitation_GPU_Shuffle         } },
+//    { "GPU_SOA_tiled",       ALGORITHM_AOS_GPU,       { .aos = ComputeGravitation_GPU_SOA_tiled       } },
+//    { "GPU_AOS_tiled",       ALGORITHM_AOS_GPU,       { .aos = ComputeGravitation_GPU_AOS_tiled       } },
+//    { "GPU_AOS_tiled_const", ALGORITHM_AOS_GPU,       { .aos = ComputeGravitation_GPU_AOS_tiled_const } },
+//    { "GPU_Atomic",          ALGORITHM_AOS_GPU,       { .aos = ComputeGravitation_GPU_Atomic          } },
 #endif
     { 0 },
 };
@@ -269,6 +269,7 @@ ComputeGravitation(
     memset(g_hostSOA_Force[1], 0, g_N * sizeof(float));
     memset(g_hostSOA_Force[2], 0, g_N * sizeof(float));
 
+
     switch ( algorithm->type ) {
         case ALGORITHM_SOA:
             *ms = algorithm->soa(
@@ -307,6 +308,13 @@ ComputeGravitation(
                 g_dptrAOS_Force,
                 4*g_N*sizeof(float),
                 cudaMemcpyDeviceToHost ) );
+            break;
+        case ALGORITHM_AOS_MULTIGPU:
+            *ms = algorithm->aos(
+                g_hostAOS_Force,
+                g_hostAOS_PosMass,
+                g_softening*g_softening,
+                g_N );
             break;
 #endif
         default:
