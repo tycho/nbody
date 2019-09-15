@@ -70,14 +70,15 @@ which was broken in the original
 */
 
 static uint32_t init[] = {
-0x00000000,0x5851f42d,0xc0b18ccf,0xcbb5f646,
-0xc7033129,0x30705b04,0x20fd5db4,0x9a8b7f78,
-0x502959d8,0xab894868,0x6c0356a7,0x88cdb7ff,
-0xb477d43f,0x70a3a52b,0xa8e4baf1,0xfd8341fc,
-0x8ae16fd9,0x742d2f7a,0x0d1f0796,0x76035e09,
-0x40f7702c,0x6fa72ca5,0xaaa84157,0x58a0df74,
-0xc74a0364,0xae533cc4,0x04185faf,0x6de3b115,
-0x0cab8628,0xf043bfa4,0x398150e9,0x37521657};
+    0x00000000,0x5851f42d,0xc0b18ccf,0xcbb5f646,
+    0xc7033129,0x30705b04,0x20fd5db4,0x9a8b7f78,
+    0x502959d8,0xab894868,0x6c0356a7,0x88cdb7ff,
+    0xb477d43f,0x70a3a52b,0xa8e4baf1,0xfd8341fc,
+    0x8ae16fd9,0x742d2f7a,0x0d1f0796,0x76035e09,
+    0x40f7702c,0x6fa72ca5,0xaaa84157,0x58a0df74,
+    0xc74a0364,0xae533cc4,0x04185faf,0x6de3b115,
+    0x0cab8628,0xf043bfa4,0x398150e9,0x37521657
+};
 
 static int n = 31;
 static int i = 3;
@@ -207,12 +208,12 @@ void randomUnitBodies(float *pos, float *vel, size_t N, float gscale, float vels
         pos[4*i+0] = point[0] * scale;
         pos[4*i+1] = point[1] * scale;
         pos[4*i+2] = point[2] * scale;
-        pos[4*i+3] = 1.0f;
+        pos[4*i+3] = nbodyRandom(0.5f, 1.0f);
 
         vel[4*i+0] = velocity[0] * vscale;
         vel[4*i+1] = velocity[1] * vscale;
         vel[4*i+2] = velocity[2] * vscale;
-        vel[4*i+3] = 1.0f;
+        vel[4*i+3] = 1.0f / pos[4*i+3];
     }
 }
 
