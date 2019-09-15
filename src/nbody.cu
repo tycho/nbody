@@ -73,6 +73,8 @@
 
 using namespace std;
 
+#define SOA_INTEGRATION 1
+
 #define DEFAULT_KPARTICLES 16
 #define DEFAULT_SEED 7
 
@@ -138,6 +140,7 @@ static float *g_hostAOS_Force_Golden;
 
 float *g_hostSOA_Pos[3];
 float *g_hostSOA_Force[3];
+float *g_hostSOA_Vel[3];
 float *g_hostSOA_Mass;
 float *g_hostSOA_InvMass;
 
@@ -150,11 +153,106 @@ static float g_timestep = 0.016f;
 static float g_scale = 0.9f;
 static float g_velocityScale = 8.0f;
 
-static void
-integrateGravitation_AOS( float * __restrict ppos, float * __restrict pvel, float * __restrict pforce, float dt, float damping, size_t N )
+static inline void
+integrateOne(
+    float * __restrict pos,
+    float * __restrict vel,
+    float * const __restrict force,
+    float invMass,
+    float dt,
+    float damping
+)
 {
+    // acceleration = force / mass;
+    // new velocity = old velocity + acceleration * deltaTime
+    vel[0] += (force[0] * invMass) * dt;
+    vel[1] += (force[1] * invMass) * dt;
+    vel[2] += (force[2] * invMass) * dt;
+
+    vel[0] *= damping;
+    vel[1] *= damping;
+    vel[2] *= damping;
+
+    // new position = old position + velocity * deltaTime
+    pos[0] += vel[0] * dt;
+    pos[1] += vel[1] * dt;
+    pos[2] += vel[2] * dt;
+}
+
+#if SOA_INTEGRATION
+
+static NOINLINE void
+integrateGravitation_SOA(
+    float ** __restrict ppos,
+    float *  __restrict pinvmass,
+    float ** __restrict pvel,
+    float ** const __restrict pforce,
+    float dt,
+    float damping,
+    size_t N
+)
+{
+    ASSERT_ALIGNED(pinvmass, NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(ppos[0], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(ppos[1], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(ppos[2], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(pforce[0], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(pforce[1], NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(pforce[2], NBODY_ALIGNMENT);
+
     ASSUME(N >= 1024);
     ASSUME(N % 1024 == 0);
+
+#pragma omp simd
+    for ( size_t i = 0; i < N; i++ ) {
+        float pos[3], vel[3], force[3];
+
+        pos[0] = ppos[0][i];
+        pos[1] = ppos[1][i];
+        pos[2] = ppos[2][i];
+
+        float invMass = pinvmass[i];
+
+        vel[0] = pvel[0][i];
+        vel[1] = pvel[1][i];
+        vel[2] = pvel[2][i];
+
+        force[0] = pforce[0][i];
+        force[1] = pforce[1][i];
+        force[2] = pforce[2][i];
+
+        integrateOne(pos, vel, force, invMass, dt, damping);
+
+        ppos[0][i] = pos[0];
+        ppos[1][i] = pos[1];
+        ppos[2][i] = pos[2];
+
+        pvel[0][i] = vel[0];
+        pvel[1][i] = vel[1];
+        pvel[2][i] = vel[2];
+    }
+}
+
+#else
+
+static NOINLINE void
+integrateGravitation_AOS(
+    float * __restrict ppos,
+    float * __restrict pvel,
+    float * const __restrict pforce,
+    float dt,
+    float damping,
+    size_t N
+)
+{
+    ASSERT_ALIGNED(ppos, NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(pvel, NBODY_ALIGNMENT);
+    ASSERT_ALIGNED(pforce, NBODY_ALIGNMENT);
+
+    ASSUME(N >= 1024);
+    ASSUME(N % 1024 == 0);
+
+#pragma omp simd
     for ( size_t i = 0; i < N; i++ ) {
         const int index = 4*i;
 
@@ -162,6 +260,7 @@ integrateGravitation_AOS( float * __restrict ppos, float * __restrict pvel, floa
         pos[0] = ppos[index+0];
         pos[1] = ppos[index+1];
         pos[2] = ppos[index+2];
+
         float invMass = pvel[index+3];
 
         vel[0] = pvel[index+0];
@@ -172,20 +271,7 @@ integrateGravitation_AOS( float * __restrict ppos, float * __restrict pvel, floa
         force[1] = pforce[index+1];
         force[2] = pforce[index+2];
 
-        // acceleration = force / mass;
-        // new velocity = old velocity + acceleration * deltaTime
-        vel[0] += (force[0] * invMass) * dt;
-        vel[1] += (force[1] * invMass) * dt;
-        vel[2] += (force[2] * invMass) * dt;
-
-        vel[0] *= damping;
-        vel[1] *= damping;
-        vel[2] *= damping;
-
-        // new position = old position + velocity * deltaTime
-        pos[0] += vel[0] * dt;
-        pos[1] += vel[1] * dt;
-        pos[2] += vel[2] * dt;
+        integrateOne(pos, vel, force, invMass, dt, damping);
 
         ppos[index+0] = pos[0];
         ppos[index+1] = pos[1];
@@ -197,10 +283,12 @@ integrateGravitation_AOS( float * __restrict ppos, float * __restrict pvel, floa
     }
 }
 
+#endif
+
 static int g_bCrossCheck = 1;
 static int g_bNoCPU = 0;
 
-static int
+static NOINLINE int
 ComputeGravitation(
     float *ms,
     float *maxRelError,
@@ -219,15 +307,6 @@ ComputeGravitation(
 
     if (!g_bCUDAPresent && bIsGPUAlgorithm)
         return 1;
-
-    // AOS -> SOA data structures in case we are measuring SOA performance
-    for ( size_t i = 0; i < g_N; i++ ) {
-        g_hostSOA_Pos[0][i]  = g_hostAOS_PosMass[4*i+0];
-        g_hostSOA_Pos[1][i]  = g_hostAOS_PosMass[4*i+1];
-        g_hostSOA_Pos[2][i]  = g_hostAOS_PosMass[4*i+2];
-        g_hostSOA_Mass[i]    = g_hostAOS_PosMass[4*i+3];
-        g_hostSOA_InvMass[i] = 1.0f / g_hostSOA_Mass[i];
-    }
 
     if ( bCrossCheck && algorithm != &s_algorithms[0] ) {
         ComputeGravitation_SOA(
@@ -248,7 +327,6 @@ ComputeGravitation(
     memset(g_hostSOA_Force[0], 0, g_N * sizeof(float));
     memset(g_hostSOA_Force[1], 0, g_N * sizeof(float));
     memset(g_hostSOA_Force[2], 0, g_N * sizeof(float));
-
 
     switch ( algorithm->type ) {
         case ALGORITHM_SOA:
@@ -305,13 +383,22 @@ ComputeGravitation(
     if ( *ms < __FLT_EPSILON__ )
         return 1;
 
-    // SOA -> AOS
     if ( bSOA ) {
+#pragma omp simd
         for ( size_t i = 0; i < g_N; i++ ) {
             g_hostAOS_Force[4*i+0] = g_hostSOA_Force[0][i];
             g_hostAOS_Force[4*i+1] = g_hostSOA_Force[1][i];
             g_hostAOS_Force[4*i+2] = g_hostSOA_Force[2][i];
         }
+    } else {
+#if SOA_INTEGRATION
+#pragma omp simd
+        for ( size_t i = 0; i < g_N; i++ ) {
+            g_hostSOA_Force[0][i] = g_hostAOS_Force[4*i+0];
+            g_hostSOA_Force[1][i] = g_hostAOS_Force[4*i+1];
+            g_hostSOA_Force[2][i] = g_hostAOS_Force[4*i+2];
+        }
+#endif
     }
 
     *maxRelError = 0.0f;
@@ -328,6 +415,29 @@ ComputeGravitation(
         *maxRelError = max;
     }
 
+#if SOA_INTEGRATION
+    integrateGravitation_SOA(
+        g_hostSOA_Pos,
+        g_hostSOA_InvMass,
+        g_hostSOA_Vel,
+        g_hostSOA_Force,
+        g_timestep,
+        g_damping,
+        g_N );
+
+    // SOA -> AOS data structures in case we are measuring AOS performance
+#pragma omp simd
+    for ( size_t i = 0; i < g_N; i++ ) {
+        g_hostAOS_PosMass[4*i+0]    = g_hostSOA_Pos[0][i];
+        g_hostAOS_PosMass[4*i+1]    = g_hostSOA_Pos[1][i];
+        g_hostAOS_PosMass[4*i+2]    = g_hostSOA_Pos[2][i];
+        g_hostAOS_VelInvMass[4*i+0] = g_hostSOA_Vel[0][i];
+        g_hostAOS_VelInvMass[4*i+1] = g_hostSOA_Vel[1][i];
+        g_hostAOS_VelInvMass[4*i+2] = g_hostSOA_Vel[2][i];
+        g_hostAOS_VelInvMass[4*i+3] = g_hostSOA_InvMass[i];
+        g_hostAOS_PosMass[4*i+3]    = g_hostSOA_Mass[i];
+    }
+#else
     integrateGravitation_AOS(
         g_hostAOS_PosMass,
         g_hostAOS_VelInvMass,
@@ -335,6 +445,21 @@ ComputeGravitation(
         g_timestep,
         g_damping,
         g_N );
+
+    // AOS -> SOA data structures in case we are measuring SOA performance
+#pragma omp simd
+    for ( size_t i = 0; i < g_N; i++ ) {
+        g_hostSOA_Pos[0][i]  = g_hostAOS_PosMass[4*i+0];
+        g_hostSOA_Pos[1][i]  = g_hostAOS_PosMass[4*i+1];
+        g_hostSOA_Pos[2][i]  = g_hostAOS_PosMass[4*i+2];
+        g_hostSOA_Vel[0][i]  = g_hostAOS_VelInvMass[4*i+0];
+        g_hostSOA_Vel[1][i]  = g_hostAOS_VelInvMass[4*i+1];
+        g_hostSOA_Vel[2][i]  = g_hostAOS_VelInvMass[4*i+2];
+        g_hostSOA_InvMass[i] = g_hostAOS_VelInvMass[4*i+3];
+        g_hostSOA_Mass[i]    = g_hostAOS_PosMass[4*i+3];
+    }
+#endif
+
     return 0;
 #ifdef USE_CUDA
 Error:
@@ -390,6 +515,7 @@ static int freeArrays(void)
         for ( size_t i = 0; i < 3; i++ ) {
             CUDART_CHECK( cudaFreeHost( g_hostSOA_Pos[i] ) );
             CUDART_CHECK( cudaFreeHost( g_hostSOA_Force[i] ) );
+            CUDART_CHECK( cudaFreeHost( g_hostSOA_Vel[i] ) );
         }
         CUDART_CHECK( cudaFreeHost( g_hostAOS_Force ) );
         CUDART_CHECK( cudaFreeHost( g_hostAOS_Force_Golden ) );
@@ -406,6 +532,7 @@ static int freeArrays(void)
         for ( size_t i = 0; i < 3; i++ ) {
             alignedFree(g_hostSOA_Pos[i]);
             alignedFree(g_hostSOA_Force[i]);
+            alignedFree(g_hostSOA_Vel[i]);
         }
         alignedFree(g_hostAOS_Force);
         alignedFree(g_hostAOS_Force_Golden);
@@ -431,6 +558,7 @@ static int allocArrays(void)
         for ( size_t i = 0; i < 3; i++ ) {
             CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Pos[i], g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
             CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Force[i], g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
+            CUDART_CHECK( cudaHostAlloc( (void **) &g_hostSOA_Vel[i], g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
         }
         CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_Force, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
         CUDART_CHECK( cudaHostAlloc( (void **) &g_hostAOS_Force_Golden, 4*g_N*sizeof(float), cudaHostAllocPortable|cudaHostAllocMapped ) );
@@ -454,6 +582,10 @@ static int allocArrays(void)
 
             g_hostSOA_Force[i] = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
             if (!g_hostSOA_Force[i])
+                goto Error;
+
+            g_hostSOA_Vel[i] = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
+            if (!g_hostSOA_Vel[i])
                 goto Error;
         }
         g_hostSOA_Mass = (float *)alignedAlloc(NBODY_ALIGNMENT, sizeof(float) * g_N);
@@ -861,8 +993,14 @@ int main(int argc, char **argv)
 
     randomUnitBodies( g_hostAOS_PosMass, g_hostAOS_VelInvMass, g_N, g_scale, g_velocityScale );
     for ( size_t i = 0; i < g_N; i++ ) {
+        g_hostSOA_Pos[0][i] = g_hostAOS_PosMass[4*i+0];
+        g_hostSOA_Pos[1][i] = g_hostAOS_PosMass[4*i+1];
+        g_hostSOA_Pos[2][i] = g_hostAOS_PosMass[4*i+2];
         g_hostSOA_Mass[i] = g_hostAOS_PosMass[4*i+3];
-        g_hostSOA_InvMass[i] = 1.0f / g_hostSOA_Mass[i];
+        g_hostSOA_Vel[0][i] = g_hostAOS_VelInvMass[4*i+0];
+        g_hostSOA_Vel[1][i] = g_hostAOS_VelInvMass[4*i+1];
+        g_hostSOA_Vel[2][i] = g_hostAOS_VelInvMass[4*i+2];
+        g_hostSOA_InvMass[i] = g_hostAOS_VelInvMass[4*i+3];
     }
 
     {
