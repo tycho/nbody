@@ -114,6 +114,9 @@ endif
 ifdef CUDA
   ifndef DEBUG
     NVCCFLAGS := -O3
+    ifneq (,$(findstring clang,$(NVCC)))
+      NVCCFLAGS += -ffast-math
+    endif
   else
     NVCCFLAGS := -O0 -g
   endif
