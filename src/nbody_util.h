@@ -43,7 +43,7 @@ extern "C" {
 
 #define NBODY_ALIGNMENT 64
 
-/* Disabled until GCC 9, when some of the target_clones bugs are hopefully fixed. */
+/* Disabled until the target_clones bugs are fixed. */
 //#if !defined(__GNUC__) || __GNUC__ < 9
 #define TARGET_DECL
 //#endif
@@ -53,35 +53,44 @@ extern "C" {
 #endif
 
 #if defined(__GNUC__)
-#  define ALIGNED(n) __attribute__((aligned(n)))
-#  ifdef DEBUG
-#    define ASSERT_ALIGNED(p,n) do { assert(((uintptr_t)(p) & (uintptr_t)(n-1)) == 0); } while (0)
-#  elif !defined(__clang__) || __has_builtin(__builtin_assume_aligned)
-#    define ASSERT_ALIGNED(p,n) do { p = (float *)__builtin_assume_aligned(p, n); } while(0)
-#  endif
-#  if defined(__clang__)
-#    if __has_builtin(__builtin_assume)
-#      define ASSUME(cond) __builtin_assume(cond)
-#    endif
-#  endif
-#  if !defined(ASSUME) && defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
-#    define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
-#  endif
-#  if !defined(__clang__) && !defined(TARGET_DECL)
-#    define TARGET_DECL __attribute__((target_clones("arch=haswell", "arch=sandybridge", "default")))
-#  endif
+#  define NOINLINE __attribute__((noinline))
+#elif defined(_MSC_VER)
+#  define NOINLINE __declspec(noinline)
+#else
+#  define NOINLINE
 #endif
 
-#if !defined(ALIGNED)
+#if defined(__GNUC__)
+#  define ALIGNED(n) __attribute__((aligned(n)))
+#elif defined(_MSC_VER)
+#  define ALIGNED(n) __declspec(align(n))
+#else
 #  define ALIGNED(n)
 #endif
-#if !defined(ASSERT_ALIGNED)
-#  define ASSERT_ALIGNED(p,n)
-#endif
-#if !defined(ASSUME)
+
+#if __has_builtin(__builtin_assume)
+#  define ASSUME(cond) __builtin_assume(cond)
+#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
+#  define ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
+#else
 #  define ASSUME(cond)
 #endif
-#if !defined(TARGET_DECL)
+
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER) && !defined(__NVCC__) && !defined(__CUDA__)
+#  define NO_FAST_MATH __attribute__((optimize("-fno-fast-math")))
+#else
+#  define NO_FAST_MATH
+#endif
+
+#if __has_builtin(__builtin_assume_aligned)
+#  define ASSERT_ALIGNED(p,n) do { p = (float *)__builtin_assume_aligned(p, n); } while(0)
+#else
+#  define ASSERT_ALIGNED(p,n)
+#endif
+
+#if !defined(TARGET_DECL) && defined(__GNUC__) && !defined(__clang__)
+#  define TARGET_DECL __attribute__((target_clones("arch=haswell", "arch=sandybridge", "default")))
+#else
 #  define TARGET_DECL
 #endif
 
