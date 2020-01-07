@@ -55,7 +55,7 @@ if [[ $HAVE_MESON -eq 1 ]]; then
 	if type -P nvcc &>/dev/null; then
 		rm -rf build
 		mkdir build
-		meson . build -Dcuda=true
+		meson . build -Duse_cuda=true
 		ninja -C build
 		build/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
 	fi
