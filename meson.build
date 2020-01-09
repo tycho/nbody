@@ -122,9 +122,38 @@ else
 endif
 
 if enable_openmp
-    openmp = dependency('openmp')
+    openmp = dependency('openmp', required: false)
     cpp_args += ['-DUSE_OPENMP']
-    extra_deps += [openmp]
+    if openmp.found()
+        extra_deps += [openmp]
+    else
+        openmp_cflag_try = [
+          '-fopenmp=libomp',
+          '-fopenmp=libiomp5',
+          '-fopenmp=libgomp',
+          '-fopenmp'
+        ]
+        omp_arg = compiler.first_supported_argument(openmp_cflag_try)
+        omp_header = compiler.has_header('omp.h')
+        assert(omp_header, 'omp.h header is missing')
+        omp_lib = compiler.find_library('omp', required: false)
+        omp_ok = omp_lib.found() and run_command('src/openmp-detect.sh', compiler.cmd_array() + [omp_arg, '-lomp']).returncode() == 0
+        if not omp_ok
+            omp_lib = compiler.find_library('iomp5', required: false)
+            omp_ok = omp_lib.found() and run_command('src/openmp-detect.sh', compiler.cmd_array() + [omp_arg, '-liomp5']).returncode() == 0
+            if not omp_ok
+                omp_lib = compiler.find_library('gomp', required: true)
+                omp_ok = omp_lib.found() and run_command('src/openmp-detect.sh', compiler.cmd_array() + [omp_arg, '-lgomp']).returncode() == 0
+                if not omp_ok
+                    omp_lib = []
+                    omp_ok = run_command('src/openmp-detect.sh', compiler.cmd_array() + [omp_arg, omp_arg]).returncode() == 0
+                endif
+            endif
+        endif
+        assert(omp_ok, 'Could not find working OpenMP functionality in your compiler')
+        cpp_args += [omp_arg]
+        extra_deps += [omp_lib]
+    endif
 endif
 
 if target_machine.system() == 'windows'
