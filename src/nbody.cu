@@ -102,7 +102,7 @@ static const algorithm_def_t s_algorithms[] = {
 
 static inline bool isGPUAlgorithm(const algorithm_def_t *algorithm)
 {
-    return (algorithm->type == ALGORITHM_AOS_GPU);
+    return (algorithm->type == ALGORITHM_AOS_GPU || algorithm->type == ALGORITHM_AOS_MULTIGPU);
 }
 
 static int maxAlgorithmIdx(void)
