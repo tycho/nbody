@@ -24,8 +24,8 @@ fi
 
 # Compile and link with separate steps, ensuring that -fopenmp doesn't get
 # passed to the linker if we have a $LIB_FLAG specified.
-if ${CXX} ${OMP_FLAG} -c -o openmp-test.o openmp-test.cpp &>/dev/null; then
-	if ${CXX} -o openmp-test openmp-test.o ${LIB_FLAG} -lm &>/dev/null; then
+if ${CXX} ${OMP_FLAG} ${CXXFLAGS} ${CPPFLAGS} -c -o openmp-test.o openmp-test.cpp &>/dev/null; then
+	if ${CXX} -o openmp-test openmp-test.o ${LDFLAGS} ${LIB_FLAG} -lm &>/dev/null; then
 		if env KMP_AFFINITY=verbose OMP_NUM_THREADS=2 ./openmp-test &>/dev/null; then
 			exit 0
 		fi
