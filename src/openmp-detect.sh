@@ -5,6 +5,11 @@ set -ex
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $SCRIPT_DIR
 
+cleanup() {
+	rm -f openmp-test.o openmp-test
+}
+trap cleanup EXIT
+
 CXX="$1"
 if [[ "${CXX}" == "ccache" ]]; then
 	shift; CXX+=" $1"
