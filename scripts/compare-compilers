@@ -88,7 +88,7 @@ if [[ $BUILT_SOMETHING -gt 0 ]]; then
 fi
 echo
 
-lscpu
+lscpu | grep -v ^Vulnerability | fmt -t -w 110
 echo
 uname -srm
 

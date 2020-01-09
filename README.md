@@ -97,25 +97,15 @@ L1i cache:                       512 KiB
 L2 cache:                        8 MiB
 L3 cache:                        64 MiB
 NUMA node0 CPU(s):               0-31
-Vulnerability Itlb multihit:     Not affected
-Vulnerability L1tf:              Not affected
-Vulnerability Mds:               Not affected
-Vulnerability Meltdown:          Not affected
-Vulnerability Spec store bypass: Mitigation; Speculative Store Bypass disabled via prctl and seccomp
-Vulnerability Spectre v1:        Mitigation; usercopy/swapgs barriers and __user pointer sanitization
-Vulnerability Spectre v2:        Mitigation; Full AMD retpoline, IBPB conditional, STIBP conditional, RSB filling
-Vulnerability Tsx async abort:   Not affected
-Flags:                           fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxs
-                                 r sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl n
-                                 onstop_tsc cpuid extd_apicid aperfmperf pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse
-                                 4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy ab
-                                 m sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_
-                                 nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate sme ssbd mba sev ibpb stibp vmm
-                                 call fsgsbase bmi1 avx2 smep bmi2 cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsav
-                                 eopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local clzero irp
-                                 erf xsaveerptr wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyas
-                                 id decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif umip rdpid overflow_
-                                 recov succor smca
+Flags:                           fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36
+   clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl
+   nonstop_tsc cpuid extd_apicid aperfmperf pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt
+   aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch
+   osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3
+   hw_pstate sme ssbd mba sev ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 cqm rdt_a rdseed adx smap
+   clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local
+   clzero irperf xsaveerptr wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid
+   decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif umip rdpid overflow_recov succor smca
 
 Linux 5.4.7-1-hsw x86_64
 
@@ -135,7 +125,9 @@ n-body version: 1.6.0-109-g8f6ea8a
 
 Binary size: 1284632 bytes
 
-+ env OMP_NUM_THREADS=16 KMP_AFFINITY=scatter build-gcc/nbody --bodies 96 --cycle-after 4 --iterations 1 --verbose --no-crosscheck
++ env OMP_NUM_THREADS=16 KMP_AFFINITY=scatter build-gcc/nbody \
+    --bodies 96 --cycle-after 4 --iterations 1 --verbose --no-crosscheck
+
 Running simulation with 98304 particles, 16 CPU threads, up to 1 GPUs
       CPU_SOA:   255.37 ms =   37.843x10^9 interactions/s (   756.85 GFLOPS)
       CPU_SOA:   253.51 ms =   38.120x10^9 interactions/s (   762.39 GFLOPS)
@@ -195,7 +187,9 @@ n-body version: 1.6.0-109-g8f6ea8a
 
 Binary size: 582264 bytes
 
-+ env OMP_NUM_THREADS=16 KMP_AFFINITY=scatter build-clang/nbody --bodies 96 --cycle-after 4 --iterations 1 --verbose --no-crosscheck
++ env OMP_NUM_THREADS=16 KMP_AFFINITY=scatter build-clang/nbody \
+    --bodies 96 --cycle-after 4 --iterations 1 --verbose --no-crosscheck
+
 Running simulation with 98304 particles, 16 CPU threads, up to 1 GPUs
       CPU_SOA:   263.99 ms =   36.606x10^9 interactions/s (   732.12 GFLOPS)
       CPU_SOA:   265.18 ms =   36.442x10^9 interactions/s (   728.83 GFLOPS)
