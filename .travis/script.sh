@@ -6,16 +6,23 @@
 #
 set -ex
 
-rm -rf build
-mkdir build
-meson . build
-ninja -C build
-build/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
+cleanup() {
+	rm -rf travis-build-{cpu,gpu}
+}
+trap cleanup EXIT
+
+BUILDDIR=travis-build-cpu
+rm -rf $BUILDDIR
+mkdir $BUILDDIR
+meson . $BUILDDIR
+ninja -C $BUILDDIR
+$BUILDDIR/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
 
 if type -P nvcc &>/dev/null; then
-	rm -rf build
-	mkdir build
-	meson . build -Duse_cuda=true
-	ninja -C build
-	build/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
+	BUILDDIR=travis-build-gpu
+	rm -rf $BUILDDIR
+	mkdir $BUILDDIR
+	meson . $BUILDDIR -Duse_cuda=true
+	ninja -C $BUILDDIR
+	$BUILDDIR/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
 fi
