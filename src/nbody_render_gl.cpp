@@ -2,6 +2,9 @@
 
 #if defined(USE_GL)
 
+#include <chrono>
+#include <thread>
+
 #include <GL/glew.h>
 
 #include <SDL.h>
@@ -196,6 +199,9 @@ int gl_display(void)
     glUseProgram(0);
 
     SDL_GL_SwapWindow(g_window);
+
+    std::chrono::microseconds const_60fps(16666);
+    std::this_thread::sleep_for(const_60fps);
 
     return 0;
 }
