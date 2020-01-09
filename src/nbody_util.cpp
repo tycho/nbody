@@ -50,7 +50,13 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
+#if !defined(__aarch64__)
 #include <mm_malloc.h>
+#else
+#include <stdlib.h>
+#define _mm_malloc(x,y) malloc(x)
+#define _mm_free free
+#endif
 #include <math.h>
 #include <stdio.h>
 #include <termios.h>
