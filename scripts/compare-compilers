@@ -1,49 +1,101 @@
 #!/bin/bash
 
+show_command() {
+	echo "+ $@"
+	$@
+}
+
+cores() {
+	lscpu -b -p=CORE,SOCKET | grep -v '^#' | sort | uniq | wc -l
+}
+
 COMPILERS=(
 	gcc
 	clang
-	icc
+	#icc
 )
 
 ARGS=( $@ )
 if [[ ${#ARGS[@]} -eq 0 ]]; then
-	ARGS=(--bodies 32 --cycle-after 3 --iterations 1)
+	ARGS=(--bodies 96 --cycle-after 4 --iterations 1 --verbose --no-crosscheck)
 fi
 
-for COMPILER in ${COMPILERS[@]}; do
-	NBODY=nbody.${COMPILER##*/}
+BUILT_SOMETHING=0
 
-	if [[ -f ${NBODY} ]]; then
-		continue
-	fi
+for COMPILER in ${COMPILERS[@]}; do
+	NBODY=build-${COMPILER}/nbody
+	BUILDINFO=${NBODY}.buildinfo
+
+	[[ -x ${NBODY} ]] && continue
+
+	type -P ${COMPILER} &>/dev/null || continue
 
 	echo
 	echo "Building with ${COMPILER}..."
 
-	EXTRA_MAKE_ARGS=()
-	if [[ $COMPILER == "clang" ]]; then
-		EXTRA_MAKE_ARGS+=( NVCC=clang++ )
+	if [[ ${ALLOW_CUDA:-1} -gt 0 ]] && type -P nvcc &>/dev/null; then
+		CUDA_PRESENT=1
+	else
+		CUDA_PRESENT=0
+	fi
+	[[ ${COMPILER} == icc ]] && CUDA_PRESENT=0
+	echo "CUDA Present: ${CUDA_PRESENT}"
+
+	EXTRA_MESON_ARGS=()
+
+	if [[ $CUDA_PRESENT -gt 0 ]]; then
+		EXTRA_MESON_ARGS+=(-Duse_cuda=true)
 	fi
 
-	make --no-print-directory CC=${COMPILER} ${EXTRA_MAKE_ARGS[@]} CUDA=1
-	make --no-print-directory CC=${COMPILER} ${EXTRA_MAKE_ARGS[@]} CUDA=1 info-flags info-compiler 2>&1 > ${NBODY}.buildinfo
-	mv nbody ${NBODY}
+	export -n CC CXX NVCC CXXFLAGS LIBRARY_PATH
+
+	case $COMPILER in
+		gcc)
+			export CC=gcc CXX=g++
+			;;
+		clang)
+			export CC=clang CXX=clang++
+			EXTRA_MESON_ARGS+=(-Dnvcc=clang++)
+			;;
+		icc)
+			export CC=icc CXX=icpc
+			;;
+	esac
+
+	meson . build-${COMPILER} ${EXTRA_MESON_ARGS[@]} || continue
+	ninja -C build-${COMPILER} || continue
+
+	rm -f ${BUILDINFO}
+	${CXX} --version > ${BUILDINFO}
+
+	# gcc outputs an extra newline, so we can skip the blank echo here
+	[[ ${CXX} != g++ ]] && echo >> ${BUILDINFO}
+
+	[[ $CUDA_PRESENT -gt 0 ]] && nvcc --version >> ${BUILDINFO}
+
+	echo >> ${BUILDINFO}
+	(echo -n "n-body version: "; git describe --tags) >> ${BUILDINFO}
+
+	echo >> ${BUILDINFO}
+	echo "Binary size: $(wc -c ${NBODY} | awk '{ print $ 1 }') bytes" >> ${BUILDINFO}
+
 	BUILT_SOMETHING=1
 done
 
-if [[ $BUILT_SOMETHING ]]; then
+if [[ $BUILT_SOMETHING -gt 0 ]]; then
 	echo
 	echo "============================================"
 fi
 echo
 
-make --no-print-directory info-cpu info-gpu info-os
+lscpu
+echo
+uname -srm
 
 for COMPILER in ${COMPILERS[@]}; do
-	NBODY=nbody.${COMPILER##*/}
+	NBODY=build-${COMPILER}/nbody
 
-	if [[ ! -f ${NBODY} ]]; then
+	if [[ ! -x ${NBODY} ]]; then
 		continue
 	fi
 
@@ -51,20 +103,18 @@ for COMPILER in ${COMPILERS[@]}; do
 	echo "============================================"
 	echo
 	cat ${NBODY}.buildinfo
-	echo "Binary size: $(wc -c ${NBODY} | awk '{ print $ 1 }') bytes"
 	echo
 
-	if [[ -z "$KMP_AFFINITY" ]]; then
-		# If you have the LLVM OpenMP Runtime linked in, this will help with
-		# thread placement and scheduling.
-		export KMP_AFFINITY=scatter
-	fi
+	OMP_PARAMS=(
+		OMP_NUM_THREADS=$(cores)
+		KMP_AFFINITY=scatter
+	)
 
 	# Do a quick warm-up to wake up the CPUs.
-	./${NBODY} --bodies 32 --iterations 2 &>/dev/null
+	${NBODY} --bodies 32 --iterations 4 &>/dev/null
 
 	# Now run with the requested arguments.
-	env KMP_AFFINITY=scatter,granularity=fine ./${NBODY} ${ARGS[@]}
+	show_command env ${OMP_PARAMS[@]} ${NBODY} ${ARGS[@]}
 
 	echo
 done

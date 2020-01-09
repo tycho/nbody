@@ -36,6 +36,7 @@ cxx_args = [
         '-mcpu=native',
     ]),
 ] + compiler.get_supported_arguments([
+    '-fPIC',
     '-fno-exceptions',
     '-fno-rtti',
     '-fvisibility=hidden',
@@ -43,6 +44,7 @@ cxx_args = [
     '-Wno-unknown-pragmas',
     '-fno-asynchronous-unwind-tables',
 ])
+ld_args = [ '-fPIC' ]
 cpp_args = [
     #'-DHIGH_ENTROPY',
 ]
@@ -58,6 +60,8 @@ nvcc_flags = [
 
 if nvcc_name == 'clang++'
     nvcc_flags += [
+        '-fPIC',
+        '-std=c++11',
         '-fcuda-flush-denormals-to-zero',
         '--cuda-gpu-arch=sm_52',
         '--cuda-gpu-arch=sm_61',
@@ -65,6 +69,7 @@ if nvcc_name == 'clang++'
     ]
 elif nvcc_name == 'nvcc'
     nvcc_flags += [
+        '-Xcompiler', '-fPIC',
         '--ftz', 'true',
         '-gencode=arch=compute_52,code="sm_52,compute_52"',
         '-gencode=arch=compute_61,code="sm_61,compute_61"',
@@ -132,16 +137,16 @@ if enable_openmp
     omp_header = compiler.has_header('omp.h')
     assert(omp_header, 'omp.h header is missing')
     omp_lib = compiler.find_library('omp', required: false)
-    omp_ok = omp_lib.found() and run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, '-lomp']).returncode() == 0
+    omp_ok = omp_lib.found() and run_command('src/openmp-detect.sh', compiler.cmd_array() + [omp_arg, '-lomp']).returncode() == 0
     if not omp_ok
         omp_lib = compiler.find_library('iomp5', required: false)
-        omp_ok = omp_lib.found() and run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, '-liomp5']).returncode() == 0
+        omp_ok = omp_lib.found() and run_command('src/openmp-detect.sh', compiler.cmd_array() + [omp_arg, '-liomp5']).returncode() == 0
         if not omp_ok
             omp_lib = compiler.find_library('gomp', required: true)
-            omp_ok = omp_lib.found() and run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, '-lgomp']).returncode() == 0
+            omp_ok = omp_lib.found() and run_command('src/openmp-detect.sh', compiler.cmd_array() + [omp_arg, '-lgomp']).returncode() == 0
             if not omp_ok
                 omp_lib = []
-                omp_ok = run_command('src/openmp-detect-meson.sh', compiler.cmd_array() + [omp_arg, omp_arg]).returncode() == 0
+                omp_ok = run_command('src/openmp-detect.sh', compiler.cmd_array() + [omp_arg, omp_arg]).returncode() == 0
             endif
         endif
     endif
@@ -160,6 +165,7 @@ executable('nbody',
     cxx_sources,
     cuda_obj,
     cpp_args: cxx_args + cpp_args,
+    link_args: ld_args,
     include_directories : incdirs,
     dependencies: [threads, libm] + extra_deps)
 
