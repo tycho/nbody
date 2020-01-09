@@ -36,6 +36,10 @@ cxx_args = [
         '-mcpu=native',
     ]),
 ] + compiler.get_supported_arguments([
+    '-fno-exceptions',
+    '-fno-rtti',
+    '-fvisibility=hidden',
+    '-fvisibility-inlines-hidden',
     '-Wno-unknown-pragmas',
     '-fno-asynchronous-unwind-tables',
 ])
