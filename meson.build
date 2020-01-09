@@ -35,9 +35,11 @@ c_sources = [
 ]
 c_args = [
     '-ffast-math',
+    compiler.first_supported_argument([
+        '-march=native',
+        '-mcpu=native',
+    ]),
 ] + compiler.get_supported_arguments([
-    '-march=native',
-    '-mcpu=native',
     '-Wno-unknown-pragmas',
     '-fno-asynchronous-unwind-tables',
 ])
