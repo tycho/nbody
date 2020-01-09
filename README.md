@@ -107,6 +107,8 @@ Flags:                           fpu vme de pse tsc msr pae mce cx8 apic sep mtr
    clzero irperf xsaveerptr wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid
    decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif umip rdpid overflow_recov succor smca
 
+GPU 0: GeForce RTX 2080 Ti
+
 Linux 5.4.7-1-hsw x86_64
 
 ============================================
@@ -121,7 +123,7 @@ Copyright (c) 2005-2019 NVIDIA Corporation
 Built on Wed_Apr_24_19:10:27_PDT_2019
 Cuda compilation tools, release 10.1, V10.1.168
 
-n-body version: 1.6.0-109-g8f6ea8a
+n-body version: 1.6.0-110-gd7b7038
 
 Binary size: 1284632 bytes
 
@@ -183,7 +185,7 @@ Copyright (c) 2005-2019 NVIDIA Corporation
 Built on Wed_Apr_24_19:10:27_PDT_2019
 Cuda compilation tools, release 10.1, V10.1.168
 
-n-body version: 1.6.0-109-g8f6ea8a
+n-body version: 1.6.0-110-gd7b7038
 
 Binary size: 582264 bytes
 

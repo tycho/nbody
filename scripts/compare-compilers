@@ -90,6 +90,8 @@ echo
 
 lscpu | grep -v ^Vulnerability | fmt -t -w 110
 echo
+nvidia-smi -L | sed 's/\s(UUID.*$//'
+echo
 uname -srm
 
 for COMPILER in ${COMPILERS[@]}; do
