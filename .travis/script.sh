@@ -6,23 +6,29 @@
 #
 set -ex
 
+BUILD_DIRS=()
+
 cleanup() {
-	rm -rf travis-build-{cpu,gpu}
+	rm -rf "${BUILD_DIRS[@]}"
 }
 trap cleanup EXIT
 
-BUILDDIR=travis-build-cpu
-rm -rf $BUILDDIR
-mkdir $BUILDDIR
-meson . $BUILDDIR
-ninja -C $BUILDDIR
-$BUILDDIR/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
+build_and_run() {
+	ID="$1"
+	MESON_ARGS="$2"
+	BUILDDIR="travis-build-$ID"
+	BUILD_DIRS+=( "$BUILDDIR" )
+	rm -rf "$BUILDDIR"
+	mkdir "$BUILDDIR"
+	meson . "$BUILDDIR" $MESON_ARGS
+	ninja -C "$BUILDDIR"
+	"$BUILDDIR"/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
+}
 
+build_and_run default
 if type -P nvcc &>/dev/null; then
-	BUILDDIR=travis-build-gpu
-	rm -rf $BUILDDIR
-	mkdir $BUILDDIR
-	meson . $BUILDDIR -Duse_cuda=true
-	ninja -C $BUILDDIR
-	$BUILDDIR/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
+	build_and_run gpu "-Duse_cuda=true"
 fi
+build_and_run no-openmp "-Dopenmp=false"
+build_and_run no-intrinsics "-Dintrinsics=false"
+build_and_run opengl "-Dopengl=true"

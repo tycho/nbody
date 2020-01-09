@@ -13,23 +13,25 @@ compiler:
   - clang
 
 env:
-  - IMAGE=ubuntu IMAGE_TAG=latest
-  - IMAGE=ubuntu IMAGE_TAG=rolling
-  - IMAGE=ubuntu IMAGE_TAG=devel
-  - IMAGE=fedora IMAGE_TAG=latest
-  - IMAGE=nvidia/cuda IMAGE_TAG=10.0-devel
-  - IMAGE=nvidia/cuda IMAGE_TAG=10.1-devel
+  global:
+    - CONTAINER_NAME=travis-docker-builder
+  jobs:
+    - IMAGE=ubuntu IMAGE_TAG=latest
+    - IMAGE=ubuntu IMAGE_TAG=rolling
+    - IMAGE=ubuntu IMAGE_TAG=devel
+    - IMAGE=fedora IMAGE_TAG=latest
+    - IMAGE=nvidia/cuda IMAGE_TAG=10.0-devel
+    - IMAGE=nvidia/cuda IMAGE_TAG=10.1-devel
 
 before_install:
-  - export CONTAINER=${IMAGE//\//-}-${IMAGE_TAG}
-  - docker run -d --name $CONTAINER -e LC_ALL="en_US.UTF-8" -e LANG="en_US.UTF-8" -v $(pwd):/travis -w /travis $IMAGE:$IMAGE_TAG tail -f /dev/null
+  - docker run -d --name $CONTAINER_NAME -e LC_ALL="en_US.UTF-8" -e LANG="en_US.UTF-8" -v $(pwd):/travis -w /travis $IMAGE:$IMAGE_TAG tail -f /dev/null
   - docker ps
 
 install:
-  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/install-${IMAGE//\//-}.sh
-  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/install-post.sh
+  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER_NAME bash .travis/install-${IMAGE//\//-}.sh
+  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER_NAME bash .travis/install-post.sh
 
 script:
-  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER bash .travis/script.sh
+  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER_NAME bash .travis/script.sh
 
 # vim: set ts=2 sts=2 sw=2 et:

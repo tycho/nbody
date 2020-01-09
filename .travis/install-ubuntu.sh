@@ -8,7 +8,7 @@ apt-get update
 apt-get install -y locales
 locale-gen en_US.UTF-8
 
-PACKAGES=(build-essential pkg-config clang meson)
+PACKAGES=(build-essential pkg-config clang meson libgl-dev libglew-dev libsdl2-dev)
 
 apt-get install -y "${PACKAGES[@]}"
 

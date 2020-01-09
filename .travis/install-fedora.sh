@@ -11,6 +11,8 @@ PACKAGES=(
 	meson
 	libomp-devel
 	pkgconf-pkg-config
+	glew-devel
+	SDL2-devel
 )
 
 dnf install -y "${PACKAGES[@]}"
