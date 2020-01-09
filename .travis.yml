@@ -13,14 +13,10 @@ compiler:
   - clang
 
 env:
-  - IMAGE=ubuntu IMAGE_TAG=bionic
-  - IMAGE=ubuntu IMAGE_TAG=cosmic
-  - IMAGE=ubuntu IMAGE_TAG=disco
+  - IMAGE=ubuntu IMAGE_TAG=latest
+  - IMAGE=ubuntu IMAGE_TAG=rolling
+  - IMAGE=ubuntu IMAGE_TAG=devel
   - IMAGE=fedora IMAGE_TAG=latest
-  - IMAGE=fedora IMAGE_TAG=rawhide
-  - IMAGE=nvidia/cuda IMAGE_TAG=7.5-devel BROKEN=1
-  - IMAGE=nvidia/cuda IMAGE_TAG=8.0-devel BROKEN=1
-  - IMAGE=nvidia/cuda IMAGE_TAG=9.2-devel BROKEN=1
   - IMAGE=nvidia/cuda IMAGE_TAG=10.0-devel
   - IMAGE=nvidia/cuda IMAGE_TAG=10.1-devel
 
