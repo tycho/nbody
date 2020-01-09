@@ -34,9 +34,10 @@ c_sources = [
     'src/nbody_util.c',
 ]
 c_args = [
-    '-march=native',
     '-ffast-math',
 ] + compiler.get_supported_arguments([
+    '-march=native',
+    '-mcpu=native',
     '-Wno-unknown-pragmas',
     '-fno-asynchronous-unwind-tables',
 ])
