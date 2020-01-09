@@ -41,7 +41,7 @@
 #include "nbody_util.h"
 
 #include "bodybodyInteraction_AltiVec.h"
-#include "nbody_CPU_SSE.h"
+#include "nbody_CPU_SIMD.h"
 
 const char *SIMD_ALGORITHM_NAME = "AltiVec";
 
