@@ -9,7 +9,6 @@ PACKAGES=(
 	gcc-c++
 	clang
 	meson
-	make
 	libomp-devel
 	pkgconf-pkg-config
 )
