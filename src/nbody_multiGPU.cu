@@ -78,10 +78,13 @@ ComputeGravitation_multiGPU(
     float *dptrForce[g_maxGPUs];
     int oldDevice;
 
+    if (g_numGPUs > g_maxGPUs || g_numGPUs < 1)
+        return 0.0f;
+
     memset( dptrPosMass, 0, sizeof(dptrPosMass) );
     memset( dptrForce, 0, sizeof(dptrForce) );
     size_t bodiesPerGPU = N / g_numGPUs;
-    if ( (0 != N % g_numGPUs) || (g_numGPUs > g_maxGPUs) ) {
+    if ( 0 != N % g_numGPUs ) {
         return 0.0f;
     }
     CUDART_CHECK( cudaGetDevice( &oldDevice ) );
