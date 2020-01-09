@@ -49,11 +49,7 @@ cpp_args = [
     #'-DHIGH_ENTROPY',
 ]
 nvcc_flags = [
-    # TODO: These include args should be generated from the nbody target
-    # somehow, but meson is a hot mess and doesn't support that kind of thing.
     '-I' + meson.current_source_dir(),
-    '-I' + join_paths(meson.current_source_dir(), 'subprojects', 'c11', 'include'),
-    '-I' + join_paths(meson.current_source_dir(), 'subprojects', 'time', 'include'),
 
     '-O3',
 ]
