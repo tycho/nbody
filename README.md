@@ -60,6 +60,16 @@ features in the build:
 
 - To disable the SIMD intrinsics variants: `-Dintrinsics=false`
 
+Once configured, you can build with:
+
+```
+$ ninja -C build
+```
+
+And run n-body with:
+```
+$ build/nbody
+```
 
 Example Runs
 ------------
