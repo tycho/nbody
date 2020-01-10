@@ -37,6 +37,7 @@ cxx_args = [
     ]),
 ] + compiler.get_supported_arguments([
     '-fPIC',
+    '-fno-stack-protector',
     '-fno-exceptions',
     '-fno-rtti',
     '-fvisibility=hidden',
