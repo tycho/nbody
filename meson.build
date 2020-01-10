@@ -45,6 +45,14 @@ cxx_args = [
     '-Wno-unknown-pragmas',
     '-fno-asynchronous-unwind-tables',
 ])
+
+if target_machine.cpu_family() == 'aarch64'
+    cxx_args += compiler.get_supported_arguments([
+        '-mlow-precision-recip-sqrt',
+        '-mtune=native',
+    ])
+endif
+
 ld_args = [ '-fPIC' ]
 cpp_args = [
     #'-DHIGH_ENTROPY',
