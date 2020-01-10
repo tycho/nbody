@@ -37,80 +37,78 @@
 
 #include <arm_neon.h>
 
-typedef float vf32x4_t __attribute__ ((vector_size(16),aligned(1)));
-
-static const vf32x4_t vec_zero = {0.0f, 0.0f, 0.0f, 0.0f};
-
-typedef union {
-    float32x4_t v;
-    float f[4];
-    vf32x4_t p;
-} v4;
-
-static inline vf32x4_t
-_vec_set_ps1(float f)
+static inline float32x4_t
+vrsqrtq_f32(const float32x4_t val)
 {
-    v4 r;
-    r.v = vdupq_n_f32(f);
-    return r.p;
+    float32x4_t e = vrsqrteq_f32(val);
+    e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(e, e), val), e);
+    return e;
 }
 
 static inline float
-_vec_sum(vf32x4_t const v)
+vhaddq_f32(const float32x4_t x)
 {
-    float32x2_t r;
-    v4 iv;
-    iv.p = v;
-    r = vadd_f32(vget_high_f32(iv.v), vget_low_f32(iv.v));
-    return vget_lane_f32(vpadd_f32(r, r), 0);
-}
-
-static inline vf32x4_t
-rcp_sqrt_nr_ps(const vf32x4_t _v) {
-    v4 vec, result;
-    vec.p = _v;
-    result.v = vrsqrteq_f32(vec.v);
-    result.v = vmulq_f32(vrsqrtsq_f32(vmulq_f32(result.v, result.v), vec.v), result.v);
-    return result.p;
+#if defined(__aarch64__)
+    return vaddvq_f32(x);
+#else
+    static const float32x2_t f0 = vdup_n_f32(0.0f);
+    return vget_lane_f32(vpadd_f32(f0, vget_high_f32(x) + vget_low_f32(x)), 1);
+#endif
 }
 
 static inline void
 bodyBodyInteraction(
-    vf32x4_t *fx,
-    vf32x4_t *fy,
-    vf32x4_t *fz,
+    float32x4_t *fx,
+    float32x4_t *fy,
+    float32x4_t *fz,
 
-    const vf32x4_t x0,
-    const vf32x4_t y0,
-    const vf32x4_t z0,
+    const float32x4_t x0,
+    const float32x4_t y0,
+    const float32x4_t z0,
 
-    const vf32x4_t x1,
-    const vf32x4_t y1,
-    const vf32x4_t z1,
-    const vf32x4_t mass1,
+    const float32x4_t x1,
+    const float32x4_t y1,
+    const float32x4_t z1,
+    const float32x4_t mass1,
 
-    const vf32x4_t softeningSquared )
+    const float32x4_t softeningSquared )
 {
     // r_01  [3 FLOPS]
-    vf32x4_t dx = x1 - x0;
-    vf32x4_t dy = y1 - y0;
-    vf32x4_t dz = z1 - z0;
+    const float32x4_t dx = vsubq_f32(x1, x0);
+    const float32x4_t dy = vsubq_f32(y1, y0);
+    const float32x4_t dz = vsubq_f32(z1, z0);
 
     // d^2 + e^2 [6 FLOPS]
-    vf32x4_t distSq = ( dx * dx ) + ( dy * dy ) + ( dz * dz );
-    distSq = distSq + softeningSquared;
+    const float32x4_t distSq =
+        vaddq_f32(
+            vaddq_f32(
+                vaddq_f32(
+                    vmulq_f32(dx, dx),
+                    vmulq_f32(dy, dy)
+                ),
+                vmulq_f32(dz, dz)
+            ),
+            softeningSquared
+        );
 
     // invDistCube =1/distSqr^(3/2)  [4 FLOPS (2 mul, 1 sqrt, 1 inv)]
-    vf32x4_t invDist = rcp_sqrt_nr_ps ( distSq );
-    vf32x4_t invDistCube = invDist * invDist * invDist;
+    const float32x4_t invDist = vrsqrtq_f32(distSq);
+    const float32x4_t invDistCube =
+        vmulq_f32(
+            invDist,
+            vmulq_f32(
+                invDist,
+                invDist
+            )
+        );
 
     // s = m_j * invDistCube [1 FLOP]
-    vf32x4_t s = mass1 * invDistCube;
+    const float32x4_t s = vmulq_f32(mass1, invDistCube);
 
     // (m_1 * r_01) / (d^2 + e^2)^(3/2)  [6 FLOPS]
-    *fx += (dx * s);
-    *fy += (dy * s);
-    *fz += (dz * s);
+    *fx = vaddq_f32(*fx, vmulq_f32(dx, s));
+    *fy = vaddq_f32(*fy, vmulq_f32(dy, s));
+    *fz = vaddq_f32(*fz, vmulq_f32(dz, s));
 }
 
 #endif

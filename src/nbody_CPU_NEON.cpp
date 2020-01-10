@@ -66,33 +66,32 @@ DEFINE_SOA(ComputeGravitation_SIMD)
     #pragma omp parallel for schedule(guided)
     for (size_t i = 0; i < N; i++)
     {
-        const vf32x4_t x0 = _vec_set_ps1( pos[0][i] );
-        const vf32x4_t y0 = _vec_set_ps1( pos[1][i] );
-        const vf32x4_t z0 = _vec_set_ps1( pos[2][i] );
+        const float32x4_t x0 = vld1q_dup_f32(&pos[0][i]);
+        const float32x4_t y0 = vld1q_dup_f32(&pos[1][i]);
+        const float32x4_t z0 = vld1q_dup_f32(&pos[2][i]);
 
-        vf32x4_t ax = vec_zero;
-        vf32x4_t ay = vec_zero;
-        vf32x4_t az = vec_zero;
+        float32x4_t ax = vmovq_n_f32(0.0f);
+        float32x4_t ay = vmovq_n_f32(0.0f);
+        float32x4_t az = vmovq_n_f32(0.0f);
 
         for ( size_t j = 0; j < N; j += 4 )
         {
-            const vf32x4_t x1 = *(vf32x4_t *)&pos[0][j];
-            const vf32x4_t y1 = *(vf32x4_t *)&pos[1][j];
-            const vf32x4_t z1 = *(vf32x4_t *)&pos[2][j];
-            const vf32x4_t mass1 = *(vf32x4_t *)&mass[j];
+            const float32x4_t x1 = vld1q_f32(&pos[0][j]);
+            const float32x4_t y1 = vld1q_f32(&pos[1][j]);
+            const float32x4_t z1 = vld1q_f32(&pos[2][j]);
+            const float32x4_t mass1 = vld1q_f32(&mass[j]);
 
             bodyBodyInteraction(
                 &ax, &ay, &az,
                 x0, y0, z0,
                 x1, y1, z1, mass1,
-                _vec_set_ps1( softeningSquared ) );
-
+                vld1q_dup_f32(&softeningSquared));
         }
 
         // Accumulate sum of four floats in the NEON register
-        force[0][i] = _vec_sum( ax );
-        force[1][i] = _vec_sum( ay );
-        force[2][i] = _vec_sum( az );
+        force[0][i] = vhaddq_f32( ax );
+        force[1][i] = vhaddq_f32( ay );
+        force[2][i] = vhaddq_f32( az );
     }
 
     auto end = chrono::steady_clock::now();
