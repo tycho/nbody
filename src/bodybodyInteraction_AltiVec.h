@@ -102,24 +102,26 @@ bodyBodyInteraction(
     const v4sf softeningSquared )
 {
     // r_01  [3 FLOPS]
-    v4sf dx = vec_sub( x1, x0 );
-    v4sf dy = vec_sub( y1, y0 );
-    v4sf dz = vec_sub( z1, z0 );
+    const v4sf dx = vec_sub( x1, x0 );
+    const v4sf dy = vec_sub( y1, y0 );
+    const v4sf dz = vec_sub( z1, z0 );
 
     // d^2 + e^2 [6 FLOPS]
-    v4sf distSq =
+    const v4sf distSq =
         vec_add(
             vec_add(
-                vec_mul( dx, dx ),
-                vec_mul( dy, dy )
+                vec_add(
+                    vec_mul( dx, dx ),
+                    vec_mul( dy, dy )
+                ),
+                vec_mul( dz, dz )
             ),
-            vec_mul( dz, dz )
+            softeningSquared
         );
-    distSq = vec_add( distSq, softeningSquared );
 
     // invDistCube =1/distSqr^(3/2)  [4 FLOPS (2 mul, 1 sqrt, 1 inv)]
-    v4sf invDist = rcp_sqrt_nr_ps( distSq );
-    v4sf invDistCube =
+    const v4sf invDist = rcp_sqrt_nr_ps( distSq );
+    const v4sf invDistCube =
         vec_mul(
             invDist,
             vec_mul(
@@ -127,7 +129,7 @@ bodyBodyInteraction(
         );
 
     // s = m_j * invDistCube [1 FLOP]
-    v4sf s = vec_mul( mass1, invDistCube );
+    const v4sf s = vec_mul( mass1, invDistCube );
 
     // (m_1 * r_01) / (d^2 + e^2)^(3/2)  [6 FLOPS]
     *fx = vec_add( *fx, vec_mul( dx, s ) );
