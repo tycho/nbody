@@ -22,7 +22,7 @@ build_and_run() {
 	mkdir "$BUILDDIR"
 	meson . "$BUILDDIR" $MESON_ARGS
 	ninja -C "$BUILDDIR"
-	"$BUILDDIR"/nbody --bodies 8 --cycle-after 3 --iterations 1 --verbose
+	"$BUILDDIR"/nbody --bodies 4 --cycle-after 1 --iterations 1 --verbose
 }
 
 build_and_run default
