@@ -36,6 +36,9 @@
 #ifdef __ALTIVEC__
 #include <altivec.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+
 typedef vector float v4sf;
 
 static const v4sf vec_zero = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -136,6 +139,8 @@ bodyBodyInteraction(
     *fy = vec_add( *fy, vec_mul( dy, s ) );
     *fz = vec_add( *fz, vec_mul( dz, s ) );
 }
+
+#pragma GCC diagnostic pop
 
 #endif
 
