@@ -68,9 +68,9 @@ DEFINE_SOA(ComputeGravitation_SIMD)
     #pragma omp parallel for schedule(guided)
     for ( size_t i = 0; i < N; i++ )
     {
-        const __m256 x0 = _mm256_set1_ps( pos[0][i] );
-        const __m256 y0 = _mm256_set1_ps( pos[1][i] );
-        const __m256 z0 = _mm256_set1_ps( pos[2][i] );
+        const __m256 x0 = _mm256_set1_ps(pos[0][i]);
+        const __m256 y0 = _mm256_set1_ps(pos[1][i]);
+        const __m256 z0 = _mm256_set1_ps(pos[2][i]);
 
         __m256 ax = _mm256_setzero_ps();
         __m256 ay = _mm256_setzero_ps();
@@ -78,22 +78,22 @@ DEFINE_SOA(ComputeGravitation_SIMD)
 
         for ( size_t j = 0; j < N; j += 8 )
         {
-            const __m256 x1 = *(__m256 *) &pos[0][j];
-            const __m256 y1 = *(__m256 *) &pos[1][j];
-            const __m256 z1 = *(__m256 *) &pos[2][j];
-            const __m256 mass1 = *(__m256 *) &mass[j];
+            const __m256 x1 = _mm256_load_ps(&pos[0][j]);
+            const __m256 y1 = _mm256_load_ps(&pos[1][j]);
+            const __m256 z1 = _mm256_load_ps(&pos[2][j]);
+            const __m256 mass1 = _mm256_load_ps(&mass[j]);
 
             bodyBodyInteraction(
                 &ax, &ay, &az,
                 x0, y0, z0,
                 x1, y1, z1, mass1,
-                _mm256_set1_ps( softeningSquared ) );
+                _mm256_set1_ps(softeningSquared));
 
         }
 
-        force[0][i] = horizontal_sum( ax );
-        force[1][i] = horizontal_sum( ay );
-        force[2][i] = horizontal_sum( az );
+        force[0][i] = horizontal_sum(ax);
+        force[1][i] = horizontal_sum(ay);
+        force[2][i] = horizontal_sum(az);
     }
 
     auto end = chrono::steady_clock::now();
