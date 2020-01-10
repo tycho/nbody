@@ -20,7 +20,7 @@ build_and_run() {
 	BUILD_DIRS+=( "$BUILDDIR" )
 	rm -rf "$BUILDDIR"
 	mkdir "$BUILDDIR"
-	meson . "$BUILDDIR" $MESON_ARGS
+	meson . "$BUILDDIR" -Dwerror=true $MESON_ARGS
 	ninja -C "$BUILDDIR"
 	"$BUILDDIR"/nbody --bodies 4 --cycle-after 1 --iterations 1 --verbose
 }
