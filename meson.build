@@ -1,7 +1,8 @@
 project('nbody', 'cpp',
     default_options: [
         'buildtype=release',
-        'cpp_std=c++11'
+        'cpp_std=c++11',
+        'b_lto=true',
     ]
 )
 
