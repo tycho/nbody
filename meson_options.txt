@@ -1,5 +1,5 @@
 option('use_cuda', type: 'boolean', value: false, description: 'NVIDIA CUDA support')
 option('nvcc', type: 'string', value: 'nvcc', description: 'CUDA compiler name')
-option('openmp', type: 'boolean', description: 'OpenMP threading')
+option('openmp', type: 'boolean', value: true, description: 'OpenMP threading')
 option('opengl', type: 'boolean', value: false, description: 'OpenGL simulation rendering')
 option('intrinsics', type: 'boolean', value: true, description: 'Compile SIMD intrinsic implementation for your platform')
