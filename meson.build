@@ -33,8 +33,8 @@ cxx_sources = [
 cxx_args = [
     '-ffast-math',
     compiler.first_supported_argument([
-        '-march=native',
-        '-mcpu=native',
+        '-march=' + get_option('march'),
+        '-mcpu=' + get_option('march'),
     ]),
 ] + compiler.get_supported_arguments([
     '-fPIC',
@@ -50,7 +50,7 @@ cxx_args = [
 if target_machine.cpu_family() == 'aarch64'
     cxx_args += compiler.get_supported_arguments([
         '-mlow-precision-recip-sqrt',
-        '-mtune=native',
+        '-mtune=' + get_option('march'),
     ])
 endif
 
