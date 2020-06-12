@@ -40,6 +40,7 @@ cxx_args = [
     '-gdwarf-4',
     '-ggdb3',
     '-fPIC',
+    '-fwrapv',
     '-fno-stack-protector',
     '-fno-exceptions',
     '-fno-rtti',
