@@ -37,6 +37,8 @@ cxx_args = [
         '-mcpu=' + get_option('march'),
     ]),
 ] + compiler.get_supported_arguments([
+    '-gdwarf-4',
+    '-ggdb3',
     '-fPIC',
     '-fno-stack-protector',
     '-fno-exceptions',
