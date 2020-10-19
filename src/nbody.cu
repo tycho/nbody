@@ -755,7 +755,7 @@ int main(int argc, char **argv)
         { "list", no_argument, NULL, 'l' },
         { "algorithm", required_argument, NULL, 'a' },
         { "graphics", no_argument, NULL, 'G' },
-        { "verbose", no_argument, NULL, 2 },
+        { "verbose", no_argument, NULL, 'v' },
         { "help", no_argument, NULL, 'h' },
         { NULL, 0, NULL, 0 }
     };
@@ -767,7 +767,7 @@ int main(int argc, char **argv)
         g_numGPUs = g_maxGPUs;
 
     while (1) {
-        int option = getopt_long(argc, argv, "n:s:i:c:g:la:Gh", cli_options, NULL);
+        int option = getopt_long(argc, argv, "n:s:i:c:g:la:Gvh", cli_options, NULL);
 
         if (option == -1)
             break;
@@ -903,7 +903,7 @@ int main(int argc, char **argv)
         case 'l':
             bPrintListOnly = 1;
             break;
-        case 2:
+        case 'v':
             bVerbose = 1;
             break;
         case 'h':
