@@ -29,8 +29,8 @@ jobs:
   include:
     - arch: arm64
       env: IMAGE=ubuntu IMAGE_TAG=rolling
-    - arch: ppc64le
-      env: IMAGE=ubuntu IMAGE_TAG=rolling
+    #- arch: ppc64le
+    #  env: IMAGE=ubuntu IMAGE_TAG=rolling
 
 before_install:
   - docker run -d --name $CONTAINER_NAME -e LC_ALL="C" -e LANG="C" -v $(pwd):/travis -w /travis $IMAGE_PREFIX$IMAGE:$IMAGE_TAG tail -f /dev/null
