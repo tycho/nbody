@@ -96,4 +96,8 @@ typedef struct _algorithm_def_t {
 #  endif
 #endif
 
+#ifdef __CYGWIN__
+#include <strings.h>
+#endif
+
 /* vim: set ts=4 sts=4 sw=4 et: */

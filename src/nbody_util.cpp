@@ -156,7 +156,11 @@ int processorCount(void)
 
 void seedRandom(unsigned int seed)
 {
+#if _XOPEN_SOURCE >= 500 || _DEFAULT_SOURCE || _SVID_SOURCE || _BSD_SOURCE
     srandom(seed);
+#else
+    srand(seed);
+#endif
 }
 
 float nbodyRandom(float randMin, float randMax)
@@ -168,7 +172,11 @@ float nbodyRandom(float randMin, float randMax)
     if (!i)
         abort();
 #else
+#if _XOPEN_SOURCE >= 500 || _DEFAULT_SOURCE || _SVID_SOURCE || _BSD_SOURCE
     v = random();
+#else
+    v = rand();
+#endif
 #endif
     result = (float)v / (float)RANDOM_MAX;
     return ((1.0f - result) * randMin + result * randMax);
