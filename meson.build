@@ -95,6 +95,10 @@ if enable_opengl
         dependency('sdl2'),
     ]
     cpp_args += ['-DUSE_GL']
+    if target_machine.system() == 'windows'
+        glu = compiler.find_library('glu32')
+        extra_deps += [glu]
+    endif
 endif
 
 if enable_simd
@@ -171,8 +175,7 @@ endif
 
 if target_machine.system() == 'windows'
     winmm = compiler.find_library('winmm')
-    glu = compiler.find_library('glu32')
-    extra_deps += [winmm, glu]
+    extra_deps += [winmm]
 endif
 
 executable('nbody',
