@@ -55,7 +55,6 @@ ComputeNBodyGravitation_Shared_multiGPU(
         size_t i = base+m;
         float acc[3] = {0};
         float4 myPosMass = ((float4 *) posMass)[i];
-#pragma unroll 32
         for ( int j = 0; j < N; j += blockDim.x ) {
             shPosMass[threadIdx.x] = ((float4 *) posMass)[j+threadIdx.x];
             __syncthreads();

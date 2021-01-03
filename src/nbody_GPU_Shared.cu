@@ -52,7 +52,6 @@ ComputeNBodyGravitation_Shared(
     {
         float acc[3] = {0};
         float4 myPosMass = ((float4 *) posMass)[i];
-#pragma unroll 32
         for ( size_t j = 0; j < N; j += blockDim.x ) {
             shPosMass[threadIdx.x] = ((float4 *) posMass)[j+threadIdx.x];
             __syncthreads();
