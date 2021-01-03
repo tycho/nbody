@@ -76,6 +76,7 @@ private:
 
 	thread_proc_t task;
 	void *param;
+	bool stopped;
 
 	int _routine()
 	{
@@ -97,10 +98,18 @@ public:
 		  param(nullptr)
 	{
 		thread = std::thread(&worker_thread::_routine, this);
+		stopped = false;
+	}
+
+	~worker_thread()
+	{
+		if (!stopped)
+			stop();
 	}
 
 	void stop()
 	{
+		stopped = true;
 		delegate(nullptr, nullptr, true);
 		thread.join();
 	}
