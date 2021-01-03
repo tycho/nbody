@@ -1,17 +1,10 @@
 /*
  *
- * nbody.cu
+ * nbody_util.cpp
  *
- * N-body example that illustrates gravitational simulation.
- * This is the type of computation that GPUs excel at:
- * parallelizable, with lots of FLOPS per unit of external
- * memory bandwidth required.
+ * Common n-body utility functions.
  *
- * Requires: No minimum SM requirement.  If SM 3.x is not available,
- * this application quietly replaces the shuffle and fast-atomic
- * implementations with the shared memory implementation.
- *
- * Copyright (c) 2011-2012, Archaea Software, LLC.
+ * Copyright (c) 2019-2021, Uplink Laboratories, LLC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

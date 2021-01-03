@@ -2,7 +2,9 @@
  *
  * nbody_util.h
  *
- * Copyright (c) 2011-2012, Archaea Software, LLC.
+ * Common n-body utility functions.
+ *
+ * Copyright (c) 2019-2021, Uplink Laboratories, LLC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

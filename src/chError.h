@@ -8,6 +8,7 @@
  *     chGetErrorString() maps a driver API error to a string.
  *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
+ * Copyright (c) 2012-2021, Uplink Laboratories, LLC.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -6,6 +6,7 @@
  * This header is designed to be included by the multi-GPU versions.
  *
  * Copyright (c) 2011-2012, Archaea Software, LLC.
+ * Copyright (c) 2012-2021, Uplink Laboratories, LLC.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
