@@ -1,7 +1,7 @@
 n-body
 =======
 
-[![Build status](https://travis-ci.org/tycho/nbody.svg?branch=master)](https://travis-ci.org/tycho/nbody)
+[![Build status](https://github.com/tycho/nbody/workflows/CI/badge.svg)](https://github.com/tycho/nbody/actions)
 
 This is a fast and portable implementation of an [n-body
 simulation](https://en.wikipedia.org/wiki/N-body_simulation). It can optionally
