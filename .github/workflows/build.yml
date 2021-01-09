@@ -1,0 +1,49 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: BuildAndTest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [ubuntu-latest, ubuntu-rolling, ubuntu-devel, fedora-latest, cuda-10.0, cuda-10.1]
+        compiler: [gcc, clang]
+        include:
+          - build: ubuntu-latest
+            os: ubuntu-latest
+            docker_image: ubuntu
+            docker_tag: latest
+          - build: ubuntu-rolling
+            os: ubuntu-latest
+            docker_image: ubuntu
+            docker_tag: rolling
+          - build: ubuntu-devel
+            os: ubuntu-latest
+            docker_image: ubuntu
+            docker_tag: devel
+          - build: fedora-latest
+            os: ubuntu-latest
+            docker_image: fedora
+            docker_tag: latest
+          - build: cuda-10.0
+            os: ubuntu-latest
+            docker_image: nvidia/cuda
+            docker_tag: 10.0-devel
+          - build: cuda-10.1
+            os: ubuntu-latest
+            docker_image: nvidia/cuda
+            docker_tag: 10.1-devel
+    steps:
+    - uses: actions/checkout@master
+    - name: Launch container
+      run: |
+        docker run -d --rm --name nbody-github-docker-builder -e LC_ALL="C" -e LANG="C" -v ${{ github.workspace }}:/build -w /build ${{ matrix.docker_image }}:${{ matrix.docker_tag }} tail -f /dev/null
+        docker ps
+    - name: Install dependencies
+      run: |
+        docker exec -e COMPILER=${{ matrix.compiler }} -e IMAGE=${{ matrix.docker_image }} -e IMAGE_TAG=${{ matrix.docker_tag }} -t nbody-github-docker-builder bash .github/install.sh
+        docker exec -e COMPILER=${{ matrix.compiler }} -e IMAGE=${{ matrix.docker_image }} -e IMAGE_TAG=${{ matrix.docker_tag }} -t nbody-github-docker-builder bash .github/install-post.sh
+    - name: Build and run project
+      run: |
+        docker exec -e COMPILER=${{ matrix.compiler }} -e IMAGE=${{ matrix.docker_image }} -e IMAGE_TAG=${{ matrix.docker_tag }} -t nbody-github-docker-builder bash .github/script.sh

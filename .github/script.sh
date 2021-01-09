@@ -16,7 +16,7 @@ trap cleanup EXIT
 build_and_run() {
 	ID="$1"
 	MESON_ARGS="$2"
-	BUILDDIR="travis-build-$ID"
+	BUILDDIR="github-build-$ID"
 	BUILD_DIRS+=( "$BUILDDIR" )
 	rm -rf "$BUILDDIR"
 	mkdir "$BUILDDIR"
@@ -24,6 +24,17 @@ build_and_run() {
 	ninja -C "$BUILDDIR"
 	"$BUILDDIR"/nbody --bodies 4 --cycle-after 1 --iterations 1 --verbose
 }
+
+case ${COMPILER} in
+gcc)
+	export CC=gcc
+	export CXX=g++
+	;;
+clang)
+	export CC=clang
+	export CXX=clang++
+	;;
+esac
 
 build_and_run default
 if type -P nvcc &>/dev/null; then

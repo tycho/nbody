@@ -16,7 +16,7 @@ compiler:
 
 env:
   global:
-    - CONTAINER_NAME=nbody-travis-docker-builder
+    - CONTAINER_NAME=nbody-github-docker-builder
   jobs:
     - IMAGE=ubuntu IMAGE_TAG=latest
     - IMAGE=ubuntu IMAGE_TAG=rolling
@@ -33,14 +33,14 @@ jobs:
     #  env: IMAGE=ubuntu IMAGE_TAG=rolling
 
 before_install:
-  - docker run -d --name $CONTAINER_NAME -e LC_ALL="C" -e LANG="C" -v $(pwd):/travis -w /travis $IMAGE_PREFIX$IMAGE:$IMAGE_TAG tail -f /dev/null
+  - docker run -d --name $CONTAINER_NAME -e LC_ALL="C" -e LANG="C" -v $(pwd):/build -w /build $IMAGE_PREFIX$IMAGE:$IMAGE_TAG tail -f /dev/null
   - docker ps
 
 install:
-  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER_NAME bash .travis/install-${IMAGE//\//-}.sh
-  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER_NAME bash .travis/install-post.sh
+  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER_NAME bash .github/install-${IMAGE//\//-}.sh
+  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER_NAME bash .github/install-post.sh
 
 script:
-  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER_NAME bash .travis/script.sh
+  - docker exec -e CC=$CC -e CXX=$CXX -t $CONTAINER_NAME bash .github/script.sh
 
 # vim: set ts=2 sts=2 sw=2 et:
