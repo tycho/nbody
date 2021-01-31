@@ -41,9 +41,23 @@
 static inline float32x4_t
 vrsqrtq_f32(const float32x4_t val)
 {
-    float32x4_t e = vrsqrteq_f32(val);
-    e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(e, e), val), e);
-    return e;
+#if 0
+    /* Closer to the x86 intrinsic implementation, but slower */
+    float32x4_t
+        nr    = vrsqrteq_f32(val),
+        muls  = vmulq_f32(vmulq_f32(nr, nr), val),
+        beta  = vmulq_f32(vdupq_n_f32(0.5f), nr),
+        gamma = vsubq_f32(vdupq_n_f32(3.0f), muls);
+
+    return vmulq_f32(beta, gamma);
+#else
+    float32x4_t
+        nr1   = vrsqrteq_f32(val),
+        muls  = vmulq_f32(nr1, nr1),
+        nr2   = vrsqrtsq_f32(muls, val),
+        ret   = vmulq_f32(nr2, nr1);
+    return ret;
+#endif
 }
 
 static inline float
