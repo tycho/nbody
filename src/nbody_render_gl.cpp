@@ -40,18 +40,27 @@
 #include <chrono>
 #include <thread>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform.hpp>
+
 #include <GL/glew.h>
 
 #include <SDL.h>
-#include <GL/gl.h>
 
 #include "nbody_util.h"
-
 static SDL_Window *g_window = NULL;
 static SDL_GLContext g_context;
-static GLuint g_pbo = 0;
+
+static GLuint g_vao = 0;
+static GLuint g_vbo = 0;
+
 static GLuint g_vertexShaderPoints = 0;
+static GLuint g_fragmentShaderPoints = 0;
 static GLuint g_programPoints = 0;
+
+static GLint g_uModelViewMatrix = -2;
+static GLint g_uProjectionMatrix = -2;
 
 static int g_key = 0;
 static int g_glOK = 0;
@@ -71,34 +80,85 @@ extern float *g_hostAOS_PosMass;
 extern size_t g_N;
 
 static const GLchar *s_vertexShaderPoints =
-    "void main()                                                            \n"
-    "{                                                                      \n"
-    "    vec4 vert = vec4(gl_Vertex.xyz, 1.0);                              \n"
-    "    gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * vert;     \n"
-    "    gl_FrontColor = gl_Color;                                          \n"
-    "}                                                                      \n"
+    "#version 330 core\n"
+    "\n"
+    "layout (location = 0) in vec3 aPos;\n"
+    "\n"
+    "uniform mat4 u_ModelViewMatrix;\n"
+    "uniform mat4 u_ProjectionMatrix;\n"
+    "\n"
+    "void main()\n"
+    "{\n"
+    "    vec4 vert = vec4(aPos, 1.0);\n"
+    "    gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * vert;\n"
+    "}\n"
 ;
+
+static const GLchar *s_fragmentShaderPoints =
+    "#version 330 core\n"
+    "\n"
+    "out vec4 o_Color;\n"
+    "\n"
+    "void main()\n"
+    "{\n"
+    "    o_Color = vec4(1.0f);\n"
+    "}\n"
+;
+
+static glm::mat4 g_ProjectionMatrix;
+static glm::mat4 g_ModelViewMatrix;
 
 static void _gl_resize(void)
 {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(60.0, (float)g_width / (float)g_height, 0.1, 1000.0);
-
-    glMatrixMode(GL_MODELVIEW);
+    g_ProjectionMatrix = glm::perspective(glm::radians(70.0f), (float)g_width / (float)g_height, 0.1f, 1000.0f);
+    g_ModelViewMatrix = glm::mat4(1.0f);
     glViewport(0, 0, g_width, g_height);
+}
+
+static bool check_shader_compile(GLint shader)
+{
+    GLint status;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    if (status != GL_TRUE) {
+        int length;
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+        if (length) {
+            char *message = new char[length];
+            glGetShaderInfoLog(shader, length, &length, message);
+            printf("%s\n", message);
+            delete [] message;
+        }
+    }
+    return status == GL_TRUE;
+}
+
+static bool check_program_link(GLint program)
+{
+    GLint status;
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (status != GL_TRUE) {
+        int length;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+        if (length) {
+            char *message = new char[length];
+            glGetProgramInfoLog(program, length, &length, message);
+            printf("%s\n", message);
+            delete [] message;
+        }
+    }
+    return status == GL_TRUE;
 }
 
 int gl_init_window(void)
 {
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 0);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetSwapInterval(1);
-
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         return 1;
     }
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetSwapInterval(1);
 
     g_window = SDL_CreateWindow(
         "n-body demo",
@@ -119,20 +179,39 @@ int gl_init_window(void)
 
     glewInit();
 
-    _gl_resize();
-
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 1.0);
 
-    glGenBuffers(1, &g_pbo);
+    glGenBuffers(1, &g_vbo);
+
+    glGenVertexArrays(1, &g_vao);
+    glBindVertexArray(g_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 4, 0);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
 
     g_vertexShaderPoints = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(g_vertexShaderPoints, 1, &s_vertexShaderPoints, 0);
     glCompileShader(g_vertexShaderPoints);
+    assert(check_shader_compile(g_vertexShaderPoints));
+
+    g_fragmentShaderPoints = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(g_fragmentShaderPoints, 1, &s_fragmentShaderPoints, 0);
+    glCompileShader(g_fragmentShaderPoints);
+    assert(check_shader_compile(g_fragmentShaderPoints));
 
     g_programPoints = glCreateProgram();
     glAttachShader(g_programPoints, g_vertexShaderPoints);
+    glAttachShader(g_programPoints, g_fragmentShaderPoints);
     glLinkProgram(g_programPoints);
+
+    assert(check_program_link(g_programPoints));
+
+    g_uModelViewMatrix = glGetUniformLocation(g_programPoints, "u_ModelViewMatrix");
+    g_uProjectionMatrix = glGetUniformLocation(g_programPoints, "u_ProjectionMatrix");
+
+    _gl_resize();
 
     g_glOK = 1;
 
@@ -147,12 +226,11 @@ int gl_quit(void)
 
 static void _gl_draw_points(void)
 {
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, g_pbo);
-    glVertexPointer(4, GL_FLOAT, 0, 0);
+    glUseProgram(g_programPoints);
+    glUniformMatrix4fv(g_uModelViewMatrix, 1, GL_FALSE, glm::value_ptr(g_ModelViewMatrix));
+    glUniformMatrix4fv(g_uProjectionMatrix, 1, GL_FALSE, glm::value_ptr(g_ProjectionMatrix));
+    glBindVertexArray(g_vao);
     glDrawArrays(GL_POINTS, 0, g_N);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 static void _handle_sdl_events(void)
@@ -211,27 +289,20 @@ int gl_display(void)
 
     _handle_sdl_events();
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
     for (c = 0; c < 3; c++) {
         g_camera_trans_lag[c] += (g_camera_trans[c] - g_camera_trans_lag[c]) * CAMERA_INERTIA;
         g_camera_rot_lag[c] += (g_camera_rot[c] - g_camera_rot_lag[c]) * CAMERA_INERTIA;
     }
 
-    glTranslatef(g_camera_trans_lag[0], g_camera_trans_lag[1], g_camera_trans_lag[2]);
-    glRotatef(g_camera_rot_lag[0], 1.0f, 0.0f, 0.0f);
-    glRotatef(g_camera_rot_lag[1], 0.0f, 1.0f, 0.0f);
+    g_ModelViewMatrix = glm::translate(glm::vec3(g_camera_trans_lag[0], g_camera_trans_lag[1], g_camera_trans_lag[2]));
+    g_ModelViewMatrix *= glm::rotate(glm::radians(g_camera_rot_lag[0]), glm::vec3(1.0f, 0.0f, 0.0f));
+    g_ModelViewMatrix *= glm::rotate(glm::radians(g_camera_rot_lag[1]), glm::vec3(0.0f, 1.0f, 0.0f));
+    g_ModelViewMatrix *= glm::rotate(glm::radians(g_camera_rot_lag[2]), glm::vec3(0.0f, 0.0f, 1.0f));
 
-    glBindBuffer(GL_ARRAY_BUFFER, g_pbo);
-    glBufferData(GL_ARRAY_BUFFER, g_N * 4 * sizeof(g_hostAOS_PosMass[0]), g_hostAOS_PosMass, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+    glBufferData(GL_ARRAY_BUFFER, g_N * 4 * sizeof(g_hostAOS_PosMass[0]), g_hostAOS_PosMass, GL_STREAM_DRAW);
 
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glPointSize(1.0f);
-    glUseProgram(g_programPoints);
     _gl_draw_points();
-    glUseProgram(0);
 
     SDL_GL_SwapWindow(g_window);
 

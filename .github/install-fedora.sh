@@ -13,6 +13,8 @@ PACKAGES=(
 	pkgconf-pkg-config
 	glew-devel
 	SDL2-devel
+	glm-devel
 )
 
+dnf update -y
 dnf install -y "${PACKAGES[@]}"

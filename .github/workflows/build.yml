@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [ubuntu-latest, ubuntu-rolling, ubuntu-devel, fedora-latest, cuda-10.0, cuda-10.1]
+        build: [ubuntu-latest, ubuntu-rolling, fedora-latest, cuda-11.4]
         compiler: [gcc, clang]
         include:
           - build: ubuntu-latest
@@ -18,22 +18,14 @@ jobs:
             os: ubuntu-latest
             docker_image: ubuntu
             docker_tag: rolling
-          - build: ubuntu-devel
-            os: ubuntu-latest
-            docker_image: ubuntu
-            docker_tag: devel
           - build: fedora-latest
             os: ubuntu-latest
             docker_image: fedora
             docker_tag: latest
-          - build: cuda-10.0
+          - build: cuda-11.4
             os: ubuntu-latest
             docker_image: nvidia/cuda
-            docker_tag: 10.0-devel
-          - build: cuda-10.1
-            os: ubuntu-latest
-            docker_image: nvidia/cuda
-            docker_tag: 10.1-devel
+            docker_tag: 11.4.2-devel-ubuntu20.04
     steps:
     - uses: actions/checkout@master
     - name: Launch container

@@ -90,15 +90,10 @@ extra_deps = []
 
 if enable_opengl
     extra_deps += [
-        dependency('gl'),
         dependency('glew'),
         dependency('sdl2'),
     ]
     cpp_args += ['-DUSE_GL']
-    if target_machine.system() == 'windows'
-        glu = compiler.find_library('glu32')
-        extra_deps += [glu]
-    endif
 endif
 
 if enable_simd
