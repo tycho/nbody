@@ -45,6 +45,9 @@
 #ifdef _WIN32
 #include <conio.h>
 #endif
+#ifdef USE_GL
+#include <SDL_main.h>
+#endif
 
 #include <cmath>
 
