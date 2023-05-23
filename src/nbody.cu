@@ -707,7 +707,7 @@ static semaphore g_semRenderInitDone;
 static int render_loop(void *_unused)
 {
     auto start = chrono::steady_clock::now();
-    uint32_t frames = 0;
+    MAYBE_UNUSED uint32_t frames = 0;
     gl_init_window();
     g_semRenderInitDone.post();
     while(g_bRunning) {
