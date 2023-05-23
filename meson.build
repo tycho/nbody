@@ -92,6 +92,7 @@ if enable_opengl
     extra_deps += [
         dependency('glew'),
         dependency('sdl2'),
+        dependency('gl'),
     ]
     cpp_args += ['-DUSE_GL']
 endif
