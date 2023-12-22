@@ -72,17 +72,35 @@ if nvcc_name == 'clang++'
         '-fPIC',
         '-std=c++11',
         '-fcuda-flush-denormals-to-zero',
-        '--cuda-gpu-arch=sm_52',
+        '--cuda-gpu-arch=sm_60',
         '--cuda-gpu-arch=sm_61',
+        '--cuda-gpu-arch=sm_62',
         '--cuda-gpu-arch=sm_70',
+        '--cuda-gpu-arch=sm_72',
+        '--cuda-gpu-arch=sm_75',
+        '--cuda-gpu-arch=sm_80',
+        '--cuda-gpu-arch=sm_86',
+        '--cuda-gpu-arch=sm_87',
+        '--cuda-gpu-arch=sm_89',
+        '--cuda-gpu-arch=sm_90',
+        '--cuda-gpu-arch=sm_90a',
     ]
 elif nvcc_name == 'nvcc'
     nvcc_flags += [
         '-Xcompiler', '-fPIC',
         '--ftz', 'true',
-        '-gencode=arch=compute_52,code="sm_52,compute_52"',
+        '-gencode=arch=compute_60,code="sm_60,compute_60"',
         '-gencode=arch=compute_61,code="sm_61,compute_61"',
-        '-gencode=arch=compute_70,code="sm_70,compute_70"'
+        '-gencode=arch=compute_62,code="sm_62,compute_62"',
+        '-gencode=arch=compute_70,code="sm_70,compute_70"',
+        '-gencode=arch=compute_72,code="sm_72,compute_72"',
+        '-gencode=arch=compute_75,code="sm_75,compute_75"',
+        '-gencode=arch=compute_80,code="sm_80,compute_80"',
+        '-gencode=arch=compute_86,code="sm_86,compute_86"',
+        '-gencode=arch=compute_87,code="sm_87,compute_87"',
+        '-gencode=arch=compute_89,code="sm_89,compute_89"',
+        '-gencode=arch=compute_90,code="sm_90,compute_90"',
+        '-gencode=arch=compute_90a,code="sm_90a,compute_90a"',
     ]
 endif
 
