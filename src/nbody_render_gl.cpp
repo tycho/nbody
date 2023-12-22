@@ -46,7 +46,7 @@
 
 #include <GL/glew.h>
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "nbody_util.h"
 static SDL_Window *g_window = NULL;
