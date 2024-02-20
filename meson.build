@@ -83,7 +83,6 @@ if nvcc_name == 'clang++'
         '--cuda-gpu-arch=sm_87',
         '--cuda-gpu-arch=sm_89',
         '--cuda-gpu-arch=sm_90',
-        '--cuda-gpu-arch=sm_90a',
     ]
 elif nvcc_name == 'nvcc'
     nvcc_flags += [
@@ -100,7 +99,6 @@ elif nvcc_name == 'nvcc'
         '-gencode=arch=compute_87,code="sm_87,compute_87"',
         '-gencode=arch=compute_89,code="sm_89,compute_89"',
         '-gencode=arch=compute_90,code="sm_90,compute_90"',
-        '-gencode=arch=compute_90a,code="sm_90a,compute_90a"',
     ]
 endif
 
