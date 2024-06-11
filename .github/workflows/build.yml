@@ -12,15 +12,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [ubuntu-latest, ubuntu-rolling, fedora-latest, cuda-12.1]
+        build: [ubuntu-jammy, ubuntu-focal, fedora-latest, cuda-12.1]
         compiler: [gcc, clang]
         include:
-          - build: ubuntu-latest
+          - build: ubuntu-jammy
             docker_image: ubuntu
-            docker_tag: latest
-          - build: ubuntu-rolling
+            docker_tag: jammy
+          - build: ubuntu-focal
             docker_image: ubuntu
-            docker_tag: rolling
+            docker_tag: focal
           - build: fedora-latest
             docker_image: fedora
             docker_tag: latest
