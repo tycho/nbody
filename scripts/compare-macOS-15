@@ -1,0 +1,216 @@
+#!/bin/bash
+
+set -e
+
+TARGET_NAME=
+TARGET_MARCH=
+TARGET_OPENMP=
+
+NBODY_ARGS=(
+	--bodies 64
+	--no-crosscheck
+	--iterations 1
+	--cycle-after 5
+	--verbose
+)
+
+die() {
+	local MESSAGE="$1"; shift
+	echo "fatal: ${MESSAGE}" >&2
+	exit 1
+}
+
+reset_env() {
+	export -n LDFLAGS
+	export -n CPPFLAGS
+	export -n CC
+	export -n CXX
+
+	# Doesn't affect Meson, just our local script
+	export -n TARGET_MARCH
+	export -n TARGET_NAME
+}
+
+set_target_env() {
+	TARGET_NAME="$1"; shift
+
+	reset_env
+
+	case "$TARGET_NAME" in
+	brew-x86-64-v3)
+		export LDFLAGS="-L/usr/local/opt/llvm/lib"
+		export CPPFLAGS="-I/usr/local/opt/llvm/include"
+
+		# Host compiler is ARM64 native, we just need the appropriate LDFLAGS
+		# to link to the target-native libs in x86_64 Homebrew
+		export CC="/opt/homebrew/opt/llvm/bin/clang -target x86_64-apple-darwin"
+		export CXX="/opt/homebrew/opt/llvm/bin/clang++ -target x86_64-apple-darwin"
+
+		TARGET_MARCH=x86-64-v3
+		TARGET_OPENMP=true
+		;;
+	brew-arm64)
+		# Homebrew version of Clang 18
+		export CC="/opt/homebrew/opt/llvm/bin/clang -target aarch64-apple-darwin"
+		export CXX="/opt/homebrew/opt/llvm/bin/clang++ -target aarch64-apple-darwin"
+
+		TARGET_MARCH=native
+		TARGET_OPENMP=true
+		;;
+	apple-arm64)
+		export CC="/usr/bin/clang"
+		export CXX="/usr/bin/clang++"
+
+		TARGET_MARCH=native
+		TARGET_OPENMP=false
+		;;
+	*)
+		die "Unknown target $TARGET_NAME"
+		;;
+	esac
+}
+
+[[ "$(uname -m)" == "arm64" ]] || die "Must run on arm64 build of macOS"
+
+[[ -x /usr/bin/clang ]] || die "Please install Xcode and the command line tools"
+
+[[ -x /opt/homebrew/bin/brew ]] || die 'Please install arm64 Homebrew: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+[[ -x /usr/local/bin/brew ]] || die 'Please install x86_64 Homebrew: arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+
+[[ -x /opt/homebrew/opt/meson/bin/meson ]] || die "Please install meson: /opt/homebrew/bin/brew install meson"
+[[ -x /opt/homebrew/opt/llvm/bin/clang ]] || die "Please install arm64 build of llvm 18: /opt/homebrew/bin/brew install llvm@18"
+[[ -x /usr/local/opt/llvm/bin/clang ]] || die "Please install x86_64 build of llvm 18: /usr/local/bin/brew install llvm@18"
+
+export PATH=/opt/homebrew/bin:$PATH
+
+echo "# n-body on macOS 15"
+echo "## n-body information"
+echo "Version: \`$(git describe --tags)\`"
+echo ""
+echo "Origin URL: \`$(git config remote.origin.url)\`"
+echo ""
+echo "Script source: https://github.com/tycho/nbody/blob/master/scripts/compare-macOS-15"
+echo ""
+echo "Command-line arguments: \'${NBODY_ARGS[@]}\'"
+echo ""
+echo "## System information"
+
+echo "### OS and hardware"
+echo "\`\`\`"
+echo -n "uname -a: "; uname -a
+for SYSCTL_NAME in kern.osversion kern.version; do
+	sysctl "${SYSCTL_NAME}"
+done
+echo
+sysctl hw.nperflevels
+PERF_LEVEL_MAX=$(( $(sysctl -n hw.nperflevels) - 1 ))
+for PERF_LEVEL in $(seq 0 ${PERF_LEVEL_MAX}); do
+	sysctl "hw.perflevel${PERF_LEVEL}.name"
+	sysctl "hw.perflevel${PERF_LEVEL}.logicalcpu"
+	sysctl "hw.perflevel${PERF_LEVEL}.l1icachesize"
+	sysctl "hw.perflevel${PERF_LEVEL}.l1dcachesize"
+	sysctl "hw.perflevel${PERF_LEVEL}.l2cachesize"
+done
+echo "\`\`\`"
+echo ""
+echo "### Compilers"
+echo ""
+echo "\`\`\`"
+set -x
+/opt/homebrew/bin/meson --version
+/opt/homebrew/opt/llvm/bin/clang --version
+/usr/local/opt/llvm/bin/clang --version
+/usr/bin/clang --version
+{ set +x; } 2>/dev/null
+echo "\`\`\`"
+
+PCORE_COUNT="$(sysctl -n hw.perflevel0.logicalcpu)"
+
+# To ensure Ninja prints without \r, showing the full build log
+export TERM="dumb"
+
+# Ensure we only use P-cores for this workload
+export OMP_NUM_THREADS="${PCORE_COUNT}"
+
+for TARGET in apple-arm64 brew-arm64 brew-x86-64-v3; do
+	set_target_env "${TARGET}"
+	BUILD_DIR="build-${TARGET_NAME}"
+	echo "## ${TARGET_NAME}"
+	echo "Supports OpenMP: ${TARGET_OPENMP}"
+	rm -rf "${BUILD_DIR}"
+	echo "### build"
+	echo "<details>"
+	echo ""
+	echo "<summary>Meson configuration</summary>"
+	echo ""
+	echo "\`\`\`"
+	set -x
+	/opt/homebrew/bin/meson setup . "${BUILD_DIR}" -Dmarch="${TARGET_MARCH}" -Dopenmp="${TARGET_OPENMP}"
+	{ set +x; } 2>/dev/null
+	echo "\`\`\`"
+	echo ""
+	echo "</details>"
+	echo ""
+	echo "<details>"
+	echo ""
+	echo "<summary>Ninja build</summary>"
+	echo ""
+	echo "\`\`\`"
+	set -x
+	/opt/homebrew/bin/ninja -C "${BUILD_DIR}"
+	{ set +x; } 2>/dev/null
+	echo "\`\`\`"
+	echo ""
+	echo "</details>"
+	echo ""
+	echo "### run"
+	echo ""
+	if ${TARGET_OPENMP}; then
+		export OMP_NUM_THREADS=$(sysctl -n hw.perflevel0.logicalcpu)
+	fi
+	echo "\`\`\`"
+	set -x
+	"${BUILD_DIR}"/nbody "${NBODY_ARGS[@]}"
+	{ set +x; } 2>/dev/null
+	echo "\`\`\`"
+
+	if ${TARGET_OPENMP}; then
+		echo "## ${TARGET_NAME} (no OpenMP)"
+		BUILD_DIR="build-${TARGET_NAME}-no-openmp"
+		rm -rf "${BUILD_DIR}"
+		echo "### build"
+		echo "<details>"
+		echo ""
+		echo "<summary>Meson configuration</summary>"
+		echo ""
+		echo "\`\`\`"
+		set -x
+		/opt/homebrew/bin/meson setup . "${BUILD_DIR}" -Dmarch="${TARGET_MARCH}" -Dopenmp=false
+		{ set +x; } 2>/dev/null
+		echo "\`\`\`"
+		echo ""
+		echo "</details>"
+		echo ""
+		echo "<details>"
+		echo ""
+		echo "<summary>Ninja build</summary>"
+		echo ""
+		echo "\`\`\`"
+		set -x
+		/opt/homebrew/bin/ninja -C "${BUILD_DIR}"
+		{ set +x; } 2>/dev/null
+		echo "\`\`\`"
+		echo ""
+		echo "</details>"
+		echo ""
+		echo "### run"
+		echo ""
+		echo "\`\`\`"
+		set -x
+		"${BUILD_DIR}"/nbody "${NBODY_ARGS[@]}"
+		{ set +x; } 2>/dev/null
+		echo "\`\`\`"
+	fi
+done
+
+export -n TERM
