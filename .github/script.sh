@@ -21,7 +21,7 @@ build_and_run() {
 	rm -rf "$BUILDDIR"
 	mkdir "$BUILDDIR"
 	meson setup "$BUILDDIR" . -Dwerror=true $MESON_ARGS
-	meson compile -C "$BUILDDIR"
+	ninja -C "$BUILDDIR"
 	"$BUILDDIR"/nbody --bodies 4 --cycle-after 1 --iterations 1 --verbose
 }
 
