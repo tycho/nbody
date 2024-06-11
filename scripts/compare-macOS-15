@@ -6,8 +6,9 @@ TARGET_NAME=
 TARGET_MARCH=
 TARGET_OPENMP=
 
-NBODY_ARGS=(
-	--bodies 64
+NBODY_ARGS_PARALLEL=(--bodies 64)
+NBODY_ARGS_SERIAL=(--bodies 16)
+NBODY_ARGS_COMMON=(
 	--no-crosscheck
 	--iterations 1
 	--cycle-after 5
@@ -27,16 +28,36 @@ reset_env() {
 	export -n CXX
 
 	# Doesn't affect Meson, just our local script
-	export -n TARGET_MARCH
-	export -n TARGET_NAME
+	TARGET_EXTRA_DESC=
+	TARGET_MARCH=
+	TARGET_OPENMP=
+}
+
+set_nbody_args() {
+	NBODY_ARGS=(${NBODY_ARGS_COMMON[@]})
+	if [[ ${TARGET_NAME} =~ .*no-openmp ]] || ! ${TARGET_OPENMP}; then
+		NBODY_ARGS+=(${NBODY_ARGS_SERIAL[@]})
+	else
+		NBODY_ARGS+=(${NBODY_ARGS_PARALLEL[@]})
+	fi
 }
 
 set_target_env() {
-	TARGET_NAME="$1"; shift
-
 	reset_env
 
 	case "$TARGET_NAME" in
+	brew-x86-64-v2)
+		export LDFLAGS="-L/usr/local/opt/llvm/lib"
+		export CPPFLAGS="-I/usr/local/opt/llvm/include"
+
+		# Host compiler is ARM64 native, we just need the appropriate LDFLAGS
+		# to link to the target-native libs in x86_64 Homebrew
+		export CC="/opt/homebrew/opt/llvm/bin/clang -target x86_64-apple-darwin"
+		export CXX="/opt/homebrew/opt/llvm/bin/clang++ -target x86_64-apple-darwin"
+
+		TARGET_MARCH=x86-64-v2
+		TARGET_OPENMP=true
+		;;
 	brew-x86-64-v3)
 		export LDFLAGS="-L/usr/local/opt/llvm/lib"
 		export CPPFLAGS="-I/usr/local/opt/llvm/include"
@@ -65,7 +86,7 @@ set_target_env() {
 		TARGET_OPENMP=false
 		;;
 	*)
-		die "Unknown target $TARGET_NAME"
+		die "Unknown target: '${TARGET}'"
 		;;
 	esac
 }
@@ -86,13 +107,11 @@ export PATH=/opt/homebrew/bin:$PATH
 echo "# n-body on macOS 15"
 echo "## n-body information"
 echo "Version: \`$(git describe --tags)\`"
-echo ""
+echo
 echo "Origin URL: \`$(git config remote.origin.url)\`"
-echo ""
+echo
 echo "Script source: https://github.com/tycho/nbody/blob/master/scripts/compare-macOS-15"
-echo ""
-echo "Command-line arguments: \'${NBODY_ARGS[@]}\'"
-echo ""
+echo
 echo "## System information"
 
 echo "### OS and hardware"
@@ -112,9 +131,9 @@ for PERF_LEVEL in $(seq 0 ${PERF_LEVEL_MAX}); do
 	sysctl "hw.perflevel${PERF_LEVEL}.l2cachesize"
 done
 echo "\`\`\`"
-echo ""
+echo
 echo "### Compilers"
-echo ""
+echo
 echo "\`\`\`"
 set -x
 /opt/homebrew/bin/meson --version
@@ -132,84 +151,69 @@ export TERM="dumb"
 # Ensure we only use P-cores for this workload
 export OMP_NUM_THREADS="${PCORE_COUNT}"
 
-for TARGET in apple-arm64 brew-arm64 brew-x86-64-v3; do
-	set_target_env "${TARGET}"
-	BUILD_DIR="build-${TARGET_NAME}"
-	echo "## ${TARGET_NAME}"
+nbody_build_and_run() {
+	echo "## ${TARGET_NAME}${TARGET_EXTRA_DESC}"
 	echo "Supports OpenMP: ${TARGET_OPENMP}"
-	rm -rf "${BUILD_DIR}"
+	echo
+	echo "n-body args: \`${NBODY_ARGS[@]}\`"
+	echo
+	rm -rf "${TARGET_BUILD_DIR}"
 	echo "### build"
 	echo "<details>"
-	echo ""
+	echo
 	echo "<summary>Meson configuration</summary>"
-	echo ""
+	echo
 	echo "\`\`\`"
 	set -x
-	/opt/homebrew/bin/meson setup . "${BUILD_DIR}" -Dmarch="${TARGET_MARCH}" -Dopenmp="${TARGET_OPENMP}"
+	/opt/homebrew/bin/meson setup . "${TARGET_BUILD_DIR}" -Dmarch="${TARGET_MARCH}" -Dopenmp="${TARGET_OPENMP}"
 	{ set +x; } 2>/dev/null
 	echo "\`\`\`"
-	echo ""
+	echo
 	echo "</details>"
-	echo ""
+	echo
 	echo "<details>"
-	echo ""
+	echo
 	echo "<summary>Ninja build</summary>"
-	echo ""
+	echo
 	echo "\`\`\`"
 	set -x
-	/opt/homebrew/bin/ninja -C "${BUILD_DIR}"
+	/opt/homebrew/bin/ninja -C "${TARGET_BUILD_DIR}"
 	{ set +x; } 2>/dev/null
 	echo "\`\`\`"
-	echo ""
+	echo
 	echo "</details>"
-	echo ""
+	echo
 	echo "### run"
-	echo ""
+	echo
 	if ${TARGET_OPENMP}; then
 		export OMP_NUM_THREADS=$(sysctl -n hw.perflevel0.logicalcpu)
 	fi
 	echo "\`\`\`"
 	set -x
-	"${BUILD_DIR}"/nbody "${NBODY_ARGS[@]}"
+	"${TARGET_BUILD_DIR}"/nbody "${NBODY_ARGS[@]}"
 	{ set +x; } 2>/dev/null
 	echo "\`\`\`"
+}
+
+TARGETS=(
+	apple-arm64
+	brew-arm64
+	brew-x86-64-v2
+	brew-x86-64-v3
+)
+
+for TARGET_NAME in ${TARGETS[@]}; do
+	set_target_env
+	TARGET_BUILD_DIR="build-${TARGET_NAME}"
+	set_nbody_args
+	nbody_build_and_run
 
 	if ${TARGET_OPENMP}; then
-		echo "## ${TARGET_NAME} (no OpenMP)"
-		BUILD_DIR="build-${TARGET_NAME}-no-openmp"
-		rm -rf "${BUILD_DIR}"
-		echo "### build"
-		echo "<details>"
-		echo ""
-		echo "<summary>Meson configuration</summary>"
-		echo ""
-		echo "\`\`\`"
-		set -x
-		/opt/homebrew/bin/meson setup . "${BUILD_DIR}" -Dmarch="${TARGET_MARCH}" -Dopenmp=false
-		{ set +x; } 2>/dev/null
-		echo "\`\`\`"
-		echo ""
-		echo "</details>"
-		echo ""
-		echo "<details>"
-		echo ""
-		echo "<summary>Ninja build</summary>"
-		echo ""
-		echo "\`\`\`"
-		set -x
-		/opt/homebrew/bin/ninja -C "${BUILD_DIR}"
-		{ set +x; } 2>/dev/null
-		echo "\`\`\`"
-		echo ""
-		echo "</details>"
-		echo ""
-		echo "### run"
-		echo ""
-		echo "\`\`\`"
-		set -x
-		"${BUILD_DIR}"/nbody "${NBODY_ARGS[@]}"
-		{ set +x; } 2>/dev/null
-		echo "\`\`\`"
+		TARGET_OPENMP=false
+		TARGET_EXTRA_DESC=" (no OpenMP)"
+		TARGET_BUILD_DIR="build-${TARGET_NAME}-no-openmp"
+		set_nbody_args
+		nbody_build_and_run
 	fi
 done
 
