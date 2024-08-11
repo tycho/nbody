@@ -43,9 +43,6 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#if !defined(__aarch64__) && !defined(_M_ARM64)
-#include <mm_malloc.h>
-#endif
 #include <math.h>
 #include <stdio.h>
 #include <termios.h>
@@ -53,8 +50,10 @@
 #include <fcntl.h>
 #include <sys/select.h>
 #endif
-#if defined(__arch64__) || defined(_M_ARM64)
 #include <stdlib.h>
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
+#include <mm_malloc.h>
+#else
 #define _mm_malloc(x,y) malloc(x)
 #define _mm_free free
 #endif
