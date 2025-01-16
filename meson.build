@@ -107,6 +107,7 @@ extra_deps = []
 if enable_opengl
     extra_deps += [
         dependency('glew'),
+        dependency('glm'),
         dependency('sdl2'),
         dependency('gl'),
     ]
