@@ -9,6 +9,7 @@ PACKAGES=(
 	gcc-c++
 	clang
 	meson
+	cmake
 	libomp-devel
 	pkgconf-pkg-config
 	glew-devel
