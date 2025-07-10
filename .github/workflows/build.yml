@@ -12,21 +12,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [ubuntu-jammy, ubuntu-focal, fedora-latest, cuda-12.1]
+        build: [ubuntu-focal, fedora-latest, cuda-12.9.1]
         compiler: [gcc, clang]
         include:
-          - build: ubuntu-jammy
-            docker_image: ubuntu
-            docker_tag: jammy
           - build: ubuntu-focal
             docker_image: ubuntu
             docker_tag: focal
           - build: fedora-latest
             docker_image: fedora
             docker_tag: latest
-          - build: cuda-12.1
+          - build: cuda-12.9.1
             docker_image: nvidia/cuda
-            docker_tag: 12.1.1-devel-ubuntu22.04
+            docker_tag: 12.9.1-devel-ubuntu22.04
     steps:
     - uses: actions/checkout@master
     - name: Prepare environment
