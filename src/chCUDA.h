@@ -51,9 +51,15 @@
 
 #else
 
+// HACK: prevent glibc from redefining rsqrtf -- we want to use ours because it
+// will inline and auto-vectorize properly.
+#define rsqrtf rsqrtf_disabled
+
 #include <stddef.h>
 #include <math.h>
 #include <memory.h>
+
+#undef rsqrtf
 
 #define __global__
 #define __host__
