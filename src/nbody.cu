@@ -49,7 +49,9 @@
 #include <SDL2/SDL_main.h>
 #endif
 
+#define rsqrt rsqrt_disabled
 #include <cmath>
+#undef rsqrt
 
 #include "chThread.h"
 #include "chError.h"
