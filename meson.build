@@ -92,12 +92,23 @@ elif nvcc_name == 'nvcc'
     ]
 endif
 
+if enable_opengl
+    glm_dep = dependency('glm', required: false)
+    if not glm_dep.found()
+        if compiler.has_header('glm/glm.hpp')
+            glm_dep = declare_dependency()
+        else
+            error('GLM not found: no pkg-config (glm.pc) and header <glm/glm.hpp> missing')
+        endif
+    endif
+endif
+
 extra_deps = []
 
 if enable_opengl
     extra_deps += [
         dependency('glew'),
-        dependency('glm'),
+        glm_dep,
         dependency('sdl2'),
         dependency('gl'),
     ]
