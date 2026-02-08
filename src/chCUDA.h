@@ -54,12 +54,16 @@
 // HACK: prevent glibc from redefining rsqrtf -- we want to use ours because it
 // will inline and auto-vectorize properly.
 #define rsqrtf rsqrtf_disabled
+#define rsqrtd rsqrtd_disabled
+#define rsqrt rsqrt_disabled
 
 #include <stddef.h>
 #include <math.h>
 #include <memory.h>
 
 #undef rsqrtf
+#undef rsqrtd
+#undef rsqrt
 
 #define __global__
 #define __host__

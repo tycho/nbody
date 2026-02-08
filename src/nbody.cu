@@ -37,6 +37,9 @@
  *
  */
 
+#include "chThread.h"
+#include "chError.h"
+
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -48,13 +51,6 @@
 #ifdef USE_GL
 #include <SDL2/SDL_main.h>
 #endif
-
-#define rsqrt rsqrt_disabled
-#include <cmath>
-#undef rsqrt
-
-#include "chThread.h"
-#include "chError.h"
 
 #include "nbody.h"
 #include "nbody_render_gl.h"
